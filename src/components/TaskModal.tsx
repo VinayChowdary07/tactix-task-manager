@@ -20,7 +20,7 @@ import {
 import { useTasks, Task } from '@/hooks/useTasks';
 import { useProjects } from '@/hooks/useProjects';
 import TagSelector from './TagSelector';
-import { X, Bell } from 'lucide-react';
+import { X, Bell, Repeat, Clock } from 'lucide-react';
 import { format } from 'date-fns';
 
 interface TaskModalProps {
@@ -48,6 +48,10 @@ const TaskModal: React.FC<TaskModalProps> = ({
     priority: 'Medium' as 'Low' | 'Medium' | 'High' | 'Critical',
     status: 'Todo' as 'Todo' | 'In Progress' | 'Done',
     project_id: 'none',
+    repeat_type: 'none' as 'none' | 'daily' | 'weekly' | 'monthly' | 'custom',
+    repeat_interval: 1,
+    repeat_until: '',
+    time_estimate: '',
     tagIds: [] as string[]
   });
 
@@ -62,6 +66,10 @@ const TaskModal: React.FC<TaskModalProps> = ({
           priority: task.priority,
           status: task.status,
           project_id: task.project_id || 'none',
+          repeat_type: task.repeat_type || 'none',
+          repeat_interval: task.repeat_interval || 1,
+          repeat_until: task.repeat_until ? format(new Date(task.repeat_until), 'yyyy-MM-dd') : '',
+          time_estimate: task.time_estimate ? Math.floor(task.time_estimate / 60).toString() : '',
           tagIds: task.tags?.map(tag => tag.id) || []
         });
       } else {
@@ -73,6 +81,10 @@ const TaskModal: React.FC<TaskModalProps> = ({
           priority: 'Medium',
           status: 'Todo',
           project_id: defaultProjectId || 'none',
+          repeat_type: 'none',
+          repeat_interval: 1,
+          repeat_until: '',
+          time_estimate: '',
           tagIds: []
         });
       }
@@ -90,6 +102,8 @@ const TaskModal: React.FC<TaskModalProps> = ({
       ...formData,
       due_date: formData.due_date ? new Date(formData.due_date).toISOString() : undefined,
       reminder_time: formData.reminder_time ? new Date(formData.reminder_time).toISOString() : undefined,
+      repeat_until: formData.repeat_until ? new Date(formData.repeat_until).toISOString() : undefined,
+      time_estimate: formData.time_estimate ? parseInt(formData.time_estimate) * 60 : undefined,
       project_id: formData.project_id === 'none' ? null : formData.project_id
     };
 
@@ -193,6 +207,23 @@ const TaskModal: React.FC<TaskModalProps> = ({
           </div>
 
           <div className="space-y-2">
+            <Label htmlFor="time_estimate" className="text-slate-300 flex items-center gap-2">
+              <Clock className="w-4 h-4" />
+              Time Estimate (hours)
+            </Label>
+            <Input
+              id="time_estimate"
+              type="number"
+              min="0"
+              step="0.5"
+              value={formData.time_estimate}
+              onChange={(e) => setFormData({ ...formData, time_estimate: e.target.value })}
+              className="bg-slate-800/50 border-slate-600 text-white focus:border-cyan-400 focus:ring-cyan-400/20"
+              placeholder="Estimated hours"
+            />
+          </div>
+
+          <div className="space-y-2">
             <Label htmlFor="reminder_time" className="text-slate-300 flex items-center gap-2">
               <Bell className="w-4 h-4" />
               Reminder Time
@@ -206,8 +237,56 @@ const TaskModal: React.FC<TaskModalProps> = ({
             />
           </div>
 
+          <div className="space-y-4 p-4 glass-card rounded-lg border border-purple-500/20">
+            <Label className="text-slate-300 flex items-center gap-2">
+              <Repeat className="w-4 h-4 text-purple-400" />
+              Recurring Task
+            </Label>
+            
+            <div className="space-y-3">
+              <Select value={formData.repeat_type} onValueChange={(value: 'none' | 'daily' | 'weekly' | 'monthly' | 'custom') => setFormData({ ...formData, repeat_type: value })}>
+                <SelectTrigger className="bg-slate-800/50 border-slate-600 text-white focus:border-purple-400">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="bg-slate-800 border-slate-600">
+                  <SelectItem value="none" className="text-slate-400">No Repeat</SelectItem>
+                  <SelectItem value="daily" className="text-blue-400">Daily</SelectItem>
+                  <SelectItem value="weekly" className="text-green-400">Weekly</SelectItem>
+                  <SelectItem value="monthly" className="text-yellow-400">Monthly</SelectItem>
+                  <SelectItem value="custom" className="text-purple-400">Custom</SelectItem>
+                </SelectContent>
+              </Select>
+
+              {formData.repeat_type !== 'none' && (
+                <>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <Label className="text-xs text-slate-400">Interval</Label>
+                      <Input
+                        type="number"
+                        min="1"
+                        value={formData.repeat_interval}
+                        onChange={(e) => setFormData({ ...formData, repeat_interval: parseInt(e.target.value) || 1 })}
+                        className="bg-slate-800/50 border-slate-600 text-white text-sm"
+                      />
+                    </div>
+                    <div>
+                      <Label className="text-xs text-slate-400">Until</Label>
+                      <Input
+                        type="date"
+                        value={formData.repeat_until}
+                        onChange={(e) => setFormData({ ...formData, repeat_until: e.target.value })}
+                        className="bg-slate-800/50 border-slate-600 text-white text-sm"
+                      />
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
+
           <div className="space-y-2">
-            <Label htmlFor="project" className="text-slate-300">Project</Label>
+            <Label className="text-slate-300">Project</Label>
             <Select value={formData.project_id} onValueChange={(value) => setFormData({ ...formData, project_id: value })}>
               <SelectTrigger className="bg-slate-800/50 border-slate-600 text-white focus:border-cyan-400">
                 <SelectValue placeholder="Select a project (optional)" />

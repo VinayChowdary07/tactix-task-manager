@@ -203,16 +203,64 @@ export type Database = {
           },
         ]
       }
+      task_time_logs: {
+        Row: {
+          created_at: string
+          duration_minutes: number | null
+          ended_at: string | null
+          id: string
+          started_at: string
+          task_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          duration_minutes?: number | null
+          ended_at?: string | null
+          id?: string
+          started_at: string
+          task_id: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          duration_minutes?: number | null
+          ended_at?: string | null
+          id?: string
+          started_at?: string
+          task_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "task_time_logs_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       tasks: {
         Row: {
           created_at: string
           description: string | null
           due_date: string | null
           id: string
+          is_recurring_parent: boolean | null
+          parent_recurring_task_id: string | null
           priority: string
           project_id: string | null
           reminder_time: string | null
+          repeat_interval: number | null
+          repeat_type: string | null
+          repeat_until: string | null
           status: string
+          time_estimate: number | null
+          time_spent: number | null
           title: string
           updated_at: string
           user_id: string
@@ -222,10 +270,17 @@ export type Database = {
           description?: string | null
           due_date?: string | null
           id?: string
+          is_recurring_parent?: boolean | null
+          parent_recurring_task_id?: string | null
           priority?: string
           project_id?: string | null
           reminder_time?: string | null
+          repeat_interval?: number | null
+          repeat_type?: string | null
+          repeat_until?: string | null
           status?: string
+          time_estimate?: number | null
+          time_spent?: number | null
           title: string
           updated_at?: string
           user_id: string
@@ -235,15 +290,29 @@ export type Database = {
           description?: string | null
           due_date?: string | null
           id?: string
+          is_recurring_parent?: boolean | null
+          parent_recurring_task_id?: string | null
           priority?: string
           project_id?: string | null
           reminder_time?: string | null
+          repeat_interval?: number | null
+          repeat_type?: string | null
+          repeat_until?: string | null
           status?: string
+          time_estimate?: number | null
+          time_spent?: number | null
           title?: string
           updated_at?: string
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "tasks_parent_recurring_task_id_fkey"
+            columns: ["parent_recurring_task_id"]
+            isOneToOne: false
+            referencedRelation: "tasks"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "tasks_project_id_fkey"
             columns: ["project_id"]
@@ -258,7 +327,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      create_recurring_task_instance: {
+        Args: { task_id: string }
+        Returns: string
+      }
     }
     Enums: {
       [_ in never]: never

@@ -1,3 +1,4 @@
+
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/lib/auth';
@@ -15,6 +16,13 @@ export interface Task {
   user_id: string;
   created_at: string;
   updated_at: string;
+  repeat_type?: 'none' | 'daily' | 'weekly' | 'monthly' | 'custom';
+  repeat_interval?: number;
+  repeat_until?: string;
+  time_estimate?: number;
+  time_spent?: number;
+  is_recurring_parent?: boolean;
+  parent_recurring_task_id?: string;
   tags?: Array<{
     id: string;
     name: string;
@@ -30,6 +38,10 @@ export interface TaskInput {
   priority: 'Low' | 'Medium' | 'High' | 'Critical';
   status: 'Todo' | 'In Progress' | 'Done';
   project_id?: string;
+  repeat_type?: 'none' | 'daily' | 'weekly' | 'monthly' | 'custom';
+  repeat_interval?: number;
+  repeat_until?: string;
+  time_estimate?: number;
   tagIds?: string[];
 }
 
