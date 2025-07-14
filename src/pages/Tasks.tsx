@@ -29,8 +29,7 @@ const Tasks = () => {
   const [filters, setFilters] = useState<TaskFilters>({
     search: '',
     priority: 'all',
-    status: 'all',
-    tagIds: []
+    status: 'all'
   });
 
   // Filter tasks based on all criteria
@@ -47,8 +46,7 @@ const Tasks = () => {
       const searchLower = filters.search.toLowerCase();
       filtered = filtered.filter(task => 
         task.title.toLowerCase().includes(searchLower) ||
-        task.description?.toLowerCase().includes(searchLower) ||
-        task.tags?.some(tag => tag.name.toLowerCase().includes(searchLower))
+        task.description?.toLowerCase().includes(searchLower)
       );
     }
 
@@ -60,13 +58,6 @@ const Tasks = () => {
     // Apply status filter
     if (filters.status !== 'all') {
       filtered = filtered.filter(task => task.status === filters.status);
-    }
-
-    // Apply tag filters
-    if (filters.tagIds.length > 0) {
-      filtered = filtered.filter(task => 
-        task.tags?.some(tag => filters.tagIds.includes(tag.id))
-      );
     }
 
     return filtered;
@@ -229,7 +220,7 @@ const Tasks = () => {
             <Target className="w-12 h-12 text-white" />
           </div>
           <h3 className="text-white text-2xl font-bold mb-4">
-            {filters.search || filters.priority !== 'all' || filters.status !== 'all' || filters.tagIds.length > 0
+            {filters.search || filters.priority !== 'all' || filters.status !== 'all'
               ? 'No tasks match your filters'
               : selectedProjectId 
                 ? 'No tasks in this project'
@@ -237,7 +228,7 @@ const Tasks = () => {
             }
           </h3>
           <p className="text-slate-400 text-lg mb-8 max-w-md mx-auto">
-            {filters.search || filters.priority !== 'all' || filters.status !== 'all' || filters.tagIds.length > 0
+            {filters.search || filters.priority !== 'all' || filters.status !== 'all'
               ? 'Try adjusting your search criteria or filters'
               : selectedProjectId 
                 ? 'Create your first task for this project to get started'

@@ -3,9 +3,8 @@ import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { Edit, Trash2, MoreHorizontal, Calendar, Clock, Flag } from 'lucide-react';
+import { Edit, Trash2, MoreHorizontal, Calendar, Flag } from 'lucide-react';
 import { Project } from '@/hooks/useProjects';
-import { Badge } from '@/components/ui/badge';
 import TaskTimer from './TaskTimer';
 import { Repeat } from 'lucide-react';
 import { format } from 'date-fns';
@@ -19,11 +18,6 @@ interface TaskCardProps {
     priority: 'Low' | 'Medium' | 'High' | 'Critical';
     status: 'Todo' | 'In Progress' | 'Done';
     project_id?: string;
-    tags?: Array<{
-      id: string;
-      name: string;
-      color: string;
-    }>;
     repeat_type?: 'none' | 'daily' | 'weekly' | 'monthly' | 'custom';
     time_estimate?: number;
     time_spent?: number;
@@ -155,25 +149,6 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, projects, onEdit, onDelete })
               </span>
             </div>
           </div>
-
-          {/* Tags */}
-          {task.tags && task.tags.length > 0 && (
-            <div className="flex items-center gap-2 flex-wrap">
-              {task.tags.map((tag) => (
-                <Badge 
-                  key={tag.id} 
-                  className="bg-transparent border rounded-full px-2 py-1 text-xs hover:scale-105 transition-transform"
-                  style={{
-                    backgroundColor: `${tag.color}15`,
-                    borderColor: `${tag.color}50`,
-                    color: tag.color
-                  }}
-                >
-                  {tag.name}
-                </Badge>
-              ))}
-            </div>
-          )}
         </div>
       </CardContent>
     </Card>

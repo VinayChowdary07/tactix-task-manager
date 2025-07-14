@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import {
   Dialog,
@@ -18,7 +19,6 @@ import {
 } from '@/components/ui/select';
 import { useTasks, Task } from '@/hooks/useTasks';
 import { useProjects } from '@/hooks/useProjects';
-import TagSelector from './TagSelector';
 import { X, Bell, Repeat, Clock } from 'lucide-react';
 import { format } from 'date-fns';
 
@@ -50,20 +50,12 @@ const TaskModal: React.FC<TaskModalProps> = ({
     repeat_type: 'none' as 'none' | 'daily' | 'weekly' | 'monthly' | 'custom',
     repeat_interval: 1,
     repeat_until: '',
-    time_estimate: '',
-    tagIds: [] as string[] // Always initialize as empty array
+    time_estimate: ''
   });
 
   useEffect(() => {
     if (isOpen) {
       if (task) {
-        // Safely extract tag IDs from the task - ensure we always have an array
-        const taskTagIds = Array.isArray(task.tags) 
-          ? task.tags.map(tag => tag?.id).filter(Boolean) 
-          : [];
-        
-        console.log("Task Tags:", task.tags, "Extracted IDs:", taskTagIds);
-        
         setFormData({
           title: task.title,
           description: task.description || '',
@@ -75,11 +67,9 @@ const TaskModal: React.FC<TaskModalProps> = ({
           repeat_type: task.repeat_type || 'none',
           repeat_interval: task.repeat_interval || 1,
           repeat_until: task.repeat_until ? format(new Date(task.repeat_until), 'yyyy-MM-dd') : '',
-          time_estimate: task.time_estimate ? Math.floor(task.time_estimate / 60).toString() : '',
-          tagIds: taskTagIds // Always an array
+          time_estimate: task.time_estimate ? Math.floor(task.time_estimate / 60).toString() : ''
         });
       } else {
-        // Reset form for new task - ensure tagIds is always an empty array
         setFormData({
           title: '',
           description: '',
@@ -91,8 +81,7 @@ const TaskModal: React.FC<TaskModalProps> = ({
           repeat_type: 'none',
           repeat_interval: 1,
           repeat_until: '',
-          time_estimate: '',
-          tagIds: [] // Always initialize as empty array
+          time_estimate: ''
         });
       }
     }
@@ -129,16 +118,6 @@ const TaskModal: React.FC<TaskModalProps> = ({
     }
   };
 
-  const handleTagsChange = (tagIds: string[]) => {
-    console.log("Tags changing to:", tagIds);
-    // Ensure we always set an array, never null or undefined
-    const safeTagIds = Array.isArray(tagIds) ? tagIds : [];
-    setFormData(prev => ({ ...prev, tagIds: safeTagIds }));
-  };
-
-  // Add debug logging
-  console.log("Form Tags:", formData.tagIds);
-
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="glass-dark border-slate-700/50 text-white max-w-2xl max-h-[90vh] overflow-y-auto neon-border-cyan">
@@ -157,7 +136,7 @@ const TaskModal: React.FC<TaskModalProps> = ({
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-6 mt-6">
-          {/* Title and Description Row */}
+          {/* Title and Description */}
           <div className="grid grid-cols-1 gap-6">
             <div className="space-y-2">
               <Label htmlFor="title" className="text-slate-300 font-medium">Task Title *</Label>
@@ -184,7 +163,7 @@ const TaskModal: React.FC<TaskModalProps> = ({
             </div>
           </div>
 
-          {/* Priority and Status Row */}
+          {/* Priority and Status */}
           <div className="grid grid-cols-2 gap-6">
             <div className="space-y-2">
               <Label htmlFor="priority" className="text-slate-300 font-medium">Priority</Label>
@@ -216,7 +195,7 @@ const TaskModal: React.FC<TaskModalProps> = ({
             </div>
           </div>
 
-          {/* Due Date and Time Estimate Row */}
+          {/* Due Date and Time Estimate */}
           <div className="grid grid-cols-2 gap-6">
             <div className="space-y-2">
               <Label htmlFor="due_date" className="text-slate-300 font-medium">Due Date</Label>
@@ -331,20 +310,6 @@ const TaskModal: React.FC<TaskModalProps> = ({
                 ))}
               </SelectContent>
             </Select>
-          </div>
-
-          {/* Tag Selector with proper error boundary and array checking */}
-          <div className="space-y-2">
-            {Array.isArray(formData.tagIds) ? (
-              <TagSelector
-                selectedTagIds={formData.tagIds}
-                onTagsChange={handleTagsChange}
-              />
-            ) : (
-              <div className="text-slate-400 text-sm">
-                ⚠️ Loading tag selector...
-              </div>
-            )}
           </div>
 
           {/* Action Buttons */}
