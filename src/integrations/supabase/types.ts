@@ -186,6 +186,8 @@ export type Database = {
           created_at: string
           description: string | null
           due_date: string | null
+          google_calendar_event_id: string | null
+          google_calendar_sync: boolean | null
           id: string
           is_recurring_parent: boolean | null
           parent_recurring_task_id: string | null
@@ -206,6 +208,8 @@ export type Database = {
           created_at?: string
           description?: string | null
           due_date?: string | null
+          google_calendar_event_id?: string | null
+          google_calendar_sync?: boolean | null
           id?: string
           is_recurring_parent?: boolean | null
           parent_recurring_task_id?: string | null
@@ -226,6 +230,8 @@ export type Database = {
           created_at?: string
           description?: string | null
           due_date?: string | null
+          google_calendar_event_id?: string | null
+          google_calendar_sync?: boolean | null
           id?: string
           is_recurring_parent?: boolean | null
           parent_recurring_task_id?: string | null

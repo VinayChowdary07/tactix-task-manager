@@ -3,7 +3,7 @@ import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { Edit, Trash2, MoreHorizontal, Calendar, Flag } from 'lucide-react';
+import { Edit, Trash2, MoreHorizontal, Calendar, Flag, ExternalLink } from 'lucide-react';
 import { Project } from '@/hooks/useProjects';
 import TaskTimer from './TaskTimer';
 import { Repeat } from 'lucide-react';
@@ -21,6 +21,8 @@ interface TaskCardProps {
     repeat_type?: 'none' | 'daily' | 'weekly' | 'monthly' | 'custom';
     time_estimate?: number;
     time_spent?: number;
+    google_calendar_event_id?: string;
+    google_calendar_sync?: boolean;
   };
   projects: Array<Project>;
   onEdit: (task: any) => void;
@@ -46,6 +48,13 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, projects, onEdit, onDelete })
   const priorityStyle = priorityConfig[task.priority];
   const statusStyle = statusConfig[task.status];
 
+  const handleViewInCalendar = () => {
+    if (task.google_calendar_event_id) {
+      const calendarUrl = `https://calendar.google.com/calendar/event?eid=${task.google_calendar_event_id}`;
+      window.open(calendarUrl, '_blank', 'noopener,noreferrer');
+    }
+  };
+
   return (
     <Card className={`glass-card ${statusStyle.border} hover:scale-[1.02] transition-all duration-300 group cursor-pointer animate-fade-in`}>
       <CardContent className="p-6">
@@ -62,6 +71,14 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, projects, onEdit, onDelete })
                     <Repeat className="w-3 h-3 text-purple-400" />
                     <span className="text-xs text-purple-400 font-medium capitalize">
                       {task.repeat_type}
+                    </span>
+                  </div>
+                )}
+                {task.google_calendar_event_id && (
+                  <div className="flex items-center gap-1 px-2 py-1 bg-cyan-500/20 rounded-full border border-cyan-500/30">
+                    <Calendar className="w-3 h-3 text-cyan-400" />
+                    <span className="text-xs text-cyan-400 font-medium">
+                      Synced
                     </span>
                   </div>
                 )}
@@ -92,6 +109,15 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, projects, onEdit, onDelete })
                   <Edit className="h-4 w-4 mr-2" />
                   <span>Edit Task</span>
                 </DropdownMenuItem>
+                {task.google_calendar_event_id && (
+                  <DropdownMenuItem 
+                    onClick={handleViewInCalendar}
+                    className="hover:bg-cyan-700/50 text-cyan-400 hover:text-cyan-300 cursor-pointer focus:text-cyan-300"
+                  >
+                    <ExternalLink className="h-4 w-4 mr-2" />
+                    <span>View in Calendar</span>
+                  </DropdownMenuItem>
+                )}
                 <DropdownMenuItem 
                   onClick={() => onDelete(task.id)} 
                   className="hover:bg-red-700/50 text-red-400 hover:text-red-300 cursor-pointer focus:text-red-300"

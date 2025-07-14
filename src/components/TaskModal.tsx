@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { Switch } from '@/components/ui/switch';
 import {
   Select,
   SelectContent,
@@ -19,7 +20,7 @@ import {
 } from '@/components/ui/select';
 import { useTasks, Task } from '@/hooks/useTasks';
 import { useProjects } from '@/hooks/useProjects';
-import { X, Bell, Repeat, Clock } from 'lucide-react';
+import { X, Bell, Repeat, Clock, Calendar } from 'lucide-react';
 import { format } from 'date-fns';
 
 interface TaskModalProps {
@@ -50,7 +51,8 @@ const TaskModal: React.FC<TaskModalProps> = ({
     repeat_type: 'none' as 'none' | 'daily' | 'weekly' | 'monthly' | 'custom',
     repeat_interval: 1,
     repeat_until: '',
-    time_estimate: ''
+    time_estimate: '',
+    google_calendar_sync: true
   });
 
   useEffect(() => {
@@ -67,7 +69,8 @@ const TaskModal: React.FC<TaskModalProps> = ({
           repeat_type: task.repeat_type || 'none',
           repeat_interval: task.repeat_interval || 1,
           repeat_until: task.repeat_until ? format(new Date(task.repeat_until), 'yyyy-MM-dd') : '',
-          time_estimate: task.time_estimate ? Math.floor(task.time_estimate / 60).toString() : ''
+          time_estimate: task.time_estimate ? Math.floor(task.time_estimate / 60).toString() : '',
+          google_calendar_sync: task.google_calendar_sync !== false
         });
       } else {
         setFormData({
@@ -81,7 +84,8 @@ const TaskModal: React.FC<TaskModalProps> = ({
           repeat_type: 'none',
           repeat_interval: 1,
           repeat_until: '',
-          time_estimate: ''
+          time_estimate: '',
+          google_calendar_sync: true
         });
       }
     }
@@ -222,6 +226,24 @@ const TaskModal: React.FC<TaskModalProps> = ({
                 onChange={(e) => setFormData({ ...formData, time_estimate: e.target.value })}
                 className="bg-slate-800/50 border-slate-600 text-white focus:border-cyan-400 focus:ring-cyan-400/20 h-12"
                 placeholder="Estimated hours"
+              />
+            </div>
+          </div>
+
+          {/* Google Calendar Sync Toggle */}
+          <div className="space-y-4 p-6 glass-card rounded-lg neon-border-cyan">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <Calendar className="w-5 h-5 text-cyan-400" />
+                <div>
+                  <Label className="text-slate-300 font-medium">Sync with Google Calendar</Label>
+                  <p className="text-sm text-slate-400">Automatically create calendar events for tasks with due dates</p>
+                </div>
+              </div>
+              <Switch
+                checked={formData.google_calendar_sync}
+                onCheckedChange={(checked) => setFormData({ ...formData, google_calendar_sync: checked })}
+                className="data-[state=checked]:bg-cyan-500"
               />
             </div>
           </div>

@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/lib/auth';
 import { toast } from 'sonner';
+import { googleCalendarService } from '@/services/googleCalendar';
 
 export interface Task {
   id: string;
@@ -23,6 +24,8 @@ export interface Task {
   time_spent?: number;
   is_recurring_parent?: boolean;
   parent_recurring_task_id?: string;
+  google_calendar_event_id?: string;
+  google_calendar_sync?: boolean;
 }
 
 export interface TaskInput {
@@ -37,6 +40,7 @@ export interface TaskInput {
   repeat_interval?: number;
   repeat_until?: string;
   time_estimate?: number;
+  google_calendar_sync?: boolean;
 }
 
 export const useTasks = () => {
@@ -59,6 +63,45 @@ export const useTasks = () => {
     enabled: !!user,
   });
 
+  const syncToGoogleCalendar = async (task: Task): Promise<string | null> => {
+    if (!task.google_calendar_sync || !task.due_date) {
+      return null;
+    }
+
+    try {
+      const event = googleCalendarService.createEventFromTask(task);
+      const eventId = await googleCalendarService.createEvent(event);
+      return eventId;
+    } catch (error) {
+      console.error('Failed to sync to Google Calendar:', error);
+      toast.error('Failed to sync task to Google Calendar');
+      return null;
+    }
+  };
+
+  const updateGoogleCalendarEvent = async (task: Task): Promise<void> => {
+    if (!task.google_calendar_sync || !task.due_date || !task.google_calendar_event_id) {
+      return;
+    }
+
+    try {
+      const event = googleCalendarService.createEventFromTask(task);
+      await googleCalendarService.updateEvent(task.google_calendar_event_id, event);
+    } catch (error) {
+      console.error('Failed to update Google Calendar event:', error);
+      toast.error('Failed to update Google Calendar event');
+    }
+  };
+
+  const deleteGoogleCalendarEvent = async (eventId: string): Promise<void> => {
+    try {
+      await googleCalendarService.deleteEvent(eventId);
+    } catch (error) {
+      console.error('Failed to delete Google Calendar event:', error);
+      toast.error('Failed to delete Google Calendar event');
+    }
+  };
+
   const createTask = useMutation({
     mutationFn: async (taskData: TaskInput) => {
       if (!user) throw new Error('User not authenticated');
@@ -70,6 +113,24 @@ export const useTasks = () => {
         .single();
       
       if (taskError) throw taskError;
+
+      // Sync to Google Calendar if enabled
+      if (task.google_calendar_sync && task.due_date) {
+        const eventId = await syncToGoogleCalendar(task);
+        if (eventId) {
+          const { error: updateError } = await supabase
+            .from('tasks')
+            .update({ google_calendar_event_id: eventId })
+            .eq('id', task.id);
+          
+          if (updateError) {
+            console.error('Failed to update task with calendar event ID:', updateError);
+          } else {
+            task.google_calendar_event_id = eventId;
+          }
+        }
+      }
+
       return task;
     },
     onSuccess: () => {
@@ -92,6 +153,33 @@ export const useTasks = () => {
         .single();
       
       if (error) throw error;
+
+      // Handle Google Calendar sync
+      if (data.google_calendar_sync && data.due_date) {
+        if (data.google_calendar_event_id) {
+          // Update existing event
+          await updateGoogleCalendarEvent(data);
+        } else {
+          // Create new event
+          const eventId = await syncToGoogleCalendar(data);
+          if (eventId) {
+            await supabase
+              .from('tasks')
+              .update({ google_calendar_event_id: eventId })
+              .eq('id', id);
+            data.google_calendar_event_id = eventId;
+          }
+        }
+      } else if (data.google_calendar_event_id && (!data.google_calendar_sync || !data.due_date)) {
+        // Delete calendar event if sync is disabled or due date removed
+        await deleteGoogleCalendarEvent(data.google_calendar_event_id);
+        await supabase
+          .from('tasks')
+          .update({ google_calendar_event_id: null })
+          .eq('id', id);
+        data.google_calendar_event_id = null;
+      }
+
       return data;
     },
     onSuccess: () => {
@@ -106,6 +194,18 @@ export const useTasks = () => {
 
   const deleteTask = useMutation({
     mutationFn: async (id: string) => {
+      // Get the task to check for calendar event
+      const { data: task } = await supabase
+        .from('tasks')
+        .select('google_calendar_event_id')
+        .eq('id', id)
+        .single();
+
+      // Delete from Google Calendar if synced
+      if (task?.google_calendar_event_id) {
+        await deleteGoogleCalendarEvent(task.google_calendar_event_id);
+      }
+
       const { error } = await supabase
         .from('tasks')
         .delete()
