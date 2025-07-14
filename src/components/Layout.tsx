@@ -19,7 +19,7 @@ import { useAuth } from '@/lib/auth';
 import { useProjects } from '@/hooks/useProjects';
 import NotificationDropdown from './NotificationDropdown';
 
-const Layout = () => {
+const Layout: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { signOut, user } = useAuth();
