@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import {
   Home,
@@ -102,16 +103,6 @@ const Layout = () => {
             })}
           </ul>
         </nav>
-
-        <div className="mt-auto">
-          <Button
-            variant="secondary"
-            className="w-full btn-gradient-purple glow-purple text-white hover:scale-105 transition-all duration-300"
-            onClick={() => setIsProjectModalOpen(true)}
-          >
-            New Project
-          </Button>
-        </div>
       </aside>
 
       {/* Main Content */}
