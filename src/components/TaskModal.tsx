@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import {
   Dialog,
@@ -52,14 +51,18 @@ const TaskModal: React.FC<TaskModalProps> = ({
     repeat_interval: 1,
     repeat_until: '',
     time_estimate: '',
-    tagIds: [] as string[]
+    tagIds: [] as string[] // Always initialize as empty array
   });
 
   useEffect(() => {
     if (isOpen) {
       if (task) {
-        // Safely extract tag IDs from the task
-        const taskTagIds = task.tags?.map(tag => tag.id) || [];
+        // Safely extract tag IDs from the task - ensure we always have an array
+        const taskTagIds = Array.isArray(task.tags) 
+          ? task.tags.map(tag => tag?.id).filter(Boolean) 
+          : [];
+        
+        console.log("Task Tags:", task.tags, "Extracted IDs:", taskTagIds);
         
         setFormData({
           title: task.title,
@@ -73,9 +76,10 @@ const TaskModal: React.FC<TaskModalProps> = ({
           repeat_interval: task.repeat_interval || 1,
           repeat_until: task.repeat_until ? format(new Date(task.repeat_until), 'yyyy-MM-dd') : '',
           time_estimate: task.time_estimate ? Math.floor(task.time_estimate / 60).toString() : '',
-          tagIds: taskTagIds
+          tagIds: taskTagIds // Always an array
         });
       } else {
+        // Reset form for new task - ensure tagIds is always an empty array
         setFormData({
           title: '',
           description: '',
@@ -88,7 +92,7 @@ const TaskModal: React.FC<TaskModalProps> = ({
           repeat_interval: 1,
           repeat_until: '',
           time_estimate: '',
-          tagIds: []
+          tagIds: [] // Always initialize as empty array
         });
       }
     }
@@ -126,8 +130,14 @@ const TaskModal: React.FC<TaskModalProps> = ({
   };
 
   const handleTagsChange = (tagIds: string[]) => {
-    setFormData(prev => ({ ...prev, tagIds }));
+    console.log("Tags changing to:", tagIds);
+    // Ensure we always set an array, never null or undefined
+    const safeTagIds = Array.isArray(tagIds) ? tagIds : [];
+    setFormData(prev => ({ ...prev, tagIds: safeTagIds }));
   };
+
+  // Add debug logging
+  console.log("Form Tags:", formData.tagIds);
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -323,12 +333,18 @@ const TaskModal: React.FC<TaskModalProps> = ({
             </Select>
           </div>
 
-          {/* Tag Selector with Error Boundary */}
+          {/* Tag Selector with proper error boundary and array checking */}
           <div className="space-y-2">
-            <TagSelector
-              selectedTagIds={formData.tagIds}
-              onTagsChange={handleTagsChange}
-            />
+            {Array.isArray(formData.tagIds) ? (
+              <TagSelector
+                selectedTagIds={formData.tagIds}
+                onTagsChange={handleTagsChange}
+              />
+            ) : (
+              <div className="text-slate-400 text-sm">
+                ⚠️ Loading tag selector...
+              </div>
+            )}
           </div>
 
           {/* Action Buttons */}
