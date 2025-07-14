@@ -4,8 +4,8 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Task } from '@/hooks/useTasks';
-import { Edit, Trash2, Calendar, Flag, Clock, AlertTriangle } from 'lucide-react';
-import { format, isToday, isBefore, startOfDay, parseISO, isAfter, addDays } from 'date-fns';
+import { Edit, Trash2, Calendar, Flag, Clock, AlertTriangle, Tag } from 'lucide-react';
+import { format, isToday, isBefore, startOfDay, parseISO, addDays } from 'date-fns';
 
 interface TaskCardProps {
   task: Task;
@@ -17,6 +17,7 @@ interface TaskCardProps {
 const TaskCard: React.FC<TaskCardProps> = ({ task, projects, onEdit, onDelete }) => {
   const getPriorityColor = (priority: string) => {
     switch (priority) {
+      case 'Critical': return 'bg-red-600/20 text-red-300 border-red-600/50 glow-red';
       case 'High': return 'bg-red-500/20 text-red-400 border-red-500/50';
       case 'Medium': return 'bg-yellow-500/20 text-yellow-400 border-yellow-500/50';
       case 'Low': return 'bg-green-500/20 text-green-400 border-green-500/50';
@@ -152,6 +153,26 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, projects, onEdit, onDelete })
               >
                 {project.name}
               </Badge>
+            </div>
+          )}
+
+          {/* Tags */}
+          {task.tags && task.tags.length > 0 && (
+            <div className="flex flex-wrap gap-1">
+              {task.tags.map((tag) => (
+                <Badge
+                  key={tag.id}
+                  className="text-xs px-2 py-1 border"
+                  style={{
+                    backgroundColor: `${tag.color}20`,
+                    color: tag.color,
+                    borderColor: `${tag.color}40`
+                  }}
+                >
+                  <Tag className="w-3 h-3 mr-1" />
+                  {tag.name}
+                </Badge>
+              ))}
             </div>
           )}
 

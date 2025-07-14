@@ -1,14 +1,13 @@
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { Plus, Target, CheckCircle2, Clock, Star, Loader2 } from 'lucide-react';
 import { useTasks, Task } from '@/hooks/useTasks';
 import { useProjects } from '@/hooks/useProjects';
 import TaskModal from '@/components/TaskModal';
 import TaskCard from '@/components/TaskCard';
-import { toast } from 'sonner';
+import TaskFiltersComponent, { TaskFilters } from '@/components/TaskFilters';
 import { useOutletContext } from 'react-router-dom';
 
 interface OutletContext {
@@ -23,10 +22,51 @@ const Tasks = () => {
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const { selectedProjectId } = useOutletContext<OutletContext>();
 
-  // Filter tasks by selected project if any
-  const filteredTasks = selectedProjectId 
-    ? tasks.filter(task => task.project_id === selectedProjectId)
-    : tasks;
+  const [filters, setFilters] = useState<TaskFilters>({
+    search: '',
+    priority: 'all',
+    status: 'all',
+    tagIds: []
+  });
+
+  // Filter tasks based on all criteria
+  const filteredTasks = useMemo(() => {
+    let filtered = tasks;
+
+    // Filter by selected project if any
+    if (selectedProjectId) {
+      filtered = filtered.filter(task => task.project_id === selectedProjectId);
+    }
+
+    // Apply search filter
+    if (filters.search) {
+      const searchLower = filters.search.toLowerCase();
+      filtered = filtered.filter(task => 
+        task.title.toLowerCase().includes(searchLower) ||
+        task.description?.toLowerCase().includes(searchLower) ||
+        task.tags?.some(tag => tag.name.toLowerCase().includes(searchLower))
+      );
+    }
+
+    // Apply priority filter
+    if (filters.priority !== 'all') {
+      filtered = filtered.filter(task => task.priority === filters.priority);
+    }
+
+    // Apply status filter
+    if (filters.status !== 'all') {
+      filtered = filtered.filter(task => task.status === filters.status);
+    }
+
+    // Apply tag filters
+    if (filters.tagIds.length > 0) {
+      filtered = filtered.filter(task => 
+        task.tags?.some(tag => filters.tagIds.includes(tag.id))
+      );
+    }
+
+    return filtered;
+  }, [tasks, selectedProjectId, filters]);
 
   const handleEditTask = (task: Task) => {
     setEditingTask(task);
@@ -52,7 +92,7 @@ const Tasks = () => {
   const todoTasks = filteredTasks.filter(task => task.status === 'Todo');
   const inProgressTasks = filteredTasks.filter(task => task.status === 'In Progress');
   const completedTasks = filteredTasks.filter(task => task.status === 'Done');
-  const highPriorityTasks = filteredTasks.filter(task => task.priority === 'High');
+  const highPriorityTasks = filteredTasks.filter(task => task.priority === 'High' || task.priority === 'Critical');
 
   const stats = [
     { label: selectedProjectId ? 'Project Tasks' : 'Total Tasks', value: filteredTasks.length.toString(), icon: Target, color: 'text-cyan-400' },
@@ -119,6 +159,13 @@ const Tasks = () => {
         </Button>
       </div>
 
+      {/* Smart Filters */}
+      <TaskFiltersComponent 
+        filters={filters}
+        onFiltersChange={setFilters}
+        className="glass-dark border-slate-700/50 p-6 rounded-lg"
+      />
+
       {/* Tasks Grid */}
       {filteredTasks.length === 0 ? (
         <div className="text-center py-12">
@@ -126,12 +173,19 @@ const Tasks = () => {
             <Target className="w-8 h-8 text-slate-400" />
           </div>
           <h3 className="text-white text-lg font-semibold mb-2">
-            {selectedProjectId ? 'No tasks in this project' : 'No tasks yet'}
+            {filters.search || filters.priority !== 'all' || filters.status !== 'all' || filters.tagIds.length > 0
+              ? 'No tasks match your filters'
+              : selectedProjectId 
+                ? 'No tasks in this project'
+                : 'No tasks yet'
+            }
           </h3>
           <p className="text-slate-400 mb-4">
-            {selectedProjectId 
-              ? 'Create your first task for this project to get started'
-              : 'Create your first task to get started with productivity tracking'
+            {filters.search || filters.priority !== 'all' || filters.status !== 'all' || filters.tagIds.length > 0
+              ? 'Try adjusting your search criteria or filters'
+              : selectedProjectId 
+                ? 'Create your first task for this project to get started'
+                : 'Create your first task to get started with productivity tracking'
             }
           </p>
           <Button 

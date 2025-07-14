@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import {
   Dialog,
@@ -18,6 +19,7 @@ import {
 } from '@/components/ui/select';
 import { useTasks, Task } from '@/hooks/useTasks';
 import { useProjects } from '@/hooks/useProjects';
+import TagSelector from './TagSelector';
 import { X } from 'lucide-react';
 import { format } from 'date-fns';
 
@@ -42,9 +44,10 @@ const TaskModal: React.FC<TaskModalProps> = ({
     title: '',
     description: '',
     due_date: '',
-    priority: 'Medium' as 'Low' | 'Medium' | 'High',
+    priority: 'Medium' as 'Low' | 'Medium' | 'High' | 'Critical',
     status: 'Todo' as 'Todo' | 'In Progress' | 'Done',
-    project_id: 'none'
+    project_id: 'none',
+    tagIds: [] as string[]
   });
 
   useEffect(() => {
@@ -56,7 +59,8 @@ const TaskModal: React.FC<TaskModalProps> = ({
           due_date: task.due_date ? format(new Date(task.due_date), 'yyyy-MM-dd') : '',
           priority: task.priority,
           status: task.status,
-          project_id: task.project_id || 'none'
+          project_id: task.project_id || 'none',
+          tagIds: task.tags?.map(tag => tag.id) || []
         });
       } else {
         setFormData({
@@ -65,7 +69,8 @@ const TaskModal: React.FC<TaskModalProps> = ({
           due_date: defaultDueDate ? format(defaultDueDate, 'yyyy-MM-dd') : '',
           priority: 'Medium',
           status: 'Todo',
-          project_id: defaultProjectId || 'none'
+          project_id: defaultProjectId || 'none',
+          tagIds: []
         });
       }
     }
@@ -144,7 +149,7 @@ const TaskModal: React.FC<TaskModalProps> = ({
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="priority" className="text-slate-300">Priority</Label>
-              <Select value={formData.priority} onValueChange={(value: 'Low' | 'Medium' | 'High') => setFormData({ ...formData, priority: value })}>
+              <Select value={formData.priority} onValueChange={(value: 'Low' | 'Medium' | 'High' | 'Critical') => setFormData({ ...formData, priority: value })}>
                 <SelectTrigger className="bg-slate-800/50 border-slate-600 text-white focus:border-cyan-400">
                   <SelectValue />
                 </SelectTrigger>
@@ -152,6 +157,7 @@ const TaskModal: React.FC<TaskModalProps> = ({
                   <SelectItem value="Low" className="text-green-400">Low</SelectItem>
                   <SelectItem value="Medium" className="text-yellow-400">Medium</SelectItem>
                   <SelectItem value="High" className="text-red-400">High</SelectItem>
+                  <SelectItem value="Critical" className="text-red-600 font-bold">Critical</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -204,6 +210,11 @@ const TaskModal: React.FC<TaskModalProps> = ({
               </SelectContent>
             </Select>
           </div>
+
+          <TagSelector
+            selectedTagIds={formData.tagIds}
+            onTagsChange={(tagIds) => setFormData({ ...formData, tagIds })}
+          />
 
           <div className="flex gap-3 pt-4">
             <Button

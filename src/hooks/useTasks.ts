@@ -9,21 +9,27 @@ export interface Task {
   title: string;
   description?: string;
   due_date?: string;
-  priority: 'Low' | 'Medium' | 'High';
+  priority: 'Low' | 'Medium' | 'High' | 'Critical';
   status: 'Todo' | 'In Progress' | 'Done';
   project_id?: string;
   user_id: string;
   created_at: string;
   updated_at: string;
+  tags?: Array<{
+    id: string;
+    name: string;
+    color: string;
+  }>;
 }
 
 export interface TaskInput {
   title: string;
   description?: string;
   due_date?: string;
-  priority: 'Low' | 'Medium' | 'High';
+  priority: 'Low' | 'Medium' | 'High' | 'Critical';
   status: 'Todo' | 'In Progress' | 'Done';
   project_id?: string;
+  tagIds?: string[];
 }
 
 export const useTasks = () => {
@@ -37,27 +43,59 @@ export const useTasks = () => {
       
       const { data, error } = await supabase
         .from('tasks')
-        .select('*')
+        .select(`
+          *,
+          task_tags (
+            tag_id,
+            tags (
+              id,
+              name,
+              color
+            )
+          )
+        `)
         .order('created_at', { ascending: false });
       
       if (error) throw error;
-      return data as Task[];
+      
+      // Transform the data to include tags directly on tasks
+      const tasksWithTags = data.map(task => ({
+        ...task,
+        tags: task.task_tags?.map((tt: any) => tt.tags).filter(Boolean) || []
+      }));
+      
+      return tasksWithTags as Task[];
     },
     enabled: !!user,
   });
 
   const createTask = useMutation({
-    mutationFn: async (taskData: TaskInput) => {
+    mutationFn: async ({ tagIds, ...taskData }: TaskInput) => {
       if (!user) throw new Error('User not authenticated');
       
-      const { data, error } = await supabase
+      const { data: task, error: taskError } = await supabase
         .from('tasks')
         .insert([{ ...taskData, user_id: user.id }])
         .select()
         .single();
       
-      if (error) throw error;
-      return data;
+      if (taskError) throw taskError;
+      
+      // Add tags if provided
+      if (tagIds && tagIds.length > 0) {
+        const tagInserts = tagIds.map(tagId => ({
+          task_id: task.id,
+          tag_id: tagId
+        }));
+        
+        const { error: tagError } = await supabase
+          .from('task_tags')
+          .insert(tagInserts);
+        
+        if (tagError) throw tagError;
+      }
+      
+      return task;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['tasks'] });
@@ -70,7 +108,7 @@ export const useTasks = () => {
   });
 
   const updateTask = useMutation({
-    mutationFn: async ({ id, ...taskData }: Partial<Task> & { id: string }) => {
+    mutationFn: async ({ id, tagIds, ...taskData }: Partial<Task> & { id: string; tagIds?: string[] }) => {
       const { data, error } = await supabase
         .from('tasks')
         .update(taskData)
@@ -79,6 +117,30 @@ export const useTasks = () => {
         .single();
       
       if (error) throw error;
+      
+      // Update tags if provided
+      if (tagIds !== undefined) {
+        // Remove existing tags
+        await supabase
+          .from('task_tags')
+          .delete()
+          .eq('task_id', id);
+        
+        // Add new tags
+        if (tagIds.length > 0) {
+          const tagInserts = tagIds.map(tagId => ({
+            task_id: id,
+            tag_id: tagId
+          }));
+          
+          const { error: tagError } = await supabase
+            .from('task_tags')
+            .insert(tagInserts);
+          
+          if (tagError) throw tagError;
+        }
+      }
+      
       return data;
     },
     onSuccess: () => {
