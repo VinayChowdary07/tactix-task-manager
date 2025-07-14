@@ -106,13 +106,16 @@ export const useTasks = () => {
     mutationFn: async (taskData: TaskInput) => {
       if (!user) throw new Error('User not authenticated');
       
-      const { data: task, error: taskError } = await supabase
+      const { data: taskResult, error: taskError } = await supabase
         .from('tasks')
         .insert([{ ...taskData, user_id: user.id }])
         .select()
         .single();
       
       if (taskError) throw taskError;
+
+      // Cast the result to Task type to ensure proper typing
+      const task = taskResult as Task;
 
       // Sync to Google Calendar if enabled
       if (task.google_calendar_sync && task.due_date) {
@@ -145,7 +148,7 @@ export const useTasks = () => {
 
   const updateTask = useMutation({
     mutationFn: async ({ id, ...taskData }: Partial<Task> & { id: string }) => {
-      const { data, error } = await supabase
+      const { data: taskResult, error } = await supabase
         .from('tasks')
         .update(taskData)
         .eq('id', id)
@@ -153,6 +156,9 @@ export const useTasks = () => {
         .single();
       
       if (error) throw error;
+
+      // Cast the result to Task type to ensure proper typing
+      const data = taskResult as Task;
 
       // Handle Google Calendar sync
       if (data.google_calendar_sync && data.due_date) {
