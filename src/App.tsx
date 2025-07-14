@@ -11,7 +11,6 @@ import Tasks from './pages/Tasks';
 import Projects from './pages/Projects';
 import Calendar from './pages/Calendar';
 import Goals from './pages/Goals';
-import Tags from './pages/Tags';
 import Settings from './pages/Settings';
 import NotFound from './pages/NotFound';
 import Layout from './components/Layout';
@@ -34,7 +33,6 @@ function App() {
                 <Route path="calendar" element={<Calendar />} />
                 <Route path="goals" element={<Goals />} />
                 <Route path="weekly-review" element={<WeeklyReview />} />
-                <Route path="tags" element={<Tags />} />
                 <Route path="settings" element={<Settings />} />
               </Route>
               <Route path="*" element={<NotFound />} />

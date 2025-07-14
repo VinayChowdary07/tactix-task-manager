@@ -39,14 +39,6 @@ const WeeklyReview = () => {
       Critical: completedTasks.filter(t => t.priority === 'Critical').length,
     };
 
-    // Tag breakdown
-    const tagBreakdown = completedTasks.reduce((acc, task) => {
-      task.tags?.forEach(tag => {
-        acc[tag.name] = (acc[tag.name] || 0) + 1;
-      });
-      return acc;
-    }, {} as Record<string, number>);
-
     // Productivity score (completion rate + time accuracy)
     const completionRate = weekTasks.length > 0 ? (completedTasks.length / weekTasks.length) * 100 : 0;
     const timeAccuracy = totalTimeEstimated > 0 ? Math.max(0, 100 - Math.abs(totalTimeSpent - totalTimeEstimated) / totalTimeEstimated * 100) : 100;
@@ -58,7 +50,6 @@ const WeeklyReview = () => {
       totalTimeSpent: Math.round(totalTimeSpent / 60), // Convert to hours
       totalTimeEstimated: Math.round(totalTimeEstimated / 60),
       priorityBreakdown,
-      tagBreakdown,
       productivityScore,
       completionRate: Math.round(completionRate)
     };
@@ -212,89 +203,54 @@ const WeeklyReview = () => {
           </CardContent>
         </Card>
 
-        {/* Tag Breakdown */}
+        {/* Productivity Insights */}
         <Card className="glass-card neon-border-cyan">
           <CardHeader>
             <CardTitle className="text-white flex items-center gap-2">
               <CalendarDays className="w-5 h-5 text-cyan-400" />
-              Top Tags This Week
+              Weekly Insights
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4">
-              {Object.entries(weeklyStats.tagBreakdown)
-                .sort(([,a], [,b]) => b - a)
-                .slice(0, 5)
-                .map(([tag, count]) => {
-                  const percentage = weeklyStats.completedTasks > 0 ? (count / weeklyStats.completedTasks) * 100 : 0;
-                  
-                  return (
-                    <div key={tag} className="space-y-2">
-                      <div className="flex justify-between text-sm">
-                        <span className="text-slate-300">{tag}</span>
-                        <span className="text-slate-400">{count} tasks</span>
-                      </div>
-                      <div className="w-full bg-slate-700/50 rounded-full h-2">
-                        <div 
-                          className="h-2 rounded-full bg-gradient-to-r from-cyan-500 to-purple-500 transition-all duration-500"
-                          style={{ width: `${percentage}%` }}
-                        />
-                      </div>
-                    </div>
-                  );
-                })}
-              {Object.keys(weeklyStats.tagBreakdown).length === 0 && (
-                <p className="text-slate-400 text-center py-4">No tags used this week</p>
-              )}
+            <div className="grid grid-cols-1 gap-6 text-center">
+              <div className="space-y-2">
+                <div className="text-2xl font-bold text-green-400">
+                  {weeklyStats.completionRate >= 80 ? '🎉' : weeklyStats.completionRate >= 60 ? '👍' : '💪'}
+                </div>
+                <p className="text-slate-300">
+                  {weeklyStats.completionRate >= 80 
+                    ? 'Excellent completion rate!' 
+                    : weeklyStats.completionRate >= 60 
+                      ? 'Good progress this week' 
+                      : 'Room for improvement'
+                  }
+                </p>
+              </div>
+              
+              <div className="space-y-2">
+                <div className="text-2xl font-bold text-blue-400">
+                  {Math.abs(weeklyStats.totalTimeSpent - weeklyStats.totalTimeEstimated) <= 2 ? '🎯' : '⏰'}
+                </div>
+                <p className="text-slate-300">
+                  {Math.abs(weeklyStats.totalTimeSpent - weeklyStats.totalTimeEstimated) <= 2
+                    ? 'Great time estimation!'
+                    : 'Work on time estimates'
+                  }
+                </p>
+              </div>
+              
+              <div className="space-y-2">
+                <div className="text-2xl font-bold text-purple-400">
+                  {weeklyStats.productivityScore >= 80 ? '⭐' : weeklyStats.productivityScore >= 60 ? '🔥' : '🚀'}
+                </div>
+                <p className="text-slate-300">
+                  Productivity Score: {weeklyStats.productivityScore}/100
+                </p>
+              </div>
             </div>
           </CardContent>
         </Card>
       </div>
-
-      {/* Productivity Insights */}
-      <Card className="glass-card neon-border-gradient">
-        <CardHeader>
-          <CardTitle className="text-white text-center">Weekly Insights</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-center">
-            <div className="space-y-2">
-              <div className="text-2xl font-bold text-green-400">
-                {weeklyStats.completionRate >= 80 ? '🎉' : weeklyStats.completionRate >= 60 ? '👍' : '💪'}
-              </div>
-              <p className="text-slate-300">
-                {weeklyStats.completionRate >= 80 
-                  ? 'Excellent completion rate!' 
-                  : weeklyStats.completionRate >= 60 
-                    ? 'Good progress this week' 
-                    : 'Room for improvement'
-                }
-              </p>
-            </div>
-            
-            <div className="space-y-2">
-              <div className="text-2xl font-bold text-blue-400">
-                {Math.abs(weeklyStats.totalTimeSpent - weeklyStats.totalTimeEstimated) <= 2 ? '🎯' : '⏰'}
-              </div>
-              <p className="text-slate-300">
-                {Math.abs(weeklyStats.totalTimeSpent - weeklyStats.totalTimeEstimated) <= 2
-                  ? 'Great time estimation!'
-                  : 'Work on time estimates'
-                }
-              </p>
-            </div>
-            
-            <div className="space-y-2">
-              <div className="text-2xl font-bold text-purple-400">
-                {weeklyStats.productivityScore >= 80 ? '⭐' : weeklyStats.productivityScore >= 60 ? '🔥' : '🚀'}
-              </div>
-              <p className="text-slate-300">
-                Productivity Score: {weeklyStats.productivityScore}/100
-              </p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
     </div>
   );
 };

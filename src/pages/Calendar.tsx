@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -54,8 +53,7 @@ const Calendar = () => {
   const [filters, setFilters] = useState<TaskFilters>({
     search: '',
     priority: 'all',
-    status: 'all',
-    tagIds: []
+    status: 'all'
   });
 
   // Filter tasks based on date and other criteria
@@ -108,8 +106,7 @@ const Calendar = () => {
       const searchLower = filters.search.toLowerCase();
       filtered = filtered.filter(task => 
         task.title.toLowerCase().includes(searchLower) ||
-        task.description?.toLowerCase().includes(searchLower) ||
-        task.tags?.some(tag => tag.name.toLowerCase().includes(searchLower))
+        task.description?.toLowerCase().includes(searchLower)
       );
     }
 
@@ -119,12 +116,6 @@ const Calendar = () => {
 
     if (filters.status !== 'all') {
       filtered = filtered.filter(task => task.status === filters.status);
-    }
-
-    if (filters.tagIds.length > 0) {
-      filtered = filtered.filter(task => 
-        task.tags?.some(tag => filters.tagIds.includes(tag.id))
-      );
     }
 
     return filtered;
