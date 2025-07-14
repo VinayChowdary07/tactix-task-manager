@@ -38,7 +38,7 @@ const TaskModal: React.FC<TaskModalProps> = ({ isOpen, onClose, task, defaultPro
     due_date: '',
     priority: 'Medium' as 'Low' | 'Medium' | 'High',
     status: 'Todo' as 'Todo' | 'In Progress' | 'Done',
-    project_id: ''
+    project_id: 'none'
   });
 
   useEffect(() => {
@@ -49,7 +49,7 @@ const TaskModal: React.FC<TaskModalProps> = ({ isOpen, onClose, task, defaultPro
         due_date: task.due_date ? format(new Date(task.due_date), 'yyyy-MM-dd') : '',
         priority: task.priority,
         status: task.status,
-        project_id: task.project_id || ''
+        project_id: task.project_id || 'none'
       });
     } else {
       setFormData({
@@ -58,7 +58,7 @@ const TaskModal: React.FC<TaskModalProps> = ({ isOpen, onClose, task, defaultPro
         due_date: '',
         priority: 'Medium',
         status: 'Todo',
-        project_id: defaultProjectId || ''
+        project_id: defaultProjectId || 'none'
       });
     }
   }, [task, isOpen, defaultProjectId]);
@@ -73,7 +73,7 @@ const TaskModal: React.FC<TaskModalProps> = ({ isOpen, onClose, task, defaultPro
     const taskData = {
       ...formData,
       due_date: formData.due_date ? new Date(formData.due_date).toISOString() : undefined,
-      project_id: formData.project_id || null
+      project_id: formData.project_id === 'none' ? null : formData.project_id
     };
 
     try {
@@ -181,7 +181,7 @@ const TaskModal: React.FC<TaskModalProps> = ({ isOpen, onClose, task, defaultPro
                 <SelectValue placeholder="Select a project (optional)" />
               </SelectTrigger>
               <SelectContent className="bg-slate-800 border-slate-600">
-                <SelectItem value="" className="text-slate-400">No Project</SelectItem>
+                <SelectItem value="none" className="text-slate-400">No Project</SelectItem>
                 {projects.map((project) => (
                   <SelectItem key={project.id} value={project.id} className="text-white">
                     <div className="flex items-center space-x-2">
