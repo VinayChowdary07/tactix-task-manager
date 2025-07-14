@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -16,15 +17,12 @@ import {
   User
 } from 'lucide-react';
 import { useAuth } from '@/lib/auth';
-import { useProjects } from '@/hooks/useProjects';
 import NotificationDropdown from './NotificationDropdown';
 
 const Layout: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { signOut, user } = useAuth();
-  const { projects } = useProjects();
-  const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const navigation = [
@@ -43,13 +41,6 @@ const Layout: React.FC = () => {
       navigate('/auth');
     } catch (error) {
       console.error('Logout failed:', error);
-    }
-  };
-
-  const handleProjectSelect = (projectId: string | null) => {
-    setSelectedProjectId(projectId);
-    if (location.pathname !== '/tasks') {
-      navigate('/tasks');
     }
   };
 
@@ -110,44 +101,6 @@ const Layout: React.FC = () => {
             })}
           </nav>
 
-          {/* Projects Section */}
-          <div className="p-4 border-t border-slate-700/50">
-            <h3 className="text-sm font-semibold text-slate-300 mb-3">Projects</h3>
-            <div className="space-y-1 max-h-40 overflow-y-auto">
-              <Button
-                variant="ghost"
-                size="sm"
-                className={`w-full justify-start text-left ${
-                  selectedProjectId === null
-                    ? 'bg-slate-700/50 text-white'
-                    : 'text-slate-400 hover:text-white hover:bg-slate-700/30'
-                }`}
-                onClick={() => handleProjectSelect(null)}
-              >
-                All Tasks
-              </Button>
-              {projects.map((project) => (
-                <Button
-                  key={project.id}
-                  variant="ghost"
-                  size="sm"
-                  className={`w-full justify-start text-left ${
-                    selectedProjectId === project.id
-                      ? 'bg-slate-700/50 text-white'
-                      : 'text-slate-400 hover:text-white hover:bg-slate-700/30'
-                  }`}
-                  onClick={() => handleProjectSelect(project.id)}
-                >
-                  <div
-                    className="w-3 h-3 rounded-full mr-2"
-                    style={{ backgroundColor: project.color || '#6366f1' }}
-                  />
-                  <span className="truncate">{project.name}</span>
-                </Button>
-              ))}
-            </div>
-          </div>
-
           {/* User Section */}
           <div className="p-4 border-t border-slate-700/50">
             <div className="flex items-center gap-3 mb-4">
@@ -185,11 +138,6 @@ const Layout: React.FC = () => {
                 <h2 className="text-lg font-semibold text-white">
                   {navigation.find(nav => nav.href === location.pathname)?.name || 'Dashboard'}
                 </h2>
-                {selectedProjectId && (
-                  <p className="text-sm text-slate-400">
-                    Project: {projects.find(p => p.id === selectedProjectId)?.name}
-                  </p>
-                )}
               </div>
             </div>
             
@@ -201,7 +149,7 @@ const Layout: React.FC = () => {
 
         {/* Page Content */}
         <main className="p-6">
-          <Outlet context={{ selectedProjectId, projects }} />
+          <Outlet />
         </main>
       </div>
 
