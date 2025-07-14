@@ -71,31 +71,6 @@ const TagSelector: React.FC<TagSelectorProps> = ({
     onTagsChange(safeSelectedTagIds.filter(id => id !== tagId));
   };
 
-  // Show loading state if tags are still loading
-  if (isLoading) {
-    return (
-      <div className={cn("space-y-2", className)}>
-        <Label className="text-slate-300">Tags</Label>
-        <div className="flex items-center justify-center p-4 bg-slate-800/50 border border-slate-600 rounded-md">
-          <Loader2 className="w-4 h-4 animate-spin text-slate-400 mr-2" />
-          <span className="text-slate-400 text-sm">Loading tags...</span>
-        </div>
-      </div>
-    );
-  }
-
-  // Show error state if tags failed to load
-  if (error) {
-    return (
-      <div className={cn("space-y-2", className)}>
-        <Label className="text-slate-300">Tags</Label>
-        <div className="p-4 bg-red-900/20 border border-red-500/50 rounded-md">
-          <span className="text-red-400 text-sm">Failed to load tags. Please try again.</span>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className={cn("space-y-2", className)}>
       <Label className="text-slate-300">Tags</Label>
@@ -147,82 +122,101 @@ const TagSelector: React.FC<TagSelectorProps> = ({
           </Button>
         </PopoverTrigger>
         <PopoverContent className="w-80 p-0 bg-slate-800 border-slate-600">
-          <Command className="bg-slate-800">
-            <CommandInput 
-              placeholder="Search tags..." 
-              className="bg-slate-800 text-white placeholder-slate-400"
-            />
-            <CommandEmpty className="text-slate-400 text-center py-6">
-              No tags found.
-            </CommandEmpty>
-            <CommandGroup className="max-h-64 overflow-auto">
-              {safeTags.map((tag) => {
-                if (!tag || !tag.id || !tag.name) return null;
-                
-                return (
-                  <CommandItem
-                    key={tag.id}
-                    value={tag.name}
-                    onSelect={() => handleTagToggle(tag.id)}
-                    className="flex items-center space-x-2 cursor-pointer hover:bg-slate-700 text-white"
-                  >
-                    <div
-                      className="w-3 h-3 rounded-full"
-                      style={{ backgroundColor: tag.color || '#6366f1' }}
-                    />
-                    <span className="flex-1">{tag.name}</span>
-                    <Check
-                      className={cn(
-                        "ml-auto h-4 w-4",
-                        safeSelectedTagIds.includes(tag.id) ? "opacity-100" : "opacity-0"
-                      )}
-                    />
-                  </CommandItem>
-                );
-              })}
-            </CommandGroup>
-            
-            {/* Create New Tag Section */}
-            <div className="border-t border-slate-600 p-2">
-              {!showNewTagInput ? (
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  className="w-full justify-start text-cyan-400 hover:text-cyan-300 hover:bg-cyan-400/10"
-                  onClick={() => setShowNewTagInput(true)}
-                >
-                  <Plus className="w-4 h-4 mr-2" />
-                  Create new tag
-                </Button>
-              ) : (
-                <div className="flex space-x-2">
-                  <Input
-                    placeholder="Tag name"
-                    value={newTagName}
-                    onChange={(e) => setNewTagName(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') {
-                        handleCreateTag();
-                      } else if (e.key === 'Escape') {
-                        setShowNewTagInput(false);
-                        setNewTagName('');
-                      }
-                    }}
-                    className="flex-1 bg-slate-700 border-slate-600 text-white"
-                    autoFocus
-                  />
+          {/* Show loading state while tags are loading */}
+          {isLoading ? (
+            <div className="flex items-center justify-center p-8 bg-slate-800">
+              <Loader2 className="w-6 h-6 animate-spin text-slate-400 mr-2" />
+              <span className="text-slate-400">Loading tags...</span>
+            </div>
+          ) : error ? (
+            /* Show error state if tags failed to load */
+            <div className="p-4 bg-red-900/20 border border-red-500/50 rounded-md">
+              <span className="text-red-400 text-sm">Failed to load tags. Please try again.</span>
+            </div>
+          ) : (
+            /* Only render Command when we have valid data */
+            <Command className="bg-slate-800">
+              <CommandInput 
+                placeholder="Search tags..." 
+                className="bg-slate-800 text-white placeholder-slate-400"
+              />
+              <CommandEmpty className="text-slate-400 text-center py-6">
+                {safeTags.length === 0 
+                  ? "No tags yet — create tags in the Tags tab!" 
+                  : "No tags found."
+                }
+              </CommandEmpty>
+              {safeTags.length > 0 && (
+                <CommandGroup className="max-h-64 overflow-auto">
+                  {safeTags.map((tag) => {
+                    if (!tag || !tag.id || !tag.name) return null;
+                    
+                    return (
+                      <CommandItem
+                        key={tag.id}
+                        value={tag.name}
+                        onSelect={() => handleTagToggle(tag.id)}
+                        className="flex items-center space-x-2 cursor-pointer hover:bg-slate-700 text-white"
+                      >
+                        <div
+                          className="w-3 h-3 rounded-full"
+                          style={{ backgroundColor: tag.color || '#6366f1' }}
+                        />
+                        <span className="flex-1">{tag.name}</span>
+                        <Check
+                          className={cn(
+                            "ml-auto h-4 w-4",
+                            safeSelectedTagIds.includes(tag.id) ? "opacity-100" : "opacity-0"
+                          )}
+                        />
+                      </CommandItem>
+                    );
+                  })}
+                </CommandGroup>
+              )}
+              
+              {/* Create New Tag Section */}
+              <div className="border-t border-slate-600 p-2">
+                {!showNewTagInput ? (
                   <Button
                     size="sm"
-                    onClick={handleCreateTag}
-                    disabled={!newTagName.trim() || createTag.isPending}
-                    className="bg-cyan-500 hover:bg-cyan-600"
+                    variant="ghost"
+                    className="w-full justify-start text-cyan-400 hover:text-cyan-300 hover:bg-cyan-400/10"
+                    onClick={() => setShowNewTagInput(true)}
                   >
-                    <Plus className="w-4 h-4" />
+                    <Plus className="w-4 h-4 mr-2" />
+                    Create new tag
                   </Button>
-                </div>
-              )}
-            </div>
-          </Command>
+                ) : (
+                  <div className="flex space-x-2">
+                    <Input
+                      placeholder="Tag name"
+                      value={newTagName}
+                      onChange={(e) => setNewTagName(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          handleCreateTag();
+                        } else if (e.key === 'Escape') {
+                          setShowNewTagInput(false);
+                          setNewTagName('');
+                        }
+                      }}
+                      className="flex-1 bg-slate-700 border-slate-600 text-white"
+                      autoFocus
+                    />
+                    <Button
+                      size="sm"
+                      onClick={handleCreateTag}
+                      disabled={!newTagName.trim() || createTag.isPending}
+                      className="bg-cyan-500 hover:bg-cyan-600"
+                    >
+                      <Plus className="w-4 h-4" />
+                    </Button>
+                  </div>
+                )}
+              </div>
+            </Command>
+          )}
         </PopoverContent>
       </Popover>
     </div>
