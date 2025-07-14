@@ -1,5 +1,5 @@
 
-import { useEffect } from "react";
+import React from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -17,7 +17,7 @@ import NotFound from "@/pages/NotFound";
 
 const queryClient = new QueryClient();
 
-const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
+const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user, loading } = useAuth();
   
   if (loading) {
@@ -40,7 +40,7 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   return <>{children}</>;
 };
 
-const AppContent = () => {
+const AppContent: React.FC = () => {
   return (
     <BrowserRouter>
       <Routes>
@@ -62,7 +62,7 @@ const AppContent = () => {
   );
 };
 
-const App = () => (
+const App: React.FC = () => (
   <QueryClientProvider client={queryClient}>
     <AuthProvider>
       <TooltipProvider>
