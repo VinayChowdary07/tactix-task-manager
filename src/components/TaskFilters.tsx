@@ -31,7 +31,7 @@ const TaskFiltersComponent: React.FC<TaskFiltersProps> = ({
   onFiltersChange,
   className
 }) => {
-  const { tags } = useTags();
+  const { tags = [] } = useTags(); // Provide default empty array
 
   const updateFilter = (key: keyof TaskFilters, value: any) => {
     onFiltersChange({
@@ -115,26 +115,28 @@ const TaskFiltersComponent: React.FC<TaskFiltersProps> = ({
           </SelectContent>
         </Select>
 
-        {/* Tag Filter */}
-        <Select value="" onValueChange={addTagFilter}>
-          <SelectTrigger className="w-32 bg-slate-800/50 border-slate-600 text-white focus:border-cyan-400">
-            <Tag className="w-4 h-4 mr-2" />
-            <SelectValue placeholder="Add Tag" />
-          </SelectTrigger>
-          <SelectContent className="bg-slate-800 border-slate-600">
-            {tags.filter(tag => !filters.tagIds.includes(tag.id)).map((tag) => (
-              <SelectItem key={tag.id} value={tag.id} className="text-white">
-                <div className="flex items-center space-x-2">
-                  <div
-                    className="w-3 h-3 rounded-full"
-                    style={{ backgroundColor: tag.color }}
-                  />
-                  <span>{tag.name}</span>
-                </div>
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        {/* Tag Filter - Only render if tags are loaded */}
+        {tags.length > 0 && (
+          <Select value="" onValueChange={addTagFilter}>
+            <SelectTrigger className="w-32 bg-slate-800/50 border-slate-600 text-white focus:border-cyan-400">
+              <Tag className="w-4 h-4 mr-2" />
+              <SelectValue placeholder="Add Tag" />
+            </SelectTrigger>
+            <SelectContent className="bg-slate-800 border-slate-600">
+              {tags.filter(tag => !filters.tagIds.includes(tag.id)).map((tag) => (
+                <SelectItem key={tag.id} value={tag.id} className="text-white">
+                  <div className="flex items-center space-x-2">
+                    <div
+                      className="w-3 h-3 rounded-full"
+                      style={{ backgroundColor: tag.color }}
+                    />
+                    <span>{tag.name}</span>
+                  </div>
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        )}
 
         {/* Clear All Button */}
         {hasActiveFilters && (
