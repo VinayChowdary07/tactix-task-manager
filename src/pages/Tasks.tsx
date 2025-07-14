@@ -72,6 +72,21 @@ const Tasks = () => {
     return filtered;
   }, [tasks, selectedProjectId, filters]);
 
+  // Group tasks by project
+  const groupedTasks = useMemo(() => {
+    const grouped: Record<string, Task[]> = {};
+    
+    filteredTasks.forEach(task => {
+      const projectId = task.project_id || 'no-project';
+      if (!grouped[projectId]) {
+        grouped[projectId] = [];
+      }
+      grouped[projectId].push(task);
+    });
+
+    return grouped;
+  }, [filteredTasks]);
+
   const handleEditTask = (task: Task) => {
     setEditingTask(task);
     setIsModalOpen(true);
@@ -90,6 +105,11 @@ const Tasks = () => {
   const handleCloseModal = () => {
     setIsModalOpen(false);
     setEditingTask(null);
+  };
+
+  const handleCreateTask = () => {
+    setEditingTask(null);
+    setIsModalOpen(true);
   };
 
   // Calculate stats from filtered data
@@ -187,7 +207,7 @@ const Tasks = () => {
       {/* Header with Create Task Button */}
       <div className="flex items-center justify-between">
         <Button 
-          onClick={() => setIsModalOpen(true)}
+          onClick={handleCreateTask}
           className="btn-gradient-purple glow-purple text-white font-semibold px-8 py-3 rounded-xl hover:scale-105 transition-all duration-300"
         >
           <Plus className="w-5 h-5 mr-2" />
@@ -202,7 +222,7 @@ const Tasks = () => {
         className="glass-card neon-border-purple p-6 rounded-xl"
       />
 
-      {/* Tasks Grid */}
+      {/* Tasks Content */}
       {filteredTasks.length === 0 ? (
         <div className="text-center py-16">
           <div className="w-24 h-24 btn-gradient-purple rounded-full flex items-center justify-center mx-auto mb-6 glow-purple">
@@ -225,7 +245,7 @@ const Tasks = () => {
             }
           </p>
           <Button 
-            onClick={() => setIsModalOpen(true)}
+            onClick={handleCreateTask}
             className="btn-gradient-blue glow-cyan text-white font-semibold px-8 py-3 rounded-xl hover:scale-105 transition-all duration-300"
           >
             <Plus className="w-5 h-5 mr-2" />
@@ -233,22 +253,57 @@ const Tasks = () => {
           </Button>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
-          {filteredTasks.map((task) => (
-            <TaskCard
-              key={task.id}
-              task={task}
-              projects={projects}
-              onEdit={handleEditTask}
-              onDelete={handleDeleteTask}
-            />
-          ))}
+        <div className="space-y-8">
+          {/* Show grouped tasks by project */}
+          {Object.entries(groupedTasks).map(([projectId, projectTasks]) => {
+            const project = projects.find(p => p.id === projectId);
+            const isNoProject = projectId === 'no-project';
+            
+            return (
+              <div key={projectId} className="space-y-4">
+                {/* Project Header */}
+                {!selectedProjectId && (
+                  <div className="flex items-center gap-3 mb-6">
+                    {!isNoProject && project && (
+                      <>
+                        <div
+                          className="w-4 h-4 rounded-full"
+                          style={{ backgroundColor: project.color || '#6366f1' }}
+                        />
+                        <h2 className="text-2xl font-bold text-white">{project.name}</h2>
+                      </>
+                    )}
+                    {isNoProject && (
+                      <>
+                        <div className="w-4 h-4 rounded-full bg-slate-500" />
+                        <h2 className="text-2xl font-bold text-slate-400">No Project</h2>
+                      </>
+                    )}
+                    <span className="text-slate-500 text-lg">({projectTasks.length})</span>
+                  </div>
+                )}
+
+                {/* Tasks Grid */}
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                  {projectTasks.map((task) => (
+                    <TaskCard
+                      key={task.id}
+                      task={task}
+                      projects={projects}
+                      onEdit={handleEditTask}
+                      onDelete={handleDeleteTask}
+                    />
+                  ))}
+                </div>
+              </div>
+            );
+          })}
         </div>
       )}
 
       {/* Floating Action Button */}
       <Button 
-        onClick={() => setIsModalOpen(true)}
+        onClick={handleCreateTask}
         size="lg"
         className="fixed bottom-8 right-8 w-16 h-16 rounded-full btn-gradient-purple glow-purple shadow-2xl hover:scale-110 transition-all duration-300 z-50"
       >

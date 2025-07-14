@@ -124,107 +124,115 @@ const TaskModal: React.FC<TaskModalProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="glass-dark border-slate-700/50 text-white max-w-md max-h-[90vh] overflow-y-auto">
+      <DialogContent className="glass-dark border-slate-700/50 text-white max-w-2xl max-h-[90vh] overflow-y-auto neon-border-cyan">
         <DialogHeader>
-          <DialogTitle className="text-xl font-bold text-gradient flex items-center justify-between">
+          <DialogTitle className="text-2xl font-bold text-gradient flex items-center justify-between">
             {task ? 'Edit Task' : 'Create New Task'}
             <Button
               variant="ghost"
               size="icon"
               onClick={onClose}
-              className="text-slate-400 hover:text-white h-8 w-8"
+              className="text-slate-400 hover:text-white hover:bg-slate-700/50 h-8 w-8 rounded-full"
             >
               <X className="w-4 h-4" />
             </Button>
           </DialogTitle>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-6 mt-4">
-          <div className="space-y-2">
-            <Label htmlFor="title" className="text-slate-300">Task Title *</Label>
-            <Input
-              id="title"
-              value={formData.title}
-              onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-              className="bg-slate-800/50 border-slate-600 text-white placeholder-slate-400 focus:border-cyan-400 focus:ring-cyan-400/20"
-              placeholder="Enter task title"
-              required
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="description" className="text-slate-300">Description</Label>
-            <Textarea
-              id="description"
-              value={formData.description}
-              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              className="bg-slate-800/50 border-slate-600 text-white placeholder-slate-400 focus:border-cyan-400 focus:ring-cyan-400/20 resize-none"
-              placeholder="Task description (optional)"
-              rows={3}
-            />
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
+        <form onSubmit={handleSubmit} className="space-y-6 mt-6">
+          {/* Title and Description Row */}
+          <div className="grid grid-cols-1 gap-6">
             <div className="space-y-2">
-              <Label htmlFor="priority" className="text-slate-300">Priority</Label>
+              <Label htmlFor="title" className="text-slate-300 font-medium">Task Title *</Label>
+              <Input
+                id="title"
+                value={formData.title}
+                onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                className="bg-slate-800/50 border-slate-600 text-white placeholder-slate-400 focus:border-cyan-400 focus:ring-cyan-400/20 h-12"
+                placeholder="Enter task title"
+                required
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="description" className="text-slate-300 font-medium">Description</Label>
+              <Textarea
+                id="description"
+                value={formData.description}
+                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                className="bg-slate-800/50 border-slate-600 text-white placeholder-slate-400 focus:border-cyan-400 focus:ring-cyan-400/20 resize-none min-h-[100px]"
+                placeholder="Task description (optional)"
+                rows={4}
+              />
+            </div>
+          </div>
+
+          {/* Priority and Status Row */}
+          <div className="grid grid-cols-2 gap-6">
+            <div className="space-y-2">
+              <Label htmlFor="priority" className="text-slate-300 font-medium">Priority</Label>
               <Select value={formData.priority} onValueChange={(value: 'Low' | 'Medium' | 'High' | 'Critical') => setFormData({ ...formData, priority: value })}>
-                <SelectTrigger className="bg-slate-800/50 border-slate-600 text-white focus:border-cyan-400">
+                <SelectTrigger className="bg-slate-800/50 border-slate-600 text-white focus:border-cyan-400 h-12">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent className="bg-slate-800 border-slate-600">
-                  <SelectItem value="Low" className="text-green-400">Low</SelectItem>
-                  <SelectItem value="Medium" className="text-yellow-400">Medium</SelectItem>
-                  <SelectItem value="High" className="text-red-400">High</SelectItem>
-                  <SelectItem value="Critical" className="text-red-600 font-bold">Critical</SelectItem>
+                  <SelectItem value="Low" className="text-green-400 focus:bg-slate-700">Low Priority</SelectItem>
+                  <SelectItem value="Medium" className="text-yellow-400 focus:bg-slate-700">Medium Priority</SelectItem>
+                  <SelectItem value="High" className="text-red-400 focus:bg-slate-700">High Priority</SelectItem>
+                  <SelectItem value="Critical" className="text-red-600 font-bold focus:bg-slate-700">Critical Priority</SelectItem>
                 </SelectContent>
               </Select>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="status" className="text-slate-300">Status</Label>
+              <Label htmlFor="status" className="text-slate-300 font-medium">Status</Label>
               <Select value={formData.status} onValueChange={(value: 'Todo' | 'In Progress' | 'Done') => setFormData({ ...formData, status: value })}>
-                <SelectTrigger className="bg-slate-800/50 border-slate-600 text-white focus:border-cyan-400">
+                <SelectTrigger className="bg-slate-800/50 border-slate-600 text-white focus:border-cyan-400 h-12">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent className="bg-slate-800 border-slate-600">
-                  <SelectItem value="Todo" className="text-slate-400">Todo</SelectItem>
-                  <SelectItem value="In Progress" className="text-blue-400">In Progress</SelectItem>
-                  <SelectItem value="Done" className="text-green-400">Done</SelectItem>
+                  <SelectItem value="Todo" className="text-slate-400 focus:bg-slate-700">Todo</SelectItem>
+                  <SelectItem value="In Progress" className="text-blue-400 focus:bg-slate-700">In Progress</SelectItem>
+                  <SelectItem value="Done" className="text-green-400 focus:bg-slate-700">Done</SelectItem>
                 </SelectContent>
               </Select>
             </div>
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="due_date" className="text-slate-300">Due Date</Label>
-            <Input
-              id="due_date"
-              type="date"
-              value={formData.due_date}
-              onChange={(e) => setFormData({ ...formData, due_date: e.target.value })}
-              className="bg-slate-800/50 border-slate-600 text-white focus:border-cyan-400 focus:ring-cyan-400/20"
-            />
+          {/* Due Date and Time Estimate Row */}
+          <div className="grid grid-cols-2 gap-6">
+            <div className="space-y-2">
+              <Label htmlFor="due_date" className="text-slate-300 font-medium">Due Date</Label>
+              <Input
+                id="due_date"
+                type="date"
+                value={formData.due_date}
+                onChange={(e) => setFormData({ ...formData, due_date: e.target.value })}
+                className="bg-slate-800/50 border-slate-600 text-white focus:border-cyan-400 focus:ring-cyan-400/20 h-12"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="time_estimate" className="text-slate-300 font-medium flex items-center gap-2">
+                <Clock className="w-4 h-4" />
+                Time Estimate (hours)
+              </Label>
+              <Input
+                id="time_estimate"
+                type="number"
+                min="0"
+                step="0.5"
+                value={formData.time_estimate}
+                onChange={(e) => setFormData({ ...formData, time_estimate: e.target.value })}
+                className="bg-slate-800/50 border-slate-600 text-white focus:border-cyan-400 focus:ring-cyan-400/20 h-12"
+                placeholder="Estimated hours"
+              />
+            </div>
           </div>
 
+          {/* Reminder Time */}
           <div className="space-y-2">
-            <Label htmlFor="time_estimate" className="text-slate-300 flex items-center gap-2">
-              <Clock className="w-4 h-4" />
-              Time Estimate (hours)
-            </Label>
-            <Input
-              id="time_estimate"
-              type="number"
-              min="0"
-              step="0.5"
-              value={formData.time_estimate}
-              onChange={(e) => setFormData({ ...formData, time_estimate: e.target.value })}
-              className="bg-slate-800/50 border-slate-600 text-white focus:border-cyan-400 focus:ring-cyan-400/20"
-              placeholder="Estimated hours"
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="reminder_time" className="text-slate-300 flex items-center gap-2">
+            <Label htmlFor="reminder_time" className="text-slate-300 font-medium flex items-center gap-2">
               <Bell className="w-4 h-4" />
               Reminder Time
             </Label>
@@ -233,68 +241,68 @@ const TaskModal: React.FC<TaskModalProps> = ({
               type="datetime-local"
               value={formData.reminder_time}
               onChange={(e) => setFormData({ ...formData, reminder_time: e.target.value })}
-              className="bg-slate-800/50 border-slate-600 text-white focus:border-cyan-400 focus:ring-cyan-400/20"
+              className="bg-slate-800/50 border-slate-600 text-white focus:border-cyan-400 focus:ring-cyan-400/20 h-12"
             />
           </div>
 
-          <div className="space-y-4 p-4 glass-card rounded-lg border border-purple-500/20">
-            <Label className="text-slate-300 flex items-center gap-2">
+          {/* Recurring Task Section */}
+          <div className="space-y-4 p-6 glass-card rounded-lg neon-border-purple">
+            <Label className="text-slate-300 font-medium flex items-center gap-2">
               <Repeat className="w-4 h-4 text-purple-400" />
               Recurring Task
             </Label>
             
-            <div className="space-y-3">
+            <div className="space-y-4">
               <Select value={formData.repeat_type} onValueChange={(value: 'none' | 'daily' | 'weekly' | 'monthly' | 'custom') => setFormData({ ...formData, repeat_type: value })}>
-                <SelectTrigger className="bg-slate-800/50 border-slate-600 text-white focus:border-purple-400">
+                <SelectTrigger className="bg-slate-800/50 border-slate-600 text-white focus:border-purple-400 h-12">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent className="bg-slate-800 border-slate-600">
-                  <SelectItem value="none" className="text-slate-400">No Repeat</SelectItem>
-                  <SelectItem value="daily" className="text-blue-400">Daily</SelectItem>
-                  <SelectItem value="weekly" className="text-green-400">Weekly</SelectItem>
-                  <SelectItem value="monthly" className="text-yellow-400">Monthly</SelectItem>
-                  <SelectItem value="custom" className="text-purple-400">Custom</SelectItem>
+                  <SelectItem value="none" className="text-slate-400 focus:bg-slate-700">No Repeat</SelectItem>
+                  <SelectItem value="daily" className="text-blue-400 focus:bg-slate-700">Daily</SelectItem>
+                  <SelectItem value="weekly" className="text-green-400 focus:bg-slate-700">Weekly</SelectItem>
+                  <SelectItem value="monthly" className="text-yellow-400 focus:bg-slate-700">Monthly</SelectItem>
+                  <SelectItem value="custom" className="text-purple-400 focus:bg-slate-700">Custom</SelectItem>
                 </SelectContent>
               </Select>
 
               {formData.repeat_type !== 'none' && (
-                <>
-                  <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <Label className="text-xs text-slate-400">Interval</Label>
-                      <Input
-                        type="number"
-                        min="1"
-                        value={formData.repeat_interval}
-                        onChange={(e) => setFormData({ ...formData, repeat_interval: parseInt(e.target.value) || 1 })}
-                        className="bg-slate-800/50 border-slate-600 text-white text-sm"
-                      />
-                    </div>
-                    <div>
-                      <Label className="text-xs text-slate-400">Until</Label>
-                      <Input
-                        type="date"
-                        value={formData.repeat_until}
-                        onChange={(e) => setFormData({ ...formData, repeat_until: e.target.value })}
-                        className="bg-slate-800/50 border-slate-600 text-white text-sm"
-                      />
-                    </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label className="text-sm text-slate-400">Interval</Label>
+                    <Input
+                      type="number"
+                      min="1"
+                      value={formData.repeat_interval}
+                      onChange={(e) => setFormData({ ...formData, repeat_interval: parseInt(e.target.value) || 1 })}
+                      className="bg-slate-800/50 border-slate-600 text-white text-sm h-10"
+                    />
                   </div>
-                </>
+                  <div>
+                    <Label className="text-sm text-slate-400">Until</Label>
+                    <Input
+                      type="date"
+                      value={formData.repeat_until}
+                      onChange={(e) => setFormData({ ...formData, repeat_until: e.target.value })}
+                      className="bg-slate-800/50 border-slate-600 text-white text-sm h-10"
+                    />
+                  </div>
+                </div>
               )}
             </div>
           </div>
 
+          {/* Project Selection */}
           <div className="space-y-2">
-            <Label className="text-slate-300">Project</Label>
+            <Label className="text-slate-300 font-medium">Project</Label>
             <Select value={formData.project_id} onValueChange={(value) => setFormData({ ...formData, project_id: value })}>
-              <SelectTrigger className="bg-slate-800/50 border-slate-600 text-white focus:border-cyan-400">
+              <SelectTrigger className="bg-slate-800/50 border-slate-600 text-white focus:border-cyan-400 h-12">
                 <SelectValue placeholder="Select a project (optional)" />
               </SelectTrigger>
               <SelectContent className="bg-slate-800 border-slate-600">
-                <SelectItem value="none" className="text-slate-400">No Project</SelectItem>
+                <SelectItem value="none" className="text-slate-400 focus:bg-slate-700">No Project</SelectItem>
                 {projects.map((project) => (
-                  <SelectItem key={project.id} value={project.id} className="text-white">
+                  <SelectItem key={project.id} value={project.id} className="text-white focus:bg-slate-700">
                     <div className="flex items-center space-x-2">
                       <div
                         className="w-3 h-3 rounded-full"
@@ -308,26 +316,28 @@ const TaskModal: React.FC<TaskModalProps> = ({
             </Select>
           </div>
 
+          {/* Tag Selector */}
           <TagSelector
             selectedTagIds={formData.tagIds}
             onTagsChange={(tagIds) => setFormData({ ...formData, tagIds })}
           />
 
-          <div className="flex gap-3 pt-4">
+          {/* Action Buttons */}
+          <div className="flex gap-4 pt-6">
             <Button
               type="button"
               variant="outline"
               onClick={onClose}
-              className="flex-1 bg-slate-800/50 border-slate-600 text-slate-300 hover:bg-slate-700/50 hover:text-white"
+              className="flex-1 bg-slate-800/50 border-slate-600 text-slate-300 hover:bg-slate-700/50 hover:text-white h-12"
             >
               Cancel
             </Button>
             <Button
               type="submit"
               disabled={createTask.isPending || updateTask.isPending}
-              className="flex-1 bg-gradient-to-r from-cyan-500 to-purple-500 hover:from-cyan-600 hover:to-purple-600 glow-cyan transition-all"
+              className="flex-1 bg-gradient-to-r from-cyan-500 to-purple-500 hover:from-cyan-600 hover:to-purple-600 glow-cyan transition-all h-12 font-semibold"
             >
-              {createTask.isPending || updateTask.isPending ? 'Saving...' : (task ? 'Update' : 'Create')}
+              {createTask.isPending || updateTask.isPending ? 'Saving...' : (task ? 'Update Task' : 'Create Task')}
             </Button>
           </div>
         </form>
