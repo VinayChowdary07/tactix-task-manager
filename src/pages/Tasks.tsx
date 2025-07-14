@@ -99,39 +99,83 @@ const Tasks = () => {
   const highPriorityTasks = filteredTasks.filter(task => task.priority === 'High' || task.priority === 'Critical');
 
   const stats = [
-    { label: selectedProjectId ? 'Project Tasks' : 'Total Tasks', value: filteredTasks.length.toString(), icon: Target, color: 'text-cyan-400' },
-    { label: 'Completed', value: completedTasks.length.toString(), icon: CheckCircle2, color: 'text-green-400' },
-    { label: 'In Progress', value: inProgressTasks.length.toString(), icon: Clock, color: 'text-blue-400' },
-    { label: 'High Priority', value: highPriorityTasks.length.toString(), icon: Star, color: 'text-red-400' },
+    { 
+      label: selectedProjectId ? 'Project Tasks' : 'Total Tasks', 
+      value: filteredTasks.length.toString(), 
+      icon: Target, 
+      gradient: 'btn-gradient-blue',
+      glow: 'glow-cyan'
+    },
+    { 
+      label: 'Completed', 
+      value: completedTasks.length.toString(), 
+      icon: CheckCircle2, 
+      gradient: 'btn-gradient-green',
+      glow: 'glow-green'
+    },
+    { 
+      label: 'In Progress', 
+      value: inProgressTasks.length.toString(), 
+      icon: Clock, 
+      gradient: 'btn-gradient-orange',
+      glow: 'glow-orange'
+    },
+    { 
+      label: 'High Priority', 
+      value: highPriorityTasks.length.toString(), 
+      icon: Star, 
+      gradient: 'btn-gradient-pink',
+      glow: 'glow-pink'
+    },
   ];
+
+  const getBorderClass = (index: number) => {
+    const classes = ['neon-border-blue', 'neon-border-green', 'neon-border-orange', 'neon-border-pink'];
+    return classes[index % classes.length];
+  };
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-[400px]">
+      <div className="flex items-center justify-center min-h-[600px]">
         <div className="text-center">
-          <Loader2 className="w-8 h-8 text-cyan-400 animate-spin mx-auto mb-4" />
-          <p className="text-slate-400">Loading your tasks...</p>
+          <div className="w-16 h-16 btn-gradient-purple rounded-full flex items-center justify-center mx-auto mb-6 animate-pulse-glow">
+            <Loader2 className="w-8 h-8 text-white animate-spin" />
+          </div>
+          <p className="text-slate-400 text-lg">Loading your tasks...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
+      {/* Hero Section */}
+      <div className="text-center py-8">
+        <h1 className="text-4xl font-bold text-gradient-pink mb-4">
+          {selectedProjectId ? 'Project Tasks' : 'Your Tasks'}
+        </h1>
+        <p className="text-xl text-slate-400 max-w-2xl mx-auto">
+          {selectedProjectId 
+            ? `Tasks for ${projects.find(p => p.id === selectedProjectId)?.name || 'this project'}`
+            : 'Manage and track your productivity with style'
+          }
+        </p>
+      </div>
+
       {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {stats.map((stat, index) => {
           const Icon = stat.icon;
           return (
-            <Card key={index} className="glass-dark border-slate-700/50 hover:glow-cyan transition-all transform hover:scale-105">
+            <Card key={index} className={`glass-card ${getBorderClass(index)} hover:scale-105 transition-all duration-300`}>
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-slate-400 text-sm font-medium">{stat.label}</p>
-                    <p className="text-2xl font-bold text-white mt-1">{stat.value}</p>
+                    <p className="text-3xl font-bold text-white mt-2">{stat.value}</p>
                   </div>
-                  <div className={`p-3 rounded-lg bg-gradient-to-br from-slate-800 to-slate-700 ${stat.color}`}>
-                    <Icon className="w-6 h-6" />
+                  <div className={`p-4 rounded-xl ${stat.gradient} ${stat.glow}`}>
+                    <Icon className="w-8 h-8 text-white" />
                   </div>
                 </div>
               </CardContent>
@@ -142,23 +186,11 @@ const Tasks = () => {
 
       {/* Header with Create Task Button */}
       <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-xl font-semibold text-white mb-1">
-            {selectedProjectId ? 'Project Tasks' : 'Your Tasks'}
-          </h2>
-          <p className="text-slate-400">
-            {selectedProjectId 
-              ? `Tasks for ${projects.find(p => p.id === selectedProjectId)?.name || 'this project'}`
-              : 'Manage and track your productivity'
-            }
-          </p>
-        </div>
-        
         <Button 
           onClick={() => setIsModalOpen(true)}
-          className="bg-gradient-to-r from-cyan-500 to-purple-500 hover:from-cyan-600 hover:to-purple-600 glow-cyan transition-all transform hover:scale-105"
+          className="btn-gradient-purple glow-purple text-white font-semibold px-8 py-3 rounded-xl hover:scale-105 transition-all duration-300"
         >
-          <Plus className="w-4 h-4 mr-2" />
+          <Plus className="w-5 h-5 mr-2" />
           New Task
         </Button>
       </div>
@@ -167,16 +199,16 @@ const Tasks = () => {
       <TaskFiltersComponent 
         filters={filters}
         onFiltersChange={setFilters}
-        className="glass-dark border-slate-700/50 p-6 rounded-lg"
+        className="glass-card neon-border-purple p-6 rounded-xl"
       />
 
       {/* Tasks Grid */}
       {filteredTasks.length === 0 ? (
-        <div className="text-center py-12">
-          <div className="w-16 h-16 bg-gradient-to-br from-slate-800 to-slate-700 rounded-full flex items-center justify-center mx-auto mb-4">
-            <Target className="w-8 h-8 text-slate-400" />
+        <div className="text-center py-16">
+          <div className="w-24 h-24 btn-gradient-purple rounded-full flex items-center justify-center mx-auto mb-6 glow-purple">
+            <Target className="w-12 h-12 text-white" />
           </div>
-          <h3 className="text-white text-lg font-semibold mb-2">
+          <h3 className="text-white text-2xl font-bold mb-4">
             {filters.search || filters.priority !== 'all' || filters.status !== 'all' || filters.tagIds.length > 0
               ? 'No tasks match your filters'
               : selectedProjectId 
@@ -184,7 +216,7 @@ const Tasks = () => {
                 : 'No tasks yet'
             }
           </h3>
-          <p className="text-slate-400 mb-4">
+          <p className="text-slate-400 text-lg mb-8 max-w-md mx-auto">
             {filters.search || filters.priority !== 'all' || filters.status !== 'all' || filters.tagIds.length > 0
               ? 'Try adjusting your search criteria or filters'
               : selectedProjectId 
@@ -194,14 +226,14 @@ const Tasks = () => {
           </p>
           <Button 
             onClick={() => setIsModalOpen(true)}
-            className="bg-gradient-to-r from-cyan-500 to-purple-500 hover:from-cyan-600 hover:to-purple-600 glow-cyan transition-all"
+            className="btn-gradient-blue glow-cyan text-white font-semibold px-8 py-3 rounded-xl hover:scale-105 transition-all duration-300"
           >
-            <Plus className="w-4 h-4 mr-2" />
+            <Plus className="w-5 h-5 mr-2" />
             Create First Task
           </Button>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
           {filteredTasks.map((task) => (
             <TaskCard
               key={task.id}
@@ -218,9 +250,9 @@ const Tasks = () => {
       <Button 
         onClick={() => setIsModalOpen(true)}
         size="lg"
-        className="fixed bottom-8 right-8 w-14 h-14 rounded-full bg-gradient-cyber glow-cyan shadow-2xl hover:scale-110 transition-all z-50"
+        className="fixed bottom-8 right-8 w-16 h-16 rounded-full btn-gradient-purple glow-purple shadow-2xl hover:scale-110 transition-all duration-300 z-50"
       >
-        <Plus className="w-6 h-6" />
+        <Plus className="w-8 h-8" />
       </Button>
 
       {/* Task Modal */}
