@@ -1,7 +1,8 @@
+
 import React from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { Toaster } from 'sonner';
-import { QueryClient } from '@tanstack/react-query';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 import Auth from './pages/Auth';
 import Index from './pages/Index';
@@ -15,9 +16,11 @@ import NotFound from './pages/NotFound';
 import Layout from './components/Layout';
 import WeeklyReview from './pages/WeeklyReview';
 
+const queryClient = new QueryClient();
+
 function App() {
   return (
-    <QueryClient>
+    <QueryClientProvider client={queryClient}>
       <BrowserRouter>
         <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-indigo-900">
           <Routes>
@@ -37,7 +40,7 @@ function App() {
           <Toaster />
         </div>
       </BrowserRouter>
-    </QueryClient>
+    </QueryClientProvider>
   );
 }
 

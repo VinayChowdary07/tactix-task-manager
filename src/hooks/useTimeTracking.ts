@@ -109,12 +109,20 @@ export const useTimeTracking = (taskId: string) => {
       
       if (error) throw error;
       
-      // Update task's time_spent
+      // Update task's time_spent by getting current value and adding duration
+      const { data: currentTask, error: fetchError } = await supabase
+        .from('tasks')
+        .select('time_spent')
+        .eq('id', taskId)
+        .single();
+      
+      if (fetchError) throw fetchError;
+      
+      const newTimeSpent = (currentTask.time_spent || 0) + durationMinutes;
+      
       const { error: taskError } = await supabase
         .from('tasks')
-        .update({
-          time_spent: supabase.raw(`COALESCE(time_spent, 0) + ${durationMinutes}`)
-        })
+        .update({ time_spent: newTimeSpent })
         .eq('id', taskId);
       
       if (taskError) throw taskError;
