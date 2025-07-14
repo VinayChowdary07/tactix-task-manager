@@ -58,6 +58,9 @@ const TaskModal: React.FC<TaskModalProps> = ({
   useEffect(() => {
     if (isOpen) {
       if (task) {
+        // Safely extract tag IDs from the task
+        const taskTagIds = task.tags?.map(tag => tag.id) || [];
+        
         setFormData({
           title: task.title,
           description: task.description || '',
@@ -70,7 +73,7 @@ const TaskModal: React.FC<TaskModalProps> = ({
           repeat_interval: task.repeat_interval || 1,
           repeat_until: task.repeat_until ? format(new Date(task.repeat_until), 'yyyy-MM-dd') : '',
           time_estimate: task.time_estimate ? Math.floor(task.time_estimate / 60).toString() : '',
-          tagIds: task.tags?.map(tag => tag.id) || []
+          tagIds: taskTagIds
         });
       } else {
         setFormData({
@@ -120,6 +123,10 @@ const TaskModal: React.FC<TaskModalProps> = ({
     } catch (error) {
       console.error('Error saving task:', error);
     }
+  };
+
+  const handleTagsChange = (tagIds: string[]) => {
+    setFormData(prev => ({ ...prev, tagIds }));
   };
 
   return (
@@ -316,11 +323,13 @@ const TaskModal: React.FC<TaskModalProps> = ({
             </Select>
           </div>
 
-          {/* Tag Selector */}
-          <TagSelector
-            selectedTagIds={formData.tagIds}
-            onTagsChange={(tagIds) => setFormData({ ...formData, tagIds })}
-          />
+          {/* Tag Selector with Error Boundary */}
+          <div className="space-y-2">
+            <TagSelector
+              selectedTagIds={formData.tagIds}
+              onTagsChange={handleTagsChange}
+            />
+          </div>
 
           {/* Action Buttons */}
           <div className="flex gap-4 pt-6">

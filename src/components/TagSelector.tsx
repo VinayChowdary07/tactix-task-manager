@@ -10,7 +10,7 @@ import {
   PopoverTrigger,
 } from '@/components/ui/popover';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from '@/components/ui/command';
-import { Check, Plus, X, Tag } from 'lucide-react';
+import { Check, Plus, X, Tag, Loader2 } from 'lucide-react';
 import { useTags } from '@/hooks/useTags';
 import { cn } from '@/lib/utils';
 
@@ -21,23 +21,27 @@ interface TagSelectorProps {
 }
 
 const TagSelector: React.FC<TagSelectorProps> = ({
-  selectedTagIds,
+  selectedTagIds = [],
   onTagsChange,
   className
 }) => {
-  const { tags, createTag } = useTags();
+  const { tags = [], createTag, isLoading, error } = useTags();
   const [open, setOpen] = useState(false);
   const [newTagName, setNewTagName] = useState('');
   const [showNewTagInput, setShowNewTagInput] = useState(false);
 
-  const selectedTags = tags.filter(tag => selectedTagIds.includes(tag.id));
+  // Ensure selectedTagIds is always an array
+  const safeSelectedTagIds = Array.isArray(selectedTagIds) ? selectedTagIds : [];
+  
+  // Only get selected tags if tags array is loaded
+  const selectedTags = tags ? tags.filter(tag => safeSelectedTagIds.includes(tag.id)) : [];
 
   const handleTagToggle = (tagId: string) => {
-    const isSelected = selectedTagIds.includes(tagId);
+    const isSelected = safeSelectedTagIds.includes(tagId);
     if (isSelected) {
-      onTagsChange(selectedTagIds.filter(id => id !== tagId));
+      onTagsChange(safeSelectedTagIds.filter(id => id !== tagId));
     } else {
-      onTagsChange([...selectedTagIds, tagId]);
+      onTagsChange([...safeSelectedTagIds, tagId]);
     }
   };
 
@@ -49,7 +53,7 @@ const TagSelector: React.FC<TagSelectorProps> = ({
         name: newTagName.trim(),
         color: `#${Math.floor(Math.random()*16777215).toString(16)}`
       });
-      onTagsChange([...selectedTagIds, newTag.id]);
+      onTagsChange([...safeSelectedTagIds, newTag.id]);
       setNewTagName('');
       setShowNewTagInput(false);
     } catch (error) {
@@ -58,8 +62,33 @@ const TagSelector: React.FC<TagSelectorProps> = ({
   };
 
   const removeTag = (tagId: string) => {
-    onTagsChange(selectedTagIds.filter(id => id !== tagId));
+    onTagsChange(safeSelectedTagIds.filter(id => id !== tagId));
   };
+
+  // Show loading state if tags are still loading
+  if (isLoading) {
+    return (
+      <div className={cn("space-y-2", className)}>
+        <Label className="text-slate-300">Tags</Label>
+        <div className="flex items-center justify-center p-4 bg-slate-800/50 border border-slate-600 rounded-md">
+          <Loader2 className="w-4 h-4 animate-spin text-slate-400 mr-2" />
+          <span className="text-slate-400 text-sm">Loading tags...</span>
+        </div>
+      </div>
+    );
+  }
+
+  // Show error state if tags failed to load
+  if (error) {
+    return (
+      <div className={cn("space-y-2", className)}>
+        <Label className="text-slate-300">Tags</Label>
+        <div className="p-4 bg-red-900/20 border border-red-500/50 rounded-md">
+          <span className="text-red-400 text-sm">Failed to load tags. Please try again.</span>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className={cn("space-y-2", className)}>
@@ -116,27 +145,29 @@ const TagSelector: React.FC<TagSelectorProps> = ({
             <CommandEmpty className="text-slate-400 text-center py-6">
               No tags found.
             </CommandEmpty>
-            <CommandGroup className="max-h-64 overflow-auto">
-              {tags.map((tag) => (
-                <CommandItem
-                  key={tag.id}
-                  onSelect={() => handleTagToggle(tag.id)}
-                  className="flex items-center space-x-2 cursor-pointer hover:bg-slate-700 text-white"
-                >
-                  <div
-                    className="w-3 h-3 rounded-full"
-                    style={{ backgroundColor: tag.color }}
-                  />
-                  <span className="flex-1">{tag.name}</span>
-                  <Check
-                    className={cn(
-                      "ml-auto h-4 w-4",
-                      selectedTagIds.includes(tag.id) ? "opacity-100" : "opacity-0"
-                    )}
-                  />
-                </CommandItem>
-              ))}
-            </CommandGroup>
+            {tags && tags.length > 0 && (
+              <CommandGroup className="max-h-64 overflow-auto">
+                {tags.map((tag) => (
+                  <CommandItem
+                    key={tag.id}
+                    onSelect={() => handleTagToggle(tag.id)}
+                    className="flex items-center space-x-2 cursor-pointer hover:bg-slate-700 text-white"
+                  >
+                    <div
+                      className="w-3 h-3 rounded-full"
+                      style={{ backgroundColor: tag.color }}
+                    />
+                    <span className="flex-1">{tag.name}</span>
+                    <Check
+                      className={cn(
+                        "ml-auto h-4 w-4",
+                        safeSelectedTagIds.includes(tag.id) ? "opacity-100" : "opacity-0"
+                      )}
+                    />
+                  </CommandItem>
+                ))}
+              </CommandGroup>
+            )}
             
             {/* Create New Tag Section */}
             <div className="border-t border-slate-600 p-2">
