@@ -20,7 +20,7 @@ import {
 import { useTasks, Task } from '@/hooks/useTasks';
 import { useProjects } from '@/hooks/useProjects';
 import TagSelector from './TagSelector';
-import { X } from 'lucide-react';
+import { X, Bell } from 'lucide-react';
 import { format } from 'date-fns';
 
 interface TaskModalProps {
@@ -44,6 +44,7 @@ const TaskModal: React.FC<TaskModalProps> = ({
     title: '',
     description: '',
     due_date: '',
+    reminder_time: '',
     priority: 'Medium' as 'Low' | 'Medium' | 'High' | 'Critical',
     status: 'Todo' as 'Todo' | 'In Progress' | 'Done',
     project_id: 'none',
@@ -57,6 +58,7 @@ const TaskModal: React.FC<TaskModalProps> = ({
           title: task.title,
           description: task.description || '',
           due_date: task.due_date ? format(new Date(task.due_date), 'yyyy-MM-dd') : '',
+          reminder_time: task.reminder_time ? format(new Date(task.reminder_time), "yyyy-MM-dd'T'HH:mm") : '',
           priority: task.priority,
           status: task.status,
           project_id: task.project_id || 'none',
@@ -67,6 +69,7 @@ const TaskModal: React.FC<TaskModalProps> = ({
           title: '',
           description: '',
           due_date: defaultDueDate ? format(defaultDueDate, 'yyyy-MM-dd') : '',
+          reminder_time: '',
           priority: 'Medium',
           status: 'Todo',
           project_id: defaultProjectId || 'none',
@@ -86,6 +89,7 @@ const TaskModal: React.FC<TaskModalProps> = ({
     const taskData = {
       ...formData,
       due_date: formData.due_date ? new Date(formData.due_date).toISOString() : undefined,
+      reminder_time: formData.reminder_time ? new Date(formData.reminder_time).toISOString() : undefined,
       project_id: formData.project_id === 'none' ? null : formData.project_id
     };
 
@@ -106,7 +110,7 @@ const TaskModal: React.FC<TaskModalProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="glass-dark border-slate-700/50 text-white max-w-md">
+      <DialogContent className="glass-dark border-slate-700/50 text-white max-w-md max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-xl font-bold text-gradient flex items-center justify-between">
             {task ? 'Edit Task' : 'Create New Task'}
@@ -184,6 +188,20 @@ const TaskModal: React.FC<TaskModalProps> = ({
               type="date"
               value={formData.due_date}
               onChange={(e) => setFormData({ ...formData, due_date: e.target.value })}
+              className="bg-slate-800/50 border-slate-600 text-white focus:border-cyan-400 focus:ring-cyan-400/20"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="reminder_time" className="text-slate-300 flex items-center gap-2">
+              <Bell className="w-4 h-4" />
+              Reminder Time
+            </Label>
+            <Input
+              id="reminder_time"
+              type="datetime-local"
+              value={formData.reminder_time}
+              onChange={(e) => setFormData({ ...formData, reminder_time: e.target.value })}
               className="bg-slate-800/50 border-slate-600 text-white focus:border-cyan-400 focus:ring-cyan-400/20"
             />
           </div>

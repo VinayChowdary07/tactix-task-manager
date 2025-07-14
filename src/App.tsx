@@ -7,8 +7,10 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "@/lib/auth";
 import Layout from "@/components/Layout";
+import Index from "@/pages/Index";
 import Auth from "@/pages/Auth";
 import Tasks from "@/pages/Tasks";
+import Goals from "@/pages/Goals";
 import Projects from "@/pages/Projects";
 import Calendar from "@/pages/Calendar";
 import Tags from "@/pages/Tags";
@@ -22,12 +24,10 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) =
   
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center">
         <div className="text-center">
-          <div className="w-16 h-16 bg-gradient-cyber rounded-full flex items-center justify-center glow-cyan animate-pulse mx-auto mb-4">
-            <div className="w-8 h-8 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-          </div>
-          <p className="text-slate-400">Loading your workspace...</p>
+          <div className="w-16 h-16 border-4 border-cyan-400 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-white text-lg">Loading...</p>
         </div>
       </div>
     );
@@ -50,7 +50,9 @@ const AppContent: React.FC = () => {
             <Layout />
           </ProtectedRoute>
         }>
-          <Route index element={<Tasks />} />
+          <Route index element={<Index />} />
+          <Route path="tasks" element={<Tasks />} />
+          <Route path="goals" element={<Goals />} />
           <Route path="projects" element={<Projects />} />
           <Route path="calendar" element={<Calendar />} />
           <Route path="tags" element={<Tags />} />
@@ -66,9 +68,9 @@ const App: React.FC = () => (
   <QueryClientProvider client={queryClient}>
     <AuthProvider>
       <TooltipProvider>
+        <AppContent />
         <Toaster />
         <Sonner />
-        <AppContent />
       </TooltipProvider>
     </AuthProvider>
   </QueryClientProvider>

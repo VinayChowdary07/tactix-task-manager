@@ -14,6 +14,102 @@ export type Database = {
   }
   public: {
     Tables: {
+      goal_tasks: {
+        Row: {
+          created_at: string
+          goal_id: string
+          id: string
+          task_id: string
+        }
+        Insert: {
+          created_at?: string
+          goal_id: string
+          id?: string
+          task_id: string
+        }
+        Update: {
+          created_at?: string
+          goal_id?: string
+          id?: string
+          task_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "goal_tasks_goal_id_fkey"
+            columns: ["goal_id"]
+            isOneToOne: false
+            referencedRelation: "goals"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "goal_tasks_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      goals: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          target_date: string | null
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          target_date?: string | null
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          target_date?: string | null
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      notifications: {
+        Row: {
+          created_at: string
+          id: string
+          message: string
+          read: boolean
+          type: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          message: string
+          read?: boolean
+          type?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          message?: string
+          read?: boolean
+          type?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       projects: {
         Row: {
           color: string | null
@@ -115,6 +211,7 @@ export type Database = {
           id: string
           priority: string
           project_id: string | null
+          reminder_time: string | null
           status: string
           title: string
           updated_at: string
@@ -127,6 +224,7 @@ export type Database = {
           id?: string
           priority?: string
           project_id?: string | null
+          reminder_time?: string | null
           status?: string
           title: string
           updated_at?: string
@@ -139,6 +237,7 @@ export type Database = {
           id?: string
           priority?: string
           project_id?: string | null
+          reminder_time?: string | null
           status?: string
           title?: string
           updated_at?: string
