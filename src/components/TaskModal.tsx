@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import {
   Dialog,
@@ -20,7 +19,8 @@ import {
 } from '@/components/ui/select';
 import { useTasks, Task } from '@/hooks/useTasks';
 import { useProjects } from '@/hooks/useProjects';
-import { X, Bell, Repeat, Clock, Calendar } from 'lucide-react';
+import { useAuth } from '@/lib/auth';
+import { X, Bell, Repeat, Clock, Calendar, AlertCircle } from 'lucide-react';
 import { format } from 'date-fns';
 
 interface TaskModalProps {
@@ -40,6 +40,7 @@ const TaskModal: React.FC<TaskModalProps> = ({
 }) => {
   const { createTask, updateTask } = useTasks();
   const { projects } = useProjects();
+  const { user } = useAuth();
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -54,6 +55,9 @@ const TaskModal: React.FC<TaskModalProps> = ({
     time_estimate: '',
     google_calendar_sync: true
   });
+
+  // Check if user signed in with Google
+  const isGoogleUser = user?.app_metadata?.providers?.includes('google');
 
   useEffect(() => {
     if (isOpen) {
@@ -70,7 +74,7 @@ const TaskModal: React.FC<TaskModalProps> = ({
           repeat_interval: task.repeat_interval || 1,
           repeat_until: task.repeat_until ? format(new Date(task.repeat_until), 'yyyy-MM-dd') : '',
           time_estimate: task.time_estimate ? Math.floor(task.time_estimate / 60).toString() : '',
-          google_calendar_sync: task.google_calendar_sync !== false
+          google_calendar_sync: task.google_calendar_sync !== false && isGoogleUser
         });
       } else {
         setFormData({
@@ -85,11 +89,11 @@ const TaskModal: React.FC<TaskModalProps> = ({
           repeat_interval: 1,
           repeat_until: '',
           time_estimate: '',
-          google_calendar_sync: true
+          google_calendar_sync: isGoogleUser
         });
       }
     }
-  }, [task, isOpen, defaultProjectId, defaultDueDate]);
+  }, [task, isOpen, defaultProjectId, defaultDueDate, isGoogleUser]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -104,7 +108,8 @@ const TaskModal: React.FC<TaskModalProps> = ({
       reminder_time: formData.reminder_time ? new Date(formData.reminder_time).toISOString() : undefined,
       repeat_until: formData.repeat_until ? new Date(formData.repeat_until).toISOString() : undefined,
       time_estimate: formData.time_estimate ? parseInt(formData.time_estimate) * 60 : undefined,
-      project_id: formData.project_id === 'none' ? null : formData.project_id
+      project_id: formData.project_id === 'none' ? null : formData.project_id,
+      google_calendar_sync: formData.google_calendar_sync && isGoogleUser
     };
 
     try {
@@ -244,8 +249,18 @@ const TaskModal: React.FC<TaskModalProps> = ({
                 checked={formData.google_calendar_sync}
                 onCheckedChange={(checked) => setFormData({ ...formData, google_calendar_sync: checked })}
                 className="data-[state=checked]:bg-cyan-500"
+                disabled={!isGoogleUser}
               />
             </div>
+            
+            {!isGoogleUser && (
+              <div className="flex items-center gap-2 p-3 bg-yellow-500/10 border border-yellow-500/20 rounded-lg">
+                <AlertCircle className="w-4 h-4 text-yellow-400 flex-shrink-0" />
+                <p className="text-sm text-yellow-300">
+                  Sign in with Google to enable Calendar sync. Sign out and use "Continue with Google" to get calendar access.
+                </p>
+              </div>
+            )}
           </div>
 
           {/* Reminder Time */}

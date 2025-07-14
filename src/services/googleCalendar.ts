@@ -28,18 +28,41 @@ class GoogleCalendarService {
   }
 
   async getAccessToken(): Promise<string | null> {
-    const { data: { session } } = await supabase.auth.getSession();
-    if (session?.provider_token) {
-      this.accessToken = session.provider_token;
-      return this.accessToken;
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      // Check if we have a session with Google provider
+      if (!session) {
+        console.log('No active session found');
+        return null;
+      }
+
+      // For Google OAuth, the access token is stored in provider_token
+      if (session.provider_token) {
+        this.accessToken = session.provider_token;
+        console.log('Google access token found');
+        return this.accessToken;
+      }
+
+      // Check if user signed in with Google
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user?.app_metadata?.providers?.includes('google')) {
+        console.log('User did not sign in with Google');
+        throw new Error('Please sign in with Google to sync with Google Calendar');
+      }
+
+      console.log('No provider token found in session');
+      return null;
+    } catch (error) {
+      console.error('Error getting access token:', error);
+      throw error;
     }
-    return null;
   }
 
   async createEvent(event: GoogleCalendarEvent): Promise<string | null> {
     const token = await this.getAccessToken();
     if (!token) {
-      throw new Error('No Google access token available');
+      throw new Error('Google Calendar access not available. Please sign out and sign in with Google again.');
     }
 
     try {
@@ -53,10 +76,18 @@ class GoogleCalendarService {
       });
 
       if (!response.ok) {
-        throw new Error(`Failed to create calendar event: ${response.statusText}`);
+        const errorText = await response.text();
+        console.error('Calendar API error:', response.status, errorText);
+        
+        if (response.status === 401) {
+          throw new Error('Google Calendar access expired. Please sign out and sign in with Google again.');
+        }
+        
+        throw new Error(`Failed to create calendar event: ${response.status} ${response.statusText}`);
       }
 
       const createdEvent = await response.json();
+      console.log('Calendar event created successfully:', createdEvent.id);
       return createdEvent.id;
     } catch (error) {
       console.error('Error creating calendar event:', error);
@@ -67,7 +98,7 @@ class GoogleCalendarService {
   async updateEvent(eventId: string, event: GoogleCalendarEvent): Promise<void> {
     const token = await this.getAccessToken();
     if (!token) {
-      throw new Error('No Google access token available');
+      throw new Error('Google Calendar access not available. Please sign out and sign in with Google again.');
     }
 
     try {
@@ -81,8 +112,17 @@ class GoogleCalendarService {
       });
 
       if (!response.ok) {
-        throw new Error(`Failed to update calendar event: ${response.statusText}`);
+        const errorText = await response.text();
+        console.error('Calendar API error:', response.status, errorText);
+        
+        if (response.status === 401) {
+          throw new Error('Google Calendar access expired. Please sign out and sign in with Google again.');
+        }
+        
+        throw new Error(`Failed to update calendar event: ${response.status} ${response.statusText}`);
       }
+
+      console.log('Calendar event updated successfully');
     } catch (error) {
       console.error('Error updating calendar event:', error);
       throw error;
@@ -92,7 +132,7 @@ class GoogleCalendarService {
   async deleteEvent(eventId: string): Promise<void> {
     const token = await this.getAccessToken();
     if (!token) {
-      throw new Error('No Google access token available');
+      throw new Error('Google Calendar access not available. Please sign out and sign in with Google again.');
     }
 
     try {
@@ -104,8 +144,17 @@ class GoogleCalendarService {
       });
 
       if (!response.ok && response.status !== 404) {
-        throw new Error(`Failed to delete calendar event: ${response.statusText}`);
+        const errorText = await response.text();
+        console.error('Calendar API error:', response.status, errorText);
+        
+        if (response.status === 401) {
+          throw new Error('Google Calendar access expired. Please sign out and sign in with Google again.');
+        }
+        
+        throw new Error(`Failed to delete calendar event: ${response.status} ${response.statusText}`);
       }
+
+      console.log('Calendar event deleted successfully');
     } catch (error) {
       console.error('Error deleting calendar event:', error);
       throw error;
