@@ -25,18 +25,21 @@ const TagSelector: React.FC<TagSelectorProps> = ({
   onTagsChange,
   className
 }) => {
-  const { tags = [], createTag, isLoading, error } = useTags();
+  const { tags, createTag, isLoading, error } = useTags();
   const [open, setOpen] = useState(false);
   const [newTagName, setNewTagName] = useState('');
   const [showNewTagInput, setShowNewTagInput] = useState(false);
 
-  // Ensure selectedTagIds is always an array
+  // Ensure we have safe arrays
   const safeSelectedTagIds = Array.isArray(selectedTagIds) ? selectedTagIds : [];
+  const safeTags = Array.isArray(tags) ? tags : [];
   
-  // Only get selected tags if tags array is loaded
-  const selectedTags = tags ? tags.filter(tag => safeSelectedTagIds.includes(tag.id)) : [];
+  // Only get selected tags if tags array is loaded and valid
+  const selectedTags = safeTags.filter(tag => tag && safeSelectedTagIds.includes(tag.id));
 
   const handleTagToggle = (tagId: string) => {
+    if (!tagId) return;
+    
     const isSelected = safeSelectedTagIds.includes(tagId);
     if (isSelected) {
       onTagsChange(safeSelectedTagIds.filter(id => id !== tagId));
@@ -53,7 +56,9 @@ const TagSelector: React.FC<TagSelectorProps> = ({
         name: newTagName.trim(),
         color: `#${Math.floor(Math.random()*16777215).toString(16)}`
       });
-      onTagsChange([...safeSelectedTagIds, newTag.id]);
+      if (newTag?.id) {
+        onTagsChange([...safeSelectedTagIds, newTag.id]);
+      }
       setNewTagName('');
       setShowNewTagInput(false);
     } catch (error) {
@@ -62,6 +67,7 @@ const TagSelector: React.FC<TagSelectorProps> = ({
   };
 
   const removeTag = (tagId: string) => {
+    if (!tagId) return;
     onTagsChange(safeSelectedTagIds.filter(id => id !== tagId));
   };
 
@@ -97,28 +103,32 @@ const TagSelector: React.FC<TagSelectorProps> = ({
       {/* Selected Tags */}
       {selectedTags.length > 0 && (
         <div className="flex flex-wrap gap-2">
-          {selectedTags.map((tag) => (
-            <Badge
-              key={tag.id}
-              className="flex items-center gap-1 px-2 py-1 text-white border"
-              style={{
-                backgroundColor: `${tag.color}20`,
-                borderColor: `${tag.color}50`,
-                color: tag.color
-              }}
-            >
-              <Tag className="w-3 h-3" />
-              {tag.name}
-              <Button
-                size="sm"
-                variant="ghost"
-                className="h-4 w-4 p-0 ml-1 hover:bg-transparent"
-                onClick={() => removeTag(tag.id)}
+          {selectedTags.map((tag) => {
+            if (!tag || !tag.id) return null;
+            
+            return (
+              <Badge
+                key={tag.id}
+                className="flex items-center gap-1 px-2 py-1 text-white border"
+                style={{
+                  backgroundColor: `${tag.color || '#6366f1'}20`,
+                  borderColor: `${tag.color || '#6366f1'}50`,
+                  color: tag.color || '#6366f1'
+                }}
               >
-                <X className="w-3 h-3" />
-              </Button>
-            </Badge>
-          ))}
+                <Tag className="w-3 h-3" />
+                {tag.name}
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="h-4 w-4 p-0 ml-1 hover:bg-transparent"
+                  onClick={() => removeTag(tag.id)}
+                >
+                  <X className="w-3 h-3" />
+                </Button>
+              </Badge>
+            );
+          })}
         </div>
       )}
 
@@ -145,27 +155,31 @@ const TagSelector: React.FC<TagSelectorProps> = ({
             <CommandEmpty className="text-slate-400 text-center py-6">
               No tags found.
             </CommandEmpty>
-            {tags && tags.length > 0 && (
+            {safeTags.length > 0 && (
               <CommandGroup className="max-h-64 overflow-auto">
-                {tags.map((tag) => (
-                  <CommandItem
-                    key={tag.id}
-                    onSelect={() => handleTagToggle(tag.id)}
-                    className="flex items-center space-x-2 cursor-pointer hover:bg-slate-700 text-white"
-                  >
-                    <div
-                      className="w-3 h-3 rounded-full"
-                      style={{ backgroundColor: tag.color }}
-                    />
-                    <span className="flex-1">{tag.name}</span>
-                    <Check
-                      className={cn(
-                        "ml-auto h-4 w-4",
-                        safeSelectedTagIds.includes(tag.id) ? "opacity-100" : "opacity-0"
-                      )}
-                    />
-                  </CommandItem>
-                ))}
+                {safeTags.map((tag) => {
+                  if (!tag || !tag.id) return null;
+                  
+                  return (
+                    <CommandItem
+                      key={tag.id}
+                      onSelect={() => handleTagToggle(tag.id)}
+                      className="flex items-center space-x-2 cursor-pointer hover:bg-slate-700 text-white"
+                    >
+                      <div
+                        className="w-3 h-3 rounded-full"
+                        style={{ backgroundColor: tag.color || '#6366f1' }}
+                      />
+                      <span className="flex-1">{tag.name}</span>
+                      <Check
+                        className={cn(
+                          "ml-auto h-4 w-4",
+                          safeSelectedTagIds.includes(tag.id) ? "opacity-100" : "opacity-0"
+                        )}
+                      />
+                    </CommandItem>
+                  );
+                })}
               </CommandGroup>
             )}
             
