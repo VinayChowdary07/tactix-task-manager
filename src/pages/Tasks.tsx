@@ -13,6 +13,7 @@ import { useOutletContext } from 'react-router-dom';
 interface OutletContext {
   selectedProjectId: string | null;
   projects: Array<{ id: string; name: string; color?: string }>;
+  setSelectedProjectId?: (id: string | null) => void;
 }
 
 const Tasks = () => {
@@ -20,7 +21,10 @@ const Tasks = () => {
   const { projects } = useProjects();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
-  const { selectedProjectId } = useOutletContext<OutletContext>();
+  
+  // Safely get context with fallback
+  const context = useOutletContext<OutletContext>();
+  const selectedProjectId = context?.selectedProjectId || null;
 
   const [filters, setFilters] = useState<TaskFilters>({
     search: '',

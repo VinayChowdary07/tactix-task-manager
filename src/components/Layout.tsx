@@ -2,7 +2,6 @@
 import React, { useState } from 'react';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
 import {
   LayoutDashboard,
   CheckSquare,
@@ -17,13 +16,16 @@ import {
   User
 } from 'lucide-react';
 import { useAuth } from '@/lib/auth';
+import { useProjects } from '@/hooks/useProjects';
 import NotificationDropdown from './NotificationDropdown';
 
 const Layout: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { signOut, user } = useAuth();
+  const { projects } = useProjects();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
 
   const navigation = [
     { name: 'Dashboard', href: '/', icon: LayoutDashboard },
@@ -42,6 +44,13 @@ const Layout: React.FC = () => {
     } catch (error) {
       console.error('Logout failed:', error);
     }
+  };
+
+  // Context to pass to child routes
+  const outletContext = {
+    selectedProjectId,
+    projects: projects || [],
+    setSelectedProjectId
   };
 
   return (
@@ -149,7 +158,7 @@ const Layout: React.FC = () => {
 
         {/* Page Content */}
         <main className="p-6">
-          <Outlet />
+          <Outlet context={outletContext} />
         </main>
       </div>
 
