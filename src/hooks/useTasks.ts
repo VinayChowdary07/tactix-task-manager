@@ -1,4 +1,3 @@
-
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/lib/auth';
@@ -9,6 +8,7 @@ export interface Task {
   title: string;
   description?: string;
   due_date?: string;
+  reminder_time?: string;
   priority: 'Low' | 'Medium' | 'High' | 'Critical';
   status: 'Todo' | 'In Progress' | 'Done';
   project_id?: string;
@@ -26,6 +26,7 @@ export interface TaskInput {
   title: string;
   description?: string;
   due_date?: string;
+  reminder_time?: string;
   priority: 'Low' | 'Medium' | 'High' | 'Critical';
   status: 'Todo' | 'In Progress' | 'Done';
   project_id?: string;
