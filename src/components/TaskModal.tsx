@@ -1,28 +1,44 @@
 
 import React, { useState, useEffect } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Task, TaskInput, useTasks } from '@/hooks/useTasks';
-import { Calendar, Zap, Save, X } from 'lucide-react';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { useTasks, Task } from '@/hooks/useTasks';
+import { useProjects } from '@/hooks/useProjects';
+import { X } from 'lucide-react';
+import { format } from 'date-fns';
 
 interface TaskModalProps {
   isOpen: boolean;
   onClose: () => void;
   task?: Task | null;
+  defaultProjectId?: string | null;
 }
 
-const TaskModal: React.FC<TaskModalProps> = ({ isOpen, onClose, task }) => {
+const TaskModal: React.FC<TaskModalProps> = ({ isOpen, onClose, task, defaultProjectId }) => {
   const { createTask, updateTask } = useTasks();
-  const [formData, setFormData] = useState<TaskInput>({
+  const { projects } = useProjects();
+  const [formData, setFormData] = useState({
     title: '',
     description: '',
     due_date: '',
-    priority: 'Medium',
-    status: 'Todo',
+    priority: 'Medium' as 'Low' | 'Medium' | 'High',
+    status: 'Todo' as 'Todo' | 'In Progress' | 'Done',
+    project_id: ''
   });
 
   useEffect(() => {
@@ -30,10 +46,10 @@ const TaskModal: React.FC<TaskModalProps> = ({ isOpen, onClose, task }) => {
       setFormData({
         title: task.title,
         description: task.description || '',
-        due_date: task.due_date ? new Date(task.due_date).toISOString().split('T')[0] : '',
+        due_date: task.due_date ? format(new Date(task.due_date), 'yyyy-MM-dd') : '',
         priority: task.priority,
         status: task.status,
-        project_id: task.project_id,
+        project_id: task.project_id || ''
       });
     } else {
       setFormData({
@@ -42,9 +58,10 @@ const TaskModal: React.FC<TaskModalProps> = ({ isOpen, onClose, task }) => {
         due_date: '',
         priority: 'Medium',
         status: 'Todo',
+        project_id: defaultProjectId || ''
       });
     }
-  }, [task, isOpen]);
+  }, [task, isOpen, defaultProjectId]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -56,11 +73,15 @@ const TaskModal: React.FC<TaskModalProps> = ({ isOpen, onClose, task }) => {
     const taskData = {
       ...formData,
       due_date: formData.due_date ? new Date(formData.due_date).toISOString() : undefined,
+      project_id: formData.project_id || null
     };
 
     try {
       if (task) {
-        await updateTask.mutateAsync({ id: task.id, ...taskData });
+        await updateTask.mutateAsync({
+          id: task.id,
+          ...taskData
+        });
       } else {
         await createTask.mutateAsync(taskData);
       }
@@ -72,110 +93,125 @@ const TaskModal: React.FC<TaskModalProps> = ({ isOpen, onClose, task }) => {
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="glass-dark border-slate-700/50 max-w-md">
+      <DialogContent className="glass-dark border-slate-700/50 text-white max-w-md">
         <DialogHeader>
-          <DialogTitle className="text-white flex items-center">
-            <Zap className="w-5 h-5 mr-2 text-cyan-400" />
+          <DialogTitle className="text-xl font-bold text-gradient flex items-center justify-between">
             {task ? 'Edit Task' : 'Create New Task'}
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={onClose}
+              className="text-slate-400 hover:text-white h-8 w-8"
+            >
+              <X className="w-4 h-4" />
+            </Button>
           </DialogTitle>
         </DialogHeader>
-        
-        <form onSubmit={handleSubmit} className="space-y-4 mt-4">
+
+        <form onSubmit={handleSubmit} className="space-y-6 mt-4">
           <div className="space-y-2">
-            <Label htmlFor="title" className="text-slate-200">Title *</Label>
+            <Label htmlFor="title" className="text-slate-300">Task Title *</Label>
             <Input
               id="title"
               value={formData.title}
-              onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
-              placeholder="Enter task title..."
-              className="bg-slate-800/50 border-slate-600 focus:border-cyan-400 focus:glow-cyan transition-all"
+              onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+              className="bg-slate-800/50 border-slate-600 text-white placeholder-slate-400 focus:border-cyan-400 focus:ring-cyan-400/20"
+              placeholder="Enter task title"
               required
             />
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="description" className="text-slate-200">Description</Label>
+            <Label htmlFor="description" className="text-slate-300">Description</Label>
             <Textarea
               id="description"
               value={formData.description}
-              onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
-              placeholder="Add task description..."
-              className="bg-slate-800/50 border-slate-600 focus:border-cyan-400 focus:glow-cyan transition-all"
+              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+              className="bg-slate-800/50 border-slate-600 text-white placeholder-slate-400 focus:border-cyan-400 focus:ring-cyan-400/20 resize-none"
+              placeholder="Task description (optional)"
               rows={3}
             />
           </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label className="text-slate-200">Priority</Label>
-              <Select 
-                value={formData.priority} 
-                onValueChange={(value: 'Low' | 'Medium' | 'High') => 
-                  setFormData(prev => ({ ...prev, priority: value }))
-                }
-              >
-                <SelectTrigger className="bg-slate-800/50 border-slate-600">
+              <Label htmlFor="priority" className="text-slate-300">Priority</Label>
+              <Select value={formData.priority} onValueChange={(value: 'Low' | 'Medium' | 'High') => setFormData({ ...formData, priority: value })}>
+                <SelectTrigger className="bg-slate-800/50 border-slate-600 text-white focus:border-cyan-400">
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent className="bg-slate-800 border-slate-700">
-                  <SelectItem value="Low">Low</SelectItem>
-                  <SelectItem value="Medium">Medium</SelectItem>
-                  <SelectItem value="High">High</SelectItem>
+                <SelectContent className="bg-slate-800 border-slate-600">
+                  <SelectItem value="Low" className="text-green-400">Low</SelectItem>
+                  <SelectItem value="Medium" className="text-yellow-400">Medium</SelectItem>
+                  <SelectItem value="High" className="text-red-400">High</SelectItem>
                 </SelectContent>
               </Select>
             </div>
 
             <div className="space-y-2">
-              <Label className="text-slate-200">Status</Label>
-              <Select 
-                value={formData.status} 
-                onValueChange={(value: 'Todo' | 'In Progress' | 'Done') => 
-                  setFormData(prev => ({ ...prev, status: value }))
-                }
-              >
-                <SelectTrigger className="bg-slate-800/50 border-slate-600">
+              <Label htmlFor="status" className="text-slate-300">Status</Label>
+              <Select value={formData.status} onValueChange={(value: 'Todo' | 'In Progress' | 'Done') => setFormData({ ...formData, status: value })}>
+                <SelectTrigger className="bg-slate-800/50 border-slate-600 text-white focus:border-cyan-400">
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent className="bg-slate-800 border-slate-700">
-                  <SelectItem value="Todo">Todo</SelectItem>
-                  <SelectItem value="In Progress">In Progress</SelectItem>
-                  <SelectItem value="Done">Done</SelectItem>
+                <SelectContent className="bg-slate-800 border-slate-600">
+                  <SelectItem value="Todo" className="text-slate-400">Todo</SelectItem>
+                  <SelectItem value="In Progress" className="text-blue-400">In Progress</SelectItem>
+                  <SelectItem value="Done" className="text-green-400">Done</SelectItem>
                 </SelectContent>
               </Select>
             </div>
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="due_date" className="text-slate-200 flex items-center">
-              <Calendar className="w-4 h-4 mr-1" />
-              Due Date
-            </Label>
+            <Label htmlFor="due_date" className="text-slate-300">Due Date</Label>
             <Input
               id="due_date"
               type="date"
               value={formData.due_date}
-              onChange={(e) => setFormData(prev => ({ ...prev, due_date: e.target.value }))}
-              className="bg-slate-800/50 border-slate-600 focus:border-cyan-400 focus:glow-cyan transition-all"
+              onChange={(e) => setFormData({ ...formData, due_date: e.target.value })}
+              className="bg-slate-800/50 border-slate-600 text-white focus:border-cyan-400 focus:ring-cyan-400/20"
             />
           </div>
 
+          <div className="space-y-2">
+            <Label htmlFor="project" className="text-slate-300">Project</Label>
+            <Select value={formData.project_id} onValueChange={(value) => setFormData({ ...formData, project_id: value })}>
+              <SelectTrigger className="bg-slate-800/50 border-slate-600 text-white focus:border-cyan-400">
+                <SelectValue placeholder="Select a project (optional)" />
+              </SelectTrigger>
+              <SelectContent className="bg-slate-800 border-slate-600">
+                <SelectItem value="" className="text-slate-400">No Project</SelectItem>
+                {projects.map((project) => (
+                  <SelectItem key={project.id} value={project.id} className="text-white">
+                    <div className="flex items-center space-x-2">
+                      <div
+                        className="w-3 h-3 rounded-full"
+                        style={{ backgroundColor: project.color || '#6366f1' }}
+                      />
+                      <span>{project.name}</span>
+                    </div>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
           <div className="flex gap-3 pt-4">
-            <Button 
-              type="submit"
-              className="flex-1 bg-gradient-to-r from-cyan-500 to-purple-500 hover:from-cyan-600 hover:to-purple-600 glow-cyan transition-all"
-              disabled={createTask.isPending || updateTask.isPending}
-            >
-              <Save className="w-4 h-4 mr-2" />
-              {task ? 'Update Task' : 'Create Task'}
-            </Button>
-            <Button 
+            <Button
               type="button"
               variant="outline"
               onClick={onClose}
-              className="border-slate-600 text-slate-300 hover:bg-slate-800"
+              className="flex-1 bg-slate-800/50 border-slate-600 text-slate-300 hover:bg-slate-700/50 hover:text-white"
             >
-              <X className="w-4 h-4 mr-2" />
               Cancel
+            </Button>
+            <Button
+              type="submit"
+              disabled={createTask.isPending || updateTask.isPending}
+              className="flex-1 bg-gradient-to-r from-cyan-500 to-purple-500 hover:from-cyan-600 hover:to-purple-600 glow-cyan transition-all"
+            >
+              {createTask.isPending || updateTask.isPending ? 'Saving...' : (task ? 'Update' : 'Create')}
             </Button>
           </div>
         </form>

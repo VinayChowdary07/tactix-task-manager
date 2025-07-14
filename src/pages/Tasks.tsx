@@ -5,14 +5,28 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Plus, Target, CheckCircle2, Clock, Star, Loader2 } from 'lucide-react';
 import { useTasks, Task } from '@/hooks/useTasks';
+import { useProjects } from '@/hooks/useProjects';
 import TaskModal from '@/components/TaskModal';
 import TaskCard from '@/components/TaskCard';
 import { toast } from 'sonner';
+import { useOutletContext } from 'react-router-dom';
+
+interface OutletContext {
+  selectedProjectId: string | null;
+  projects: Array<{ id: string; name: string; color?: string }>;
+}
 
 const Tasks = () => {
   const { tasks, isLoading, deleteTask } = useTasks();
+  const { projects } = useProjects();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
+  const { selectedProjectId } = useOutletContext<OutletContext>();
+
+  // Filter tasks by selected project if any
+  const filteredTasks = selectedProjectId 
+    ? tasks.filter(task => task.project_id === selectedProjectId)
+    : tasks;
 
   const handleEditTask = (task: Task) => {
     setEditingTask(task);
@@ -34,14 +48,14 @@ const Tasks = () => {
     setEditingTask(null);
   };
 
-  // Calculate stats from real data
-  const todoTasks = tasks.filter(task => task.status === 'Todo');
-  const inProgressTasks = tasks.filter(task => task.status === 'In Progress');
-  const completedTasks = tasks.filter(task => task.status === 'Done');
-  const highPriorityTasks = tasks.filter(task => task.priority === 'High');
+  // Calculate stats from filtered data
+  const todoTasks = filteredTasks.filter(task => task.status === 'Todo');
+  const inProgressTasks = filteredTasks.filter(task => task.status === 'In Progress');
+  const completedTasks = filteredTasks.filter(task => task.status === 'Done');
+  const highPriorityTasks = filteredTasks.filter(task => task.priority === 'High');
 
   const stats = [
-    { label: 'Total Tasks', value: tasks.length.toString(), icon: Target, color: 'text-cyan-400' },
+    { label: selectedProjectId ? 'Project Tasks' : 'Total Tasks', value: filteredTasks.length.toString(), icon: Target, color: 'text-cyan-400' },
     { label: 'Completed', value: completedTasks.length.toString(), icon: CheckCircle2, color: 'text-green-400' },
     { label: 'In Progress', value: inProgressTasks.length.toString(), icon: Clock, color: 'text-blue-400' },
     { label: 'High Priority', value: highPriorityTasks.length.toString(), icon: Star, color: 'text-red-400' },
@@ -85,8 +99,15 @@ const Tasks = () => {
       {/* Header with Create Task Button */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-xl font-semibold text-white mb-1">Your Tasks</h2>
-          <p className="text-slate-400">Manage and track your productivity</p>
+          <h2 className="text-xl font-semibold text-white mb-1">
+            {selectedProjectId ? 'Project Tasks' : 'Your Tasks'}
+          </h2>
+          <p className="text-slate-400">
+            {selectedProjectId 
+              ? `Tasks for ${projects.find(p => p.id === selectedProjectId)?.name || 'this project'}`
+              : 'Manage and track your productivity'
+            }
+          </p>
         </div>
         
         <Button 
@@ -99,13 +120,20 @@ const Tasks = () => {
       </div>
 
       {/* Tasks Grid */}
-      {tasks.length === 0 ? (
+      {filteredTasks.length === 0 ? (
         <div className="text-center py-12">
           <div className="w-16 h-16 bg-gradient-to-br from-slate-800 to-slate-700 rounded-full flex items-center justify-center mx-auto mb-4">
             <Target className="w-8 h-8 text-slate-400" />
           </div>
-          <h3 className="text-white text-lg font-semibold mb-2">No tasks yet</h3>
-          <p className="text-slate-400 mb-4">Create your first task to get started with productivity tracking</p>
+          <h3 className="text-white text-lg font-semibold mb-2">
+            {selectedProjectId ? 'No tasks in this project' : 'No tasks yet'}
+          </h3>
+          <p className="text-slate-400 mb-4">
+            {selectedProjectId 
+              ? 'Create your first task for this project to get started'
+              : 'Create your first task to get started with productivity tracking'
+            }
+          </p>
           <Button 
             onClick={() => setIsModalOpen(true)}
             className="bg-gradient-to-r from-cyan-500 to-purple-500 hover:from-cyan-600 hover:to-purple-600 glow-cyan transition-all"
@@ -116,10 +144,11 @@ const Tasks = () => {
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-          {tasks.map((task) => (
+          {filteredTasks.map((task) => (
             <TaskCard
               key={task.id}
               task={task}
+              projects={projects}
               onEdit={handleEditTask}
               onDelete={handleDeleteTask}
             />
@@ -141,6 +170,7 @@ const Tasks = () => {
         isOpen={isModalOpen}
         onClose={handleCloseModal}
         task={editingTask}
+        defaultProjectId={selectedProjectId}
       />
     </div>
   );
