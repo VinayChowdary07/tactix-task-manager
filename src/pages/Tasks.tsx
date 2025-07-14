@@ -1,125 +1,62 @@
 
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Progress } from '@/components/ui/progress';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { 
-  Plus, 
-  Clock, 
-  Star, 
-  CheckCircle2, 
-  AlertCircle, 
-  Calendar,
-  Zap,
-  Target,
-  TrendingUp
-} from 'lucide-react';
+import { Plus, Target, CheckCircle2, Clock, Star, Loader2 } from 'lucide-react';
+import { useTasks, Task } from '@/hooks/useTasks';
+import TaskModal from '@/components/TaskModal';
+import TaskCard from '@/components/TaskCard';
+import { toast } from 'sonner';
 
 const Tasks = () => {
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const { tasks, isLoading, deleteTask } = useTasks();
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingTask, setEditingTask] = useState<Task | null>(null);
 
-  // Placeholder task data
-  const tasks = [
-    {
-      id: 1,
-      title: "Complete UI/UX Design Review",
-      description: "Review and approve the new dashboard design mockups",
-      dueDate: "2024-01-20",
-      priority: "high",
-      progress: 75,
-      status: "in-progress",
-      tags: ["Design", "Review"]
-    },
-    {
-      id: 2,
-      title: "Implement Authentication System",
-      description: "Set up user authentication with OAuth providers",
-      dueDate: "2024-01-18",
-      priority: "high",
-      progress: 90,
-      status: "in-progress",
-      tags: ["Development", "Security"]
-    },
-    {
-      id: 3,
-      title: "Database Migration Script",
-      description: "Create migration scripts for the new user profile tables",
-      dueDate: "2024-01-25",
-      priority: "medium",
-      progress: 45,
-      status: "in-progress",
-      tags: ["Database", "Migration"]
-    },
-    {
-      id: 4,
-      title: "Team Meeting Preparation",
-      description: "Prepare slides and agenda for the weekly team standup",
-      dueDate: "2024-01-17",
-      priority: "low",
-      progress: 100,
-      status: "completed",
-      tags: ["Meeting", "Team"]
-    },
-    {
-      id: 5,
-      title: "API Documentation Update",
-      description: "Update API documentation with new endpoints and examples",
-      dueDate: "2024-01-22",
-      priority: "medium",
-      progress: 20,
-      status: "todo",
-      tags: ["Documentation", "API"]
-    },
-    {
-      id: 6,
-      title: "Performance Optimization",
-      description: "Optimize application performance and reduce load times",
-      dueDate: "2024-01-30",
-      priority: "high",
-      progress: 10,
-      status: "todo",
-      tags: ["Performance", "Optimization"]
-    }
-  ];
+  const handleEditTask = (task: Task) => {
+    setEditingTask(task);
+    setIsModalOpen(true);
+  };
 
-  const getPriorityColor = (priority: string) => {
-    switch (priority) {
-      case 'high': return 'bg-red-500/20 text-red-400 border-red-500/50';
-      case 'medium': return 'bg-yellow-500/20 text-yellow-400 border-yellow-500/50';
-      case 'low': return 'bg-green-500/20 text-green-400 border-green-500/50';
-      default: return 'bg-slate-500/20 text-slate-400 border-slate-500/50';
+  const handleDeleteTask = async (id: string) => {
+    if (window.confirm('Are you sure you want to delete this task?')) {
+      try {
+        await deleteTask.mutateAsync(id);
+      } catch (error) {
+        console.error('Error deleting task:', error);
+      }
     }
   };
 
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case 'completed': return <CheckCircle2 className="w-4 h-4 text-green-400" />;
-      case 'in-progress': return <Clock className="w-4 h-4 text-blue-400" />;
-      case 'todo': return <AlertCircle className="w-4 h-4 text-orange-400" />;
-      default: return null;
-    }
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    setEditingTask(null);
   };
 
-  const getProgressColor = (progress: number) => {
-    if (progress >= 80) return 'bg-gradient-to-r from-green-500 to-emerald-500';
-    if (progress >= 50) return 'bg-gradient-to-r from-blue-500 to-cyan-500';
-    if (progress >= 25) return 'bg-gradient-to-r from-yellow-500 to-orange-500';
-    return 'bg-gradient-to-r from-red-500 to-pink-500';
-  };
+  // Calculate stats from real data
+  const todoTasks = tasks.filter(task => task.status === 'Todo');
+  const inProgressTasks = tasks.filter(task => task.status === 'In Progress');
+  const completedTasks = tasks.filter(task => task.status === 'Done');
+  const highPriorityTasks = tasks.filter(task => task.priority === 'High');
 
-  // Stats data
   const stats = [
-    { label: 'Total Tasks', value: '24', icon: Target, color: 'text-cyan-400' },
-    { label: 'Completed', value: '18', icon: CheckCircle2, color: 'text-green-400' },
-    { label: 'In Progress', value: '4', icon: Clock, color: 'text-blue-400' },
-    { label: 'High Priority', value: '2', icon: Star, color: 'text-red-400' },
+    { label: 'Total Tasks', value: tasks.length.toString(), icon: Target, color: 'text-cyan-400' },
+    { label: 'Completed', value: completedTasks.length.toString(), icon: CheckCircle2, color: 'text-green-400' },
+    { label: 'In Progress', value: inProgressTasks.length.toString(), icon: Clock, color: 'text-blue-400' },
+    { label: 'High Priority', value: highPriorityTasks.length.toString(), icon: Star, color: 'text-red-400' },
   ];
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="text-center">
+          <Loader2 className="w-8 h-8 text-cyan-400 animate-spin mx-auto mb-4" />
+          <p className="text-slate-400">Loading your tasks...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -152,163 +89,59 @@ const Tasks = () => {
           <p className="text-slate-400">Manage and track your productivity</p>
         </div>
         
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogTrigger asChild>
-            <Button className="bg-gradient-to-r from-cyan-500 to-purple-500 hover:from-cyan-600 hover:to-purple-600 glow-cyan transition-all transform hover:scale-105">
-              <Plus className="w-4 h-4 mr-2" />
-              New Task
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="glass-dark border-slate-700/50 max-w-md">
-            <DialogHeader>
-              <DialogTitle className="text-white flex items-center">
-                <Zap className="w-5 h-5 mr-2 text-cyan-400" />
-                Create New Task
-              </DialogTitle>
-            </DialogHeader>
-            <div className="space-y-4 mt-4">
-              <div className="space-y-2">
-                <Label htmlFor="task-title" className="text-slate-200">Title</Label>
-                <Input
-                  id="task-title"
-                  placeholder="Enter task title..."
-                  className="bg-slate-800/50 border-slate-600 focus:border-primary focus:glow-cyan transition-all"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="task-description" className="text-slate-200">Description</Label>
-                <Textarea
-                  id="task-description"
-                  placeholder="Add task description..."
-                  className="bg-slate-800/50 border-slate-600 focus:border-primary focus:glow-cyan transition-all"
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label className="text-slate-200">Priority</Label>
-                  <Select>
-                    <SelectTrigger className="bg-slate-800/50 border-slate-600">
-                      <SelectValue placeholder="Select priority" />
-                    </SelectTrigger>
-                    <SelectContent className="bg-slate-800 border-slate-700">
-                      <SelectItem value="high">High</SelectItem>
-                      <SelectItem value="medium">Medium</SelectItem>
-                      <SelectItem value="low">Low</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="task-date" className="text-slate-200">Due Date</Label>
-                  <Input
-                    id="task-date"
-                    type="date"
-                    className="bg-slate-800/50 border-slate-600 focus:border-primary focus:glow-cyan transition-all"
-                  />
-                </div>
-              </div>
-              <Button 
-                className="w-full bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 glow-purple transition-all"
-                onClick={() => setIsDialogOpen(false)}
-              >
-                <Plus className="w-4 h-4 mr-2" />
-                Create Task
-              </Button>
-            </div>
-          </DialogContent>
-        </Dialog>
+        <Button 
+          onClick={() => setIsModalOpen(true)}
+          className="bg-gradient-to-r from-cyan-500 to-purple-500 hover:from-cyan-600 hover:to-purple-600 glow-cyan transition-all transform hover:scale-105"
+        >
+          <Plus className="w-4 h-4 mr-2" />
+          New Task
+        </Button>
       </div>
 
       {/* Tasks Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-        {tasks.map((task) => (
-          <Card 
-            key={task.id} 
-            className="glass-dark border-slate-700/50 hover:glow-cyan transition-all transform hover:scale-105 cursor-pointer group"
+      {tasks.length === 0 ? (
+        <div className="text-center py-12">
+          <div className="w-16 h-16 bg-gradient-to-br from-slate-800 to-slate-700 rounded-full flex items-center justify-center mx-auto mb-4">
+            <Target className="w-8 h-8 text-slate-400" />
+          </div>
+          <h3 className="text-white text-lg font-semibold mb-2">No tasks yet</h3>
+          <p className="text-slate-400 mb-4">Create your first task to get started with productivity tracking</p>
+          <Button 
+            onClick={() => setIsModalOpen(true)}
+            className="bg-gradient-to-r from-cyan-500 to-purple-500 hover:from-cyan-600 hover:to-purple-600 glow-cyan transition-all"
           >
-            <CardHeader className="pb-3">
-              <div className="flex items-start justify-between">
-                <CardTitle className="text-white text-lg group-hover:text-cyan-400 transition-colors">
-                  {task.title}
-                </CardTitle>
-                {getStatusIcon(task.status)}
-              </div>
-              <p className="text-slate-400 text-sm mt-2">{task.description}</p>
-            </CardHeader>
-            
-            <CardContent className="pt-0">
-              <div className="space-y-4">
-                {/* Progress */}
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="text-slate-400">Progress</span>
-                    <span className="text-white font-medium">{task.progress}%</span>
-                  </div>
-                  <div className="w-full bg-slate-700 rounded-full h-2">
-                    <div 
-                      className={`h-2 rounded-full transition-all ${getProgressColor(task.progress)}`}
-                      style={{ width: `${task.progress}%` }}
-                    ></div>
-                  </div>
-                </div>
-
-                {/* Due Date and Priority */}
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-2 text-slate-400 text-sm">
-                    <Calendar className="w-4 h-4" />
-                    <span>{new Date(task.dueDate).toLocaleDateString()}</span>
-                  </div>
-                  <Badge className={`border ${getPriorityColor(task.priority)}`}>
-                    {task.priority}
-                  </Badge>
-                </div>
-
-                {/* Tags */}
-                <div className="flex flex-wrap gap-2">
-                  {task.tags.map((tag, index) => (
-                    <Badge 
-                      key={index} 
-                      variant="outline" 
-                      className="text-xs bg-slate-800/50 border-slate-600 text-slate-300"
-                    >
-                      {tag}
-                    </Badge>
-                  ))}
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+            <Plus className="w-4 h-4 mr-2" />
+            Create First Task
+          </Button>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+          {tasks.map((task) => (
+            <TaskCard
+              key={task.id}
+              task={task}
+              onEdit={handleEditTask}
+              onDelete={handleDeleteTask}
+            />
+          ))}
+        </div>
+      )}
 
       {/* Floating Action Button */}
-      <Dialog>
-        <DialogTrigger asChild>
-          <Button 
-            size="lg"
-            className="fixed bottom-8 right-8 w-14 h-14 rounded-full bg-gradient-cyber glow-cyan shadow-2xl hover:scale-110 transition-all z-50"
-          >
-            <Plus className="w-6 h-6" />
-          </Button>
-        </DialogTrigger>
-        <DialogContent className="glass-dark border-slate-700/50 max-w-md">
-          <DialogHeader>
-            <DialogTitle className="text-white flex items-center">
-              <TrendingUp className="w-5 h-5 mr-2 text-cyan-400" />
-              Quick Task
-            </DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4 mt-4">
-            <Input
-              placeholder="What needs to be done?"
-              className="bg-slate-800/50 border-slate-600 focus:border-primary focus:glow-cyan transition-all"
-            />
-            <Button className="w-full bg-gradient-to-r from-cyan-500 to-purple-500 hover:from-cyan-600 hover:to-purple-600 glow-cyan transition-all">
-              <Plus className="w-4 h-4 mr-2" />
-              Add Task
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
+      <Button 
+        onClick={() => setIsModalOpen(true)}
+        size="lg"
+        className="fixed bottom-8 right-8 w-14 h-14 rounded-full bg-gradient-cyber glow-cyan shadow-2xl hover:scale-110 transition-all z-50"
+      >
+        <Plus className="w-6 h-6" />
+      </Button>
+
+      {/* Task Modal */}
+      <TaskModal
+        isOpen={isModalOpen}
+        onClose={handleCloseModal}
+        task={editingTask}
+      />
     </div>
   );
 };
