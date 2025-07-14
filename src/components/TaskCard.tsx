@@ -4,8 +4,8 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Task } from '@/hooks/useTasks';
-import { Edit, Trash2, Calendar, Flag } from 'lucide-react';
-import { format } from 'date-fns';
+import { Edit, Trash2, Calendar, Flag, Clock, AlertTriangle } from 'lucide-react';
+import { format, isToday, isBefore, startOfDay, parseISO, isAfter, addDays } from 'date-fns';
 
 interface TaskCardProps {
   task: Task;
@@ -33,6 +33,53 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, projects, onEdit, onDelete })
     }
   };
 
+  const getDueDateInfo = () => {
+    if (!task.due_date) return null;
+    
+    const dueDate = parseISO(task.due_date);
+    const now = new Date();
+    const today = startOfDay(now);
+    const tomorrow = addDays(today, 1);
+    
+    if (task.status === 'Done') {
+      return {
+        label: 'Completed',
+        color: 'bg-green-500/20 text-green-400 border-green-500/50',
+        icon: Clock
+      };
+    }
+    
+    if (isBefore(dueDate, today)) {
+      return {
+        label: 'Overdue',
+        color: 'bg-red-500/20 text-red-400 border-red-500/50 animate-pulse',
+        icon: AlertTriangle
+      };
+    }
+    
+    if (isToday(dueDate)) {
+      return {
+        label: 'Due Today',
+        color: 'bg-yellow-500/20 text-yellow-400 border-yellow-500/50 glow-yellow',
+        icon: Clock
+      };
+    }
+    
+    if (isBefore(dueDate, tomorrow)) {
+      return {
+        label: 'Due Tomorrow',
+        color: 'bg-orange-500/20 text-orange-400 border-orange-500/50',
+        icon: Clock
+      };
+    }
+    
+    return {
+      label: format(dueDate, 'MMM dd, yyyy'),
+      color: 'bg-cyan-500/20 text-cyan-400 border-cyan-500/50',
+      icon: Calendar
+    };
+  };
+
   const getProgressPercentage = () => {
     switch (task.status) {
       case 'Done': return 100;
@@ -43,6 +90,7 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, projects, onEdit, onDelete })
   };
 
   const project = projects.find(p => p.id === task.project_id);
+  const dueDateInfo = getDueDateInfo();
 
   return (
     <Card className="glass-dark border-slate-700/50 hover:glow-cyan transition-all transform hover:scale-105 cursor-pointer group">
@@ -64,7 +112,10 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, projects, onEdit, onDelete })
               <Button
                 size="sm"
                 variant="ghost"
-                onClick={() => onEdit(task)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onEdit(task);
+                }}
                 className="w-8 h-8 p-0 text-slate-400 hover:text-cyan-400 hover:bg-cyan-400/10"
               >
                 <Edit className="w-4 h-4" />
@@ -72,7 +123,10 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, projects, onEdit, onDelete })
               <Button
                 size="sm"
                 variant="ghost"
-                onClick={() => onDelete(task.id)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onDelete(task.id);
+                }}
                 className="w-8 h-8 p-0 text-slate-400 hover:text-red-400 hover:bg-red-400/10"
               >
                 <Trash2 className="w-4 h-4" />
@@ -101,15 +155,17 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, projects, onEdit, onDelete })
             </div>
           )}
 
-          {/* Due date */}
-          {task.due_date && (
-            <div className="flex items-center space-x-2 text-slate-400 text-sm">
-              <Calendar className="w-4 h-4" />
-              <span>{format(new Date(task.due_date), 'MMM dd, yyyy')}</span>
+          {/* Due Date Badge */}
+          {dueDateInfo && (
+            <div className="flex items-center space-x-2">
+              <Badge className={`border text-xs ${dueDateInfo.color}`}>
+                <dueDateInfo.icon className="w-3 h-3 mr-1" />
+                {dueDateInfo.label}
+              </Badge>
             </div>
           )}
 
-          {/* Status and Priority */}
+          {/* Priority and Status */}
           <div className="flex items-center justify-between">
             <Badge className={`border ${getPriorityColor(task.priority)}`}>
               <Flag className="w-3 h-3 mr-1" />

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import {
   Dialog,
@@ -27,9 +26,16 @@ interface TaskModalProps {
   onClose: () => void;
   task?: Task | null;
   defaultProjectId?: string | null;
+  defaultDueDate?: Date;
 }
 
-const TaskModal: React.FC<TaskModalProps> = ({ isOpen, onClose, task, defaultProjectId }) => {
+const TaskModal: React.FC<TaskModalProps> = ({ 
+  isOpen, 
+  onClose, 
+  task, 
+  defaultProjectId,
+  defaultDueDate 
+}) => {
   const { createTask, updateTask } = useTasks();
   const { projects } = useProjects();
   const [formData, setFormData] = useState({
@@ -42,26 +48,28 @@ const TaskModal: React.FC<TaskModalProps> = ({ isOpen, onClose, task, defaultPro
   });
 
   useEffect(() => {
-    if (task) {
-      setFormData({
-        title: task.title,
-        description: task.description || '',
-        due_date: task.due_date ? format(new Date(task.due_date), 'yyyy-MM-dd') : '',
-        priority: task.priority,
-        status: task.status,
-        project_id: task.project_id || 'none'
-      });
-    } else {
-      setFormData({
-        title: '',
-        description: '',
-        due_date: '',
-        priority: 'Medium',
-        status: 'Todo',
-        project_id: defaultProjectId || 'none'
-      });
+    if (isOpen) {
+      if (task) {
+        setFormData({
+          title: task.title,
+          description: task.description || '',
+          due_date: task.due_date ? format(new Date(task.due_date), 'yyyy-MM-dd') : '',
+          priority: task.priority,
+          status: task.status,
+          project_id: task.project_id || 'none'
+        });
+      } else {
+        setFormData({
+          title: '',
+          description: '',
+          due_date: defaultDueDate ? format(defaultDueDate, 'yyyy-MM-dd') : '',
+          priority: 'Medium',
+          status: 'Todo',
+          project_id: defaultProjectId || 'none'
+        });
+      }
     }
-  }, [task, isOpen, defaultProjectId]);
+  }, [task, isOpen, defaultProjectId, defaultDueDate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
