@@ -7,16 +7,17 @@ import { Input } from '@/components/ui/input';
 import { 
   FolderOpen, 
   Plus, 
-  Users, 
   Calendar,
-  Star,
   Clock,
   CheckCircle2,
   Search,
   MoreVertical,
   Edit3,
   Trash2,
-  Target
+  Target,
+  AlertCircle,
+  Minus,
+  TrendingUp
 } from 'lucide-react';
 import { useProjects } from '@/hooks/useProjects';
 import ProjectModal from '@/components/ProjectModal';
@@ -28,10 +29,12 @@ import {
 } from '@/components/ui/dropdown-menu';
 
 const Projects = () => {
-  const { projects, deleteProject } = useProjects();
+  const { projects = [], isLoading, deleteProject } = useProjects();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedProject, setSelectedProject] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
+
+  console.log('Projects data:', projects);
 
   const filteredProjects = projects.filter(project =>
     project.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -39,12 +42,13 @@ const Projects = () => {
   );
 
   const handleEditProject = (project: any) => {
+    console.log('Editing project:', project);
     setSelectedProject(project);
     setIsModalOpen(true);
   };
 
-  const handleDeleteProject = async (projectId: string) => {
-    if (window.confirm('Are you sure you want to delete this project? This action cannot be undone.')) {
+  const handleDeleteProject = async (projectId: string, projectName: string) => {
+    if (window.confirm(`Are you sure you want to delete "${projectName}"? This action cannot be undone.`)) {
       try {
         await deleteProject.mutateAsync(projectId);
       } catch (error) {
@@ -60,6 +64,22 @@ const Projects = () => {
 
   const getProjectColorStyle = (color?: string) => {
     return color ? { backgroundColor: color } : { backgroundColor: '#6366f1' };
+  };
+
+  const getPriorityIcon = (priority?: string) => {
+    switch (priority) {
+      case 'High': return <TrendingUp className="w-4 h-4 text-red-400" />;
+      case 'Low': return <Minus className="w-4 h-4 text-green-400" />;
+      default: return <AlertCircle className="w-4 h-4 text-yellow-400" />;
+    }
+  };
+
+  const getPriorityColor = (priority?: string) => {
+    switch (priority) {
+      case 'High': return 'bg-red-500/20 text-red-300 border-red-500/30';
+      case 'Low': return 'bg-green-500/20 text-green-300 border-green-500/30';
+      default: return 'bg-yellow-500/20 text-yellow-300 border-yellow-500/30';
+    }
   };
 
   const stats = [
@@ -92,6 +112,14 @@ const Projects = () => {
       glow: 'glow-purple'
     },
   ];
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-white text-xl">Loading projects...</div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-8">
@@ -184,17 +212,25 @@ const Projects = () => {
                 <div className="flex items-start justify-between">
                   <div className="flex items-center space-x-4 flex-1">
                     <div 
-                      className="p-3 rounded-xl"
+                      className="p-3 rounded-xl shadow-lg"
                       style={getProjectColorStyle(project.color)}
                     >
                       <FolderOpen className="w-6 h-6 text-white" />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <CardTitle className="text-white text-xl group-hover:text-gradient transition-all duration-300 truncate">
-                        {project.name}
-                      </CardTitle>
+                      <div className="flex items-center gap-2 mb-2">
+                        <CardTitle className="text-white text-xl group-hover:text-gradient transition-all duration-300 truncate">
+                          {project.name}
+                        </CardTitle>
+                        <Badge 
+                          className={`text-xs px-2 py-1 border ${getPriorityColor(project.priority)}`}
+                        >
+                          {getPriorityIcon(project.priority)}
+                          <span className="ml-1">{project.priority || 'Medium'}</span>
+                        </Badge>
+                      </div>
                       {project.description && (
-                        <p className="text-slate-400 text-sm mt-2 line-clamp-2">{project.description}</p>
+                        <p className="text-slate-400 text-sm line-clamp-2">{project.description}</p>
                       )}
                     </div>
                   </div>
@@ -218,7 +254,7 @@ const Projects = () => {
                           Edit Project
                         </DropdownMenuItem>
                         <DropdownMenuItem 
-                          onClick={() => handleDeleteProject(project.id)}
+                          onClick={() => handleDeleteProject(project.id, project.name)}
                           className="text-red-400 hover:text-red-300"
                         >
                           <Trash2 className="w-4 h-4 mr-2" />
@@ -240,10 +276,11 @@ const Projects = () => {
                     </div>
                     <div className="w-full bg-slate-800 rounded-full h-3 overflow-hidden">
                       <div 
-                        className="h-3 rounded-full transition-all duration-1000"
+                        className="h-3 rounded-full transition-all duration-1000 shadow-lg"
                         style={{
                           width: `${project.progress || 0}%`,
-                          backgroundColor: project.color || '#6366f1'
+                          backgroundColor: project.color || '#6366f1',
+                          boxShadow: `0 0 10px ${project.color || '#6366f1'}40`
                         }}
                       ></div>
                     </div>
@@ -262,7 +299,7 @@ const Projects = () => {
                     </div>
                     <div className="flex items-center space-x-3 p-3 rounded-lg glass-card">
                       <div 
-                        className="w-5 h-5 rounded-full"
+                        className="w-5 h-5 rounded-full shadow-md"
                         style={getProjectColorStyle(project.color)}
                       />
                       <div>

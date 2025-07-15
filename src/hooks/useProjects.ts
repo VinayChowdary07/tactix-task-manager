@@ -9,6 +9,7 @@ export interface Project {
   name: string;
   description?: string;
   color?: string;
+  priority?: 'Low' | 'Medium' | 'High';
   user_id: string;
   created_at: string;
   updated_at: string;
@@ -25,6 +26,7 @@ export interface ProjectInput {
   name: string;
   description?: string;
   color?: string;
+  priority?: 'Low' | 'Medium' | 'High';
 }
 
 export const useProjects = () => {
@@ -36,6 +38,8 @@ export const useProjects = () => {
     queryFn: async () => {
       if (!user) return [];
       
+      console.log('Fetching projects for user:', user.id);
+      
       // Fetch projects with task counts
       const { data, error } = await supabase
         .from('projects')
@@ -43,9 +47,15 @@ export const useProjects = () => {
           *,
           tasks:tasks(id, status)
         `)
+        .eq('user_id', user.id)
         .order('name', { ascending: true });
       
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching projects:', error);
+        throw error;
+      }
+      
+      console.log('Fetched projects:', data);
       
       // Calculate progress for each project
       const projectsWithProgress = data.map(project => {
@@ -58,7 +68,8 @@ export const useProjects = () => {
           ...project,
           task_count: totalTasks,
           completed_task_count: completedTasks,
-          progress
+          progress,
+          priority: project.priority || 'Medium'
         };
       });
       
@@ -71,53 +82,81 @@ export const useProjects = () => {
     mutationFn: async (projectData: ProjectInput) => {
       if (!user) throw new Error('User not authenticated');
       
+      console.log('Creating project:', projectData);
+      
       const { data, error } = await supabase
         .from('projects')
-        .insert([{ ...projectData, user_id: user.id }])
+        .insert([{ 
+          ...projectData, 
+          user_id: user.id,
+          priority: projectData.priority || 'Medium'
+        }])
         .select()
         .single();
       
-      if (error) throw error;
+      if (error) {
+        console.error('Error creating project:', error);
+        throw error;
+      }
+      
+      console.log('Created project:', data);
       return data;
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['projects'] });
-      toast.success('Project created successfully!');
+      toast.success(`Project "${data.name}" created successfully!`);
     },
     onError: (error) => {
       console.error('Error creating project:', error);
-      toast.error('Failed to create project');
+      toast.error('Failed to create project. Please try again.');
     },
   });
 
   const updateProject = useMutation({
     mutationFn: async ({ id, ...projectData }: Partial<Project> & { id: string }) => {
+      console.log('Updating project:', id, projectData);
+      
       // Remove non-database fields before updating
       const { tasks, task_count, completed_task_count, progress, ...updateData } = projectData;
       
+      // Only include fields that should be updated
+      const cleanUpdateData: any = {};
+      if (updateData.name !== undefined) cleanUpdateData.name = updateData.name;
+      if (updateData.description !== undefined) cleanUpdateData.description = updateData.description;
+      if (updateData.color !== undefined) cleanUpdateData.color = updateData.color;
+      if (updateData.priority !== undefined) cleanUpdateData.priority = updateData.priority;
+      
       const { data, error } = await supabase
         .from('projects')
-        .update(updateData)
+        .update(cleanUpdateData)
         .eq('id', id)
+        .eq('user_id', user?.id)
         .select()
         .single();
       
-      if (error) throw error;
+      if (error) {
+        console.error('Error updating project:', error);
+        throw error;
+      }
+      
+      console.log('Updated project:', data);
       return data;
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['projects'] });
       queryClient.invalidateQueries({ queryKey: ['tasks'] });
-      toast.success('Project updated successfully!');
+      toast.success(`Project "${data.name}" updated successfully!`);
     },
     onError: (error) => {
       console.error('Error updating project:', error);
-      toast.error('Failed to update project');
+      toast.error('Failed to update project. Please try again.');
     },
   });
 
   const deleteProject = useMutation({
     mutationFn: async (id: string) => {
+      console.log('Deleting project:', id);
+      
       // First, set all tasks with this project_id to null
       await supabase
         .from('tasks')
@@ -128,9 +167,15 @@ export const useProjects = () => {
       const { error } = await supabase
         .from('projects')
         .delete()
-        .eq('id', id);
+        .eq('id', id)
+        .eq('user_id', user?.id);
       
-      if (error) throw error;
+      if (error) {
+        console.error('Error deleting project:', error);
+        throw error;
+      }
+      
+      console.log('Deleted project:', id);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['projects'] });
@@ -139,7 +184,7 @@ export const useProjects = () => {
     },
     onError: (error) => {
       console.error('Error deleting project:', error);
-      toast.error('Failed to delete project');
+      toast.error('Failed to delete project. Please try again.');
     },
   });
 

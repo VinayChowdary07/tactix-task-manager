@@ -9,6 +9,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useProjects, Project } from '@/hooks/useProjects';
 import { X } from 'lucide-react';
 import { toast } from 'sonner';
@@ -24,46 +25,62 @@ const colors = [
   '#eab308', '#22c55e', '#10b981', '#06b6d4', '#3b82f6'
 ];
 
+const priorities = ['Low', 'Medium', 'High'] as const;
+
 const ProjectModal: React.FC<ProjectModalProps> = ({ isOpen, onClose, project }) => {
   const { createProject, updateProject } = useProjects();
   const [formData, setFormData] = useState({
     name: '',
     description: '',
-    color: '#6366f1'
+    color: '#6366f1',
+    priority: 'Medium' as 'Low' | 'Medium' | 'High'
   });
   const [originalData, setOriginalData] = useState({
     name: '',
     description: '',
-    color: '#6366f1'
+    color: '#6366f1',
+    priority: 'Medium' as 'Low' | 'Medium' | 'High'
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // Reset form when modal opens/closes or project changes
   useEffect(() => {
-    if (project && isOpen) {
-      const data = {
-        name: project.name || '',
-        description: project.description || '',
-        color: project.color || '#6366f1'
-      };
-      setFormData(data);
-      setOriginalData(data);
-    } else if (!project && isOpen) {
-      const data = {
-        name: '',
-        description: '',
-        color: '#6366f1'
-      };
-      setFormData(data);
-      setOriginalData(data);
+    if (isOpen) {
+      if (project) {
+        // Editing existing project
+        const data = {
+          name: project.name || '',
+          description: project.description || '',
+          color: project.color || '#6366f1',
+          priority: (project.priority || 'Medium') as 'Low' | 'Medium' | 'High'
+        };
+        setFormData(data);
+        setOriginalData(data);
+        console.log('Loaded project for editing:', data);
+      } else {
+        // Creating new project
+        const data = {
+          name: '',
+          description: '',
+          color: '#6366f1',
+          priority: 'Medium' as 'Low' | 'Medium' | 'High'
+        };
+        setFormData(data);
+        setOriginalData(data);
+        console.log('Reset form for new project');
+      }
     }
   }, [project, isOpen]);
 
   const hasChanges = () => {
-    return (
-      formData.name !== originalData.name ||
-      formData.description !== originalData.description ||
-      formData.color !== originalData.color
+    const changed = (
+      formData.name.trim() !== originalData.name.trim() ||
+      formData.description.trim() !== originalData.description.trim() ||
+      formData.color !== originalData.color ||
+      formData.priority !== originalData.priority
     );
+    console.log('Has changes:', changed, { formData, originalData });
+    return changed;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -76,6 +93,7 @@ const ProjectModal: React.FC<ProjectModalProps> = ({ isOpen, onClose, project })
 
     // If editing and no changes, just close the modal
     if (project && !hasChanges()) {
+      console.log('No changes detected, closing modal');
       onClose();
       return;
     }
@@ -85,9 +103,12 @@ const ProjectModal: React.FC<ProjectModalProps> = ({ isOpen, onClose, project })
     try {
       const projectData = {
         name: formData.name.trim(),
-        description: formData.description?.trim() || '',
-        color: formData.color
+        description: formData.description.trim(),
+        color: formData.color,
+        priority: formData.priority
       };
+
+      console.log('Submitting project data:', projectData);
 
       if (project) {
         await updateProject.mutateAsync({
@@ -97,6 +118,7 @@ const ProjectModal: React.FC<ProjectModalProps> = ({ isOpen, onClose, project })
       } else {
         await createProject.mutateAsync(projectData);
       }
+      
       onClose();
     } catch (error) {
       console.error('Error saving project:', error);
@@ -114,6 +136,11 @@ const ProjectModal: React.FC<ProjectModalProps> = ({ isOpen, onClose, project })
     } else {
       onClose();
     }
+  };
+
+  const handleInputChange = (field: string, value: string) => {
+    console.log('Input change:', field, value);
+    setFormData(prev => ({ ...prev, [field]: value }));
   };
 
   return (
@@ -140,7 +167,7 @@ const ProjectModal: React.FC<ProjectModalProps> = ({ isOpen, onClose, project })
             <Input
               id="name"
               value={formData.name}
-              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+              onChange={(e) => handleInputChange('name', e.target.value)}
               className="bg-slate-800/50 border-slate-600 text-white placeholder-slate-400 focus:border-cyan-400 focus:ring-cyan-400/20"
               placeholder="Enter project name"
               required
@@ -153,10 +180,30 @@ const ProjectModal: React.FC<ProjectModalProps> = ({ isOpen, onClose, project })
             <Input
               id="description"
               value={formData.description}
-              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+              onChange={(e) => handleInputChange('description', e.target.value)}
               className="bg-slate-800/50 border-slate-600 text-white placeholder-slate-400 focus:border-cyan-400 focus:ring-cyan-400/20"
               placeholder="Project description (optional)"
             />
+          </div>
+
+          {/* Priority */}
+          <div className="space-y-2">
+            <Label className="text-slate-300">Priority</Label>
+            <Select 
+              value={formData.priority} 
+              onValueChange={(value) => handleInputChange('priority', value)}
+            >
+              <SelectTrigger className="bg-slate-800/50 border-slate-600 text-white">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent className="glass-dark border-slate-700">
+                {priorities.map((priority) => (
+                  <SelectItem key={priority} value={priority} className="text-white hover:bg-slate-700">
+                    {priority}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
           {/* Color Selection */}
@@ -167,10 +214,10 @@ const ProjectModal: React.FC<ProjectModalProps> = ({ isOpen, onClose, project })
                 <button
                   key={color}
                   type="button"
-                  onClick={() => setFormData({ ...formData, color })}
+                  onClick={() => handleInputChange('color', color)}
                   className={`w-12 h-12 rounded-lg transition-all border-2 ${
                     formData.color === color 
-                      ? 'border-white scale-110' 
+                      ? 'border-white scale-110 shadow-lg' 
                       : 'border-transparent hover:scale-105'
                   }`}
                   style={{ backgroundColor: color }}
@@ -192,7 +239,7 @@ const ProjectModal: React.FC<ProjectModalProps> = ({ isOpen, onClose, project })
             </Button>
             <Button
               type="submit"
-              disabled={isSubmitting || (!project && !formData.name.trim())}
+              disabled={isSubmitting || (!project && !formData.name.trim()) || (project && !hasChanges())}
               className="flex-1 bg-gradient-to-r from-cyan-500 to-purple-500 hover:from-cyan-600 hover:to-purple-600 glow-cyan transition-all disabled:opacity-50"
             >
               {isSubmitting ? 'Saving...' : (project ? 'Update Project' : 'Create Project')}
