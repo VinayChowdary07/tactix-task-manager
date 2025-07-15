@@ -110,6 +110,39 @@ export type Database = {
         }
         Relationships: []
       }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          created_at: string | null
+          first_name: string | null
+          id: string
+          last_name: string | null
+          timezone: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string | null
+          first_name?: string | null
+          id?: string
+          last_name?: string | null
+          timezone?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string | null
+          first_name?: string | null
+          id?: string
+          last_name?: string | null
+          timezone?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       projects: {
         Row: {
           color: string | null
@@ -264,6 +297,66 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      user_preferences: {
+        Row: {
+          accent_color: string | null
+          activity_status: boolean | null
+          analytics_tracking: boolean | null
+          created_at: string | null
+          email_notifications: boolean | null
+          id: string
+          mobile_push_notifications: boolean | null
+          profile_visibility: boolean | null
+          project_milestones: boolean | null
+          task_reminders: boolean | null
+          task_sharing: boolean | null
+          team_updates: boolean | null
+          theme: string | null
+          two_factor_enabled: boolean | null
+          updated_at: string | null
+          user_id: string
+          weekly_summary: boolean | null
+        }
+        Insert: {
+          accent_color?: string | null
+          activity_status?: boolean | null
+          analytics_tracking?: boolean | null
+          created_at?: string | null
+          email_notifications?: boolean | null
+          id?: string
+          mobile_push_notifications?: boolean | null
+          profile_visibility?: boolean | null
+          project_milestones?: boolean | null
+          task_reminders?: boolean | null
+          task_sharing?: boolean | null
+          team_updates?: boolean | null
+          theme?: string | null
+          two_factor_enabled?: boolean | null
+          updated_at?: string | null
+          user_id: string
+          weekly_summary?: boolean | null
+        }
+        Update: {
+          accent_color?: string | null
+          activity_status?: boolean | null
+          analytics_tracking?: boolean | null
+          created_at?: string | null
+          email_notifications?: boolean | null
+          id?: string
+          mobile_push_notifications?: boolean | null
+          profile_visibility?: boolean | null
+          project_milestones?: boolean | null
+          task_reminders?: boolean | null
+          task_sharing?: boolean | null
+          team_updates?: boolean | null
+          theme?: string | null
+          two_factor_enabled?: boolean | null
+          updated_at?: string | null
+          user_id?: string
+          weekly_summary?: boolean | null
+        }
+        Relationships: []
       }
     }
     Views: {
