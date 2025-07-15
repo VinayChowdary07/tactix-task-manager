@@ -47,13 +47,12 @@ const TaskCard: React.FC<TaskCardProps> = ({
   const completedSubtasks = task.subtasks?.filter(st => st.completed).length || 0;
   const totalSubtasks = task.subtasks?.length || 0;
 
-  const handleToggleComplete = (e: React.MouseEvent) => {
-    e.stopPropagation();
+  const handleToggleComplete = (checked: boolean | string) => {
     if (onToggleComplete) {
       onToggleComplete({
         ...task,
-        completed: !task.completed,
-        status: !task.completed ? 'Done' : 'Todo'
+        completed: typeof checked === 'boolean' ? checked : !task.completed,
+        status: (typeof checked === 'boolean' ? checked : !task.completed) ? 'Done' : 'Todo'
       });
     }
   };

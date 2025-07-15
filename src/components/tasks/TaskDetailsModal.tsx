@@ -18,7 +18,7 @@ import {
   Plus, 
   X, 
   RotateCw,
-  Project,
+  Folder,
   Clock,
   Edit
 } from 'lucide-react';
@@ -259,7 +259,7 @@ const TaskDetailsModal: React.FC<TaskDetailsModalProps> = ({
           <div className="flex flex-wrap items-center gap-4">
             {project && (
               <div className="flex items-center gap-2">
-                <Project className="w-4 h-4 text-slate-500" />
+                <Folder className="w-4 h-4 text-slate-500" />
                 <div
                   className="w-3 h-3 rounded-full"
                   style={{ backgroundColor: project.color || '#6366f1' }}
