@@ -6,7 +6,6 @@ import {
   FolderOpen,
   Calendar,
   Settings,
-  Tag,
   Target,
 } from 'lucide-react';
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
@@ -45,7 +44,6 @@ const Layout = () => {
     { to: '/calendar', icon: Calendar, label: 'Calendar' },
     { to: '/goals', icon: Target, label: 'Goals' },
     { to: '/weekly-review', icon: BarChart3, label: 'Weekly Review' },
-    { to: '/tags', icon: Tag, label: 'Tags' },
     { to: '/settings', icon: Settings, label: 'Settings' },
   ];
 
