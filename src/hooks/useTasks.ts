@@ -49,6 +49,22 @@ export interface TaskInput {
   completed?: boolean;
 }
 
+// Helper function to convert database task to our Task interface
+const convertDbTaskToTask = (dbTask: any): Task => {
+  return {
+    ...dbTask,
+    subtasks: Array.isArray(dbTask.subtasks) ? dbTask.subtasks as Subtask[] : []
+  };
+};
+
+// Helper function to convert our Task interface to database format
+const convertTaskToDbFormat = (task: any) => {
+  return {
+    ...task,
+    subtasks: JSON.stringify(task.subtasks || [])
+  };
+};
+
 export const useTasks = () => {
   const { user, loading: authLoading } = useAuth();
   const queryClient = useQueryClient();
@@ -75,7 +91,7 @@ export const useTasks = () => {
       }
       
       console.log('Tasks fetched successfully:', data?.length);
-      return data as Task[];
+      return data ? data.map(convertDbTaskToTask) : [];
     },
     enabled: !!user?.id && !authLoading,
   });
@@ -118,7 +134,7 @@ export const useTasks = () => {
       }
 
       console.log('Task created successfully:', taskResult.id);
-      return taskResult as Task;
+      return convertDbTaskToTask(taskResult);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['tasks'] });
@@ -176,7 +192,7 @@ export const useTasks = () => {
       }
 
       console.log('Task updated successfully:', taskResult.id);
-      return taskResult as Task;
+      return convertDbTaskToTask(taskResult);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['tasks'] });
