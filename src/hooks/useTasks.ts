@@ -1,3 +1,4 @@
+
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/lib/auth';
@@ -52,24 +53,45 @@ export const useTasks = () => {
         .select('*')
         .order('created_at', { ascending: false });
       
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching tasks:', error);
+        throw error;
+      }
       return data as Task[];
     },
     enabled: !!user,
   });
 
-
   const createTask = useMutation({
     mutationFn: async (taskData: TaskInput) => {
       if (!user) throw new Error('User not authenticated');
       
+      // Prepare the data for insertion
+      const insertData = {
+        title: taskData.title,
+        description: taskData.description || null,
+        due_date: taskData.due_date || null,
+        reminder_time: taskData.reminder_time || null,
+        priority: taskData.priority,
+        status: taskData.status,
+        project_id: taskData.project_id || null,
+        repeat_type: taskData.repeat_type || 'none',
+        repeat_interval: taskData.repeat_interval || null,
+        repeat_until: taskData.repeat_until || null,
+        time_estimate: taskData.time_estimate || null,
+        user_id: user.id
+      };
+
       const { data: taskResult, error: taskError } = await supabase
         .from('tasks')
-        .insert([{ ...taskData, user_id: user.id }])
+        .insert([insertData])
         .select()
         .single();
       
-      if (taskError) throw taskError;
+      if (taskError) {
+        console.error('Error creating task:', taskError);
+        throw taskError;
+      }
 
       return taskResult as Task;
     },
@@ -85,14 +107,33 @@ export const useTasks = () => {
 
   const updateTask = useMutation({
     mutationFn: async ({ id, ...taskData }: Partial<Task> & { id: string }) => {
+      // Prepare the data for update
+      const updateData = {
+        title: taskData.title,
+        description: taskData.description || null,
+        due_date: taskData.due_date || null,
+        reminder_time: taskData.reminder_time || null,
+        priority: taskData.priority,
+        status: taskData.status,
+        project_id: taskData.project_id || null,
+        repeat_type: taskData.repeat_type || 'none',
+        repeat_interval: taskData.repeat_interval || null,
+        repeat_until: taskData.repeat_until || null,
+        time_estimate: taskData.time_estimate || null,
+        time_spent: taskData.time_spent
+      };
+
       const { data: taskResult, error } = await supabase
         .from('tasks')
-        .update(taskData)
+        .update(updateData)
         .eq('id', id)
         .select()
         .single();
       
-      if (error) throw error;
+      if (error) {
+        console.error('Error updating task:', error);
+        throw error;
+      }
 
       return taskResult as Task;
     },
@@ -113,7 +154,10 @@ export const useTasks = () => {
         .delete()
         .eq('id', id);
       
-      if (error) throw error;
+      if (error) {
+        console.error('Error deleting task:', error);
+        throw error;
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['tasks'] });

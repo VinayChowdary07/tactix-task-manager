@@ -22,8 +22,6 @@ const Tasks = () => {
     status: 'all'
   });
 
-  console.log('Tasks page render - isModalOpen:', isModalOpen, 'editingTask:', editingTask);
-
   const filteredTasks = tasks.filter(task => {
     const matchesSearch = task.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
       task.description?.toLowerCase().includes(searchTerm.toLowerCase());
@@ -38,7 +36,6 @@ const Tasks = () => {
   });
 
   const handleEditTask = (task: any) => {
-    console.log('Opening edit modal for task:', task);
     setEditingTask(task);
     setIsModalOpen(true);
   };
@@ -54,13 +51,11 @@ const Tasks = () => {
   };
 
   const handleCloseModal = () => {
-    console.log('Closing modal');
     setIsModalOpen(false);
     setEditingTask(null);
   };
 
   const handleOpenNewTaskModal = () => {
-    console.log('Opening new task modal');
     setEditingTask(null);
     setIsModalOpen(true);
   };

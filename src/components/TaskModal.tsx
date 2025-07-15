@@ -38,24 +38,28 @@ const TaskModal: React.FC<TaskModalProps> = ({ isOpen, onClose, task }) => {
     priority: 'Medium' as 'Low' | 'Medium' | 'High' | 'Critical',
     status: 'Todo' as 'Todo' | 'In Progress' | 'Done',
     project_id: '',
-    repeat_type: 'none' as 'none' | 'daily' | 'weekly' | 'monthly' | 'custom',
     time_estimate: 0
   });
 
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState('');
+
+  // Reset form when modal opens/closes or task changes
   useEffect(() => {
     if (isOpen) {
       if (task) {
+        // Editing existing task
         setFormData({
           title: task.title || '',
           description: task.description || '',
-          due_date: task.due_date ? new Date(task.due_date).toISOString().split('T')[0] : '',
+          due_date: task.due_date ? task.due_date.split('T')[0] : '',
           priority: task.priority || 'Medium',
           status: task.status || 'Todo',
           project_id: task.project_id || '',
-          repeat_type: task.repeat_type || 'none',
           time_estimate: task.time_estimate || 0
         });
       } else {
+        // Creating new task
         setFormData({
           title: '',
           description: '',
@@ -63,43 +67,50 @@ const TaskModal: React.FC<TaskModalProps> = ({ isOpen, onClose, task }) => {
           priority: 'Medium',
           status: 'Todo',
           project_id: '',
-          repeat_type: 'none',
           time_estimate: 0
         });
       }
+      setError('');
     }
   }, [task, isOpen]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError('');
     
+    // Validate required fields
     if (!formData.title.trim()) {
-      console.error('Task title is required');
+      setError('Task title is required');
       return;
     }
 
+    setIsSubmitting(true);
+
     try {
-      console.log('Submitting task data:', formData);
-      
       const taskData = {
         title: formData.title.trim(),
         description: formData.description || undefined,
-        due_date: formData.due_date ? new Date(formData.due_date).toISOString() : undefined,
+        due_date: formData.due_date || undefined,
         priority: formData.priority,
         status: formData.status,
         project_id: formData.project_id || undefined,
-        repeat_type: formData.repeat_type,
-        time_estimate: formData.time_estimate
+        time_estimate: formData.time_estimate || undefined
       };
 
       if (task) {
+        // Update existing task
         await updateTask.mutateAsync({ id: task.id, ...taskData });
       } else {
+        // Create new task
         await createTask.mutateAsync(taskData);
       }
+      
       onClose();
     } catch (error) {
       console.error('Error saving task:', error);
+      setError('Failed to save task. Please try again.');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -110,6 +121,7 @@ const TaskModal: React.FC<TaskModalProps> = ({ isOpen, onClose, task }) => {
         onClose();
       } catch (error) {
         console.error('Error deleting task:', error);
+        setError('Failed to delete task. Please try again.');
       }
     }
   };
@@ -120,8 +132,6 @@ const TaskModal: React.FC<TaskModalProps> = ({ isOpen, onClose, task }) => {
     High: '#ef4444',
     Critical: '#dc2626'
   };
-
-  if (!isOpen) return null;
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -142,6 +152,12 @@ const TaskModal: React.FC<TaskModalProps> = ({ isOpen, onClose, task }) => {
             </Button>
           )}
         </DialogHeader>
+
+        {error && (
+          <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-3 text-red-400 text-sm">
+            {error}
+          </div>
+        )}
 
         <form onSubmit={handleSubmit} className="space-y-6 mt-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -262,21 +278,6 @@ const TaskModal: React.FC<TaskModalProps> = ({ isOpen, onClose, task }) => {
                   </SelectContent>
                 </Select>
               </div>
-
-              <div>
-                <Label className="text-slate-300 font-medium">Repeat</Label>
-                <Select value={formData.repeat_type} onValueChange={(value: any) => setFormData({ ...formData, repeat_type: value })}>
-                  <SelectTrigger className="bg-slate-800/50 border-slate-600/50 text-white focus:border-cyan-400 mt-2">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent className="bg-slate-800 border-slate-600">
-                    <SelectItem value="none">No Repeat</SelectItem>
-                    <SelectItem value="daily">Daily</SelectItem>
-                    <SelectItem value="weekly">Weekly</SelectItem>
-                    <SelectItem value="monthly">Monthly</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
             </div>
           </div>
 
@@ -286,15 +287,16 @@ const TaskModal: React.FC<TaskModalProps> = ({ isOpen, onClose, task }) => {
               variant="outline"
               onClick={onClose}
               className="flex-1 bg-slate-800/50 border-slate-600/50 text-slate-300 hover:bg-slate-700/50 hover:border-slate-500 transition-all"
+              disabled={isSubmitting}
             >
               Cancel
             </Button>
             <Button
               type="submit"
-              disabled={createTask.isPending || updateTask.isPending || !formData.title.trim()}
+              disabled={isSubmitting || !formData.title.trim()}
               className="flex-1 bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 text-white font-medium shadow-lg hover:shadow-cyan-500/25 transition-all transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {createTask.isPending || updateTask.isPending ? 'Saving...' : (task ? 'Update Task' : 'Create Task')}
+              {isSubmitting ? 'Saving...' : (task ? 'Update Task' : 'Create Task')}
             </Button>
           </div>
         </form>
