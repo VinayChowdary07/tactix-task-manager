@@ -278,7 +278,7 @@ const TaskModal: React.FC<TaskModalProps> = ({ isOpen, onClose, task }) => {
                   </SelectTrigger>
                   <SelectContent className="bg-slate-800 border-slate-600">
                     <SelectItem value="">No Project</SelectItem>
-                    {projects.map((project) => (
+                    {Array.from(projects || []).map((project) => (
                       <SelectItem key={project.id} value={project.id}>
                         <div className="flex items-center gap-2">
                           <div 
