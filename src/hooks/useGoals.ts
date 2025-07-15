@@ -8,7 +8,14 @@ export interface Goal {
   id: string;
   title: string;
   description?: string;
+  start_date?: string;
   target_date?: string;
+  goal_type: 'personal' | 'team' | 'recurring';
+  tags?: string[];
+  color: string;
+  notes?: string;
+  status: 'active' | 'completed' | 'paused' | 'archived';
+  completed_at?: string;
   user_id: string;
   created_at: string;
   updated_at: string;
@@ -21,13 +28,32 @@ export interface Goal {
       status: string;
     };
   }>;
+  goal_milestones?: Array<{
+    id: string;
+    title: string;
+    description?: string;
+    target_date?: string;
+    completed: boolean;
+    completed_at?: string;
+  }>;
 }
 
 export interface GoalInput {
   title: string;
   description?: string;
+  start_date?: string;
   target_date?: string;
+  goal_type?: 'personal' | 'team' | 'recurring';
+  tags?: string[];
+  color?: string;
+  notes?: string;
+  status?: 'active' | 'completed' | 'paused' | 'archived';
   taskIds?: string[];
+  milestones?: Array<{
+    title: string;
+    description?: string;
+    target_date?: string;
+  }>;
 }
 
 export const useGoals = () => {
@@ -51,6 +77,14 @@ export const useGoals = () => {
               title,
               status
             )
+          ),
+          goal_milestones (
+            id,
+            title,
+            description,
+            target_date,
+            completed,
+            completed_at
           )
         `)
         .order('created_at', { ascending: false });
@@ -62,7 +96,7 @@ export const useGoals = () => {
   });
 
   const createGoal = useMutation({
-    mutationFn: async ({ taskIds, ...goalData }: GoalInput) => {
+    mutationFn: async ({ taskIds, milestones, ...goalData }: GoalInput) => {
       if (!user) throw new Error('User not authenticated');
       
       const { data: goal, error: goalError } = await supabase
@@ -86,6 +120,20 @@ export const useGoals = () => {
         
         if (linkError) throw linkError;
       }
+
+      // Create milestones if provided
+      if (milestones && milestones.length > 0) {
+        const milestoneData = milestones.map(milestone => ({
+          goal_id: goal.id,
+          ...milestone
+        }));
+        
+        const { error: milestoneError } = await supabase
+          .from('goal_milestones')
+          .insert(milestoneData);
+        
+        if (milestoneError) throw milestoneError;
+      }
       
       return goal;
     },
@@ -100,7 +148,7 @@ export const useGoals = () => {
   });
 
   const updateGoal = useMutation({
-    mutationFn: async ({ id, taskIds, ...goalData }: Partial<Goal> & { id: string; taskIds?: string[] }) => {
+    mutationFn: async ({ id, taskIds, milestones, ...goalData }: Partial<Goal> & { id: string; taskIds?: string[]; milestones?: Array<{id?: string; title: string; description?: string; target_date?: string; completed?: boolean}> }) => {
       const { data, error } = await supabase
         .from('goals')
         .update(goalData)
@@ -112,13 +160,8 @@ export const useGoals = () => {
       
       // Update task links if provided
       if (taskIds !== undefined) {
-        // Remove existing task links
-        await supabase
-          .from('goal_tasks')
-          .delete()
-          .eq('goal_id', id);
+        await supabase.from('goal_tasks').delete().eq('goal_id', id);
         
-        // Add new task links
         if (taskIds.length > 0) {
           const taskLinks = taskIds.map(taskId => ({
             goal_id: id,
@@ -130,6 +173,28 @@ export const useGoals = () => {
             .insert(taskLinks);
           
           if (linkError) throw linkError;
+        }
+      }
+
+      // Update milestones if provided
+      if (milestones !== undefined) {
+        // Delete existing milestones and recreate
+        await supabase.from('goal_milestones').delete().eq('goal_id', id);
+        
+        if (milestones.length > 0) {
+          const milestoneData = milestones.map(milestone => ({
+            goal_id: id,
+            title: milestone.title,
+            description: milestone.description,
+            target_date: milestone.target_date,
+            completed: milestone.completed || false
+          }));
+          
+          const { error: milestoneError } = await supabase
+            .from('goal_milestones')
+            .insert(milestoneData);
+          
+          if (milestoneError) throw milestoneError;
         }
       }
       
@@ -164,6 +229,28 @@ export const useGoals = () => {
     },
   });
 
+  const markGoalComplete = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase
+        .from('goals')
+        .update({ 
+          status: 'completed',
+          completed_at: new Date().toISOString()
+        })
+        .eq('id', id);
+      
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['goals'] });
+      toast.success('Goal marked as complete! 🎉');
+    },
+    onError: (error) => {
+      console.error('Error marking goal as complete:', error);
+      toast.error('Failed to mark goal as complete');
+    },
+  });
+
   return {
     goals,
     isLoading,
@@ -171,5 +258,6 @@ export const useGoals = () => {
     createGoal,
     updateGoal,
     deleteGoal,
+    markGoalComplete,
   };
 };

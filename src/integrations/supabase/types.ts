@@ -14,6 +14,50 @@ export type Database = {
   }
   public: {
     Tables: {
+      goal_milestones: {
+        Row: {
+          completed: boolean
+          completed_at: string | null
+          created_at: string
+          description: string | null
+          goal_id: string
+          id: string
+          target_date: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          completed?: boolean
+          completed_at?: string | null
+          created_at?: string
+          description?: string | null
+          goal_id: string
+          id?: string
+          target_date?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          completed?: boolean
+          completed_at?: string | null
+          created_at?: string
+          description?: string | null
+          goal_id?: string
+          id?: string
+          target_date?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "goal_milestones_goal_id_fkey"
+            columns: ["goal_id"]
+            isOneToOne: false
+            referencedRelation: "goals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       goal_tasks: {
         Row: {
           created_at: string
@@ -52,27 +96,48 @@ export type Database = {
       }
       goals: {
         Row: {
+          color: string | null
+          completed_at: string | null
           created_at: string
           description: string | null
+          goal_type: string | null
           id: string
+          notes: string | null
+          start_date: string | null
+          status: string | null
+          tags: string[] | null
           target_date: string | null
           title: string
           updated_at: string
           user_id: string
         }
         Insert: {
+          color?: string | null
+          completed_at?: string | null
           created_at?: string
           description?: string | null
+          goal_type?: string | null
           id?: string
+          notes?: string | null
+          start_date?: string | null
+          status?: string | null
+          tags?: string[] | null
           target_date?: string | null
           title: string
           updated_at?: string
           user_id: string
         }
         Update: {
+          color?: string | null
+          completed_at?: string | null
           created_at?: string
           description?: string | null
+          goal_type?: string | null
           id?: string
+          notes?: string | null
+          start_date?: string | null
+          status?: string | null
+          tags?: string[] | null
           target_date?: string | null
           title?: string
           updated_at?: string
