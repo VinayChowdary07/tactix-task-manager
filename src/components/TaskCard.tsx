@@ -5,8 +5,6 @@ import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Edit, Trash2, MoreHorizontal, Calendar, Flag } from 'lucide-react';
 import { Project } from '@/hooks/useProjects';
-import TaskTimer from './TaskTimer';
-import { Repeat } from 'lucide-react';
 import { format } from 'date-fns';
 
 interface TaskCardProps {
@@ -18,9 +16,6 @@ interface TaskCardProps {
     priority: 'Low' | 'Medium' | 'High' | 'Critical';
     status: 'Todo' | 'In Progress' | 'Done';
     project_id?: string;
-    repeat_type?: 'none' | 'daily' | 'weekly' | 'monthly' | 'custom';
-    time_estimate?: number;
-    time_spent?: number;
   };
   projects: Array<Project>;
   onEdit: (task: any) => void;
@@ -38,7 +33,7 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, projects, onEdit, onDelete })
   };
 
   const statusConfig = {
-    Todo: { border: 'border-cyan-400/50', color: 'text-blue-400' },
+    Todo: { border: 'border-slate-700/50', color: 'text-slate-400' },
     'In Progress': { border: 'border-orange-400/50', color: 'text-orange-400' },
     Done: { border: 'border-green-400/50', color: 'text-green-400' },
   };
@@ -53,19 +48,9 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, projects, onEdit, onDelete })
           {/* Header with Title and Actions */}
           <div className="flex items-start justify-between">
             <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2 mb-2">
-                <h3 className="text-white font-semibold text-lg truncate group-hover:text-cyan-400 transition-colors">
-                  {task.title}
-                </h3>
-                {task.repeat_type && task.repeat_type !== 'none' && (
-                  <div className="flex items-center gap-1 px-2 py-1 bg-purple-500/20 rounded-full border border-purple-500/30">
-                    <Repeat className="w-3 h-3 text-purple-400" />
-                    <span className="text-xs text-purple-400 font-medium capitalize">
-                      {task.repeat_type}
-                    </span>
-                  </div>
-                )}
-              </div>
+              <h3 className="text-white font-semibold text-lg truncate group-hover:text-cyan-400 transition-colors mb-2">
+                {task.title}
+              </h3>
               
               {task.description && (
                 <p className="text-slate-400 text-sm line-clamp-2 mb-3 leading-relaxed">
@@ -102,13 +87,6 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, projects, onEdit, onDelete })
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
-
-          {/* Timer Component */}
-          <TaskTimer 
-            taskId={task.id} 
-            timeEstimate={task.time_estimate}
-            timeSpent={task.time_spent}
-          />
 
           {/* Due Date */}
           {task.due_date && (

@@ -9,34 +9,21 @@ export interface Task {
   title: string;
   description?: string;
   due_date?: string;
-  reminder_time?: string;
   priority: 'Low' | 'Medium' | 'High' | 'Critical';
   status: 'Todo' | 'In Progress' | 'Done';
   project_id?: string;
   user_id: string;
   created_at: string;
   updated_at: string;
-  repeat_type?: 'none' | 'daily' | 'weekly' | 'monthly' | 'custom';
-  repeat_interval?: number;
-  repeat_until?: string;
-  time_estimate?: number;
-  time_spent?: number;
-  is_recurring_parent?: boolean;
-  parent_recurring_task_id?: string;
 }
 
 export interface TaskInput {
   title: string;
   description?: string;
   due_date?: string;
-  reminder_time?: string;
   priority: 'Low' | 'Medium' | 'High' | 'Critical';
   status: 'Todo' | 'In Progress' | 'Done';
   project_id?: string;
-  repeat_type?: 'none' | 'daily' | 'weekly' | 'monthly' | 'custom';
-  repeat_interval?: number;
-  repeat_until?: string;
-  time_estimate?: number;
 }
 
 export const useTasks = () => {
@@ -48,8 +35,6 @@ export const useTasks = () => {
     queryFn: async () => {
       if (!user) return [];
       
-      console.log('Fetching tasks for user:', user.id);
-      
       const { data, error } = await supabase
         .from('tasks')
         .select('*')
@@ -60,7 +45,6 @@ export const useTasks = () => {
         throw error;
       }
       
-      console.log('Tasks fetched successfully:', data?.length || 0);
       return data as Task[];
     },
     enabled: !!user,
@@ -70,25 +54,15 @@ export const useTasks = () => {
     mutationFn: async (taskData: TaskInput) => {
       if (!user) throw new Error('User not authenticated');
       
-      console.log('Creating task with data:', taskData);
-      
-      // Clean and prepare the data for insertion
       const insertData = {
         title: taskData.title.trim(),
         description: taskData.description?.trim() || null,
         due_date: taskData.due_date || null,
-        reminder_time: taskData.reminder_time || null,
         priority: taskData.priority,
         status: taskData.status,
         project_id: taskData.project_id || null,
-        repeat_type: taskData.repeat_type || 'none',
-        repeat_interval: taskData.repeat_interval || null,
-        repeat_until: taskData.repeat_until || null,
-        time_estimate: taskData.time_estimate || null,
         user_id: user.id
       };
-
-      console.log('Inserting task data:', insertData);
 
       const { data: taskResult, error: taskError } = await supabase
         .from('tasks')
@@ -101,11 +75,9 @@ export const useTasks = () => {
         throw taskError;
       }
 
-      console.log('Task created successfully:', taskResult);
       return taskResult as Task;
     },
-    onSuccess: (data) => {
-      console.log('Task creation successful, invalidating queries');
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['tasks'] });
       toast.success('Task created successfully!');
     },
@@ -119,22 +91,13 @@ export const useTasks = () => {
     mutationFn: async ({ id, ...taskData }: Partial<Task> & { id: string }) => {
       if (!user) throw new Error('User not authenticated');
       
-      console.log('Updating task with ID:', id, 'Data:', taskData);
-      
-      // Clean and prepare the data for update
       const updateData = {
         title: taskData.title?.trim(),
         description: taskData.description?.trim() || null,
         due_date: taskData.due_date || null,
-        reminder_time: taskData.reminder_time || null,
         priority: taskData.priority,
         status: taskData.status,
-        project_id: taskData.project_id || null,
-        repeat_type: taskData.repeat_type || 'none',
-        repeat_interval: taskData.repeat_interval || null,
-        repeat_until: taskData.repeat_until || null,
-        time_estimate: taskData.time_estimate || null,
-        time_spent: taskData.time_spent || null
+        project_id: taskData.project_id || null
       };
 
       // Remove undefined values
@@ -143,8 +106,6 @@ export const useTasks = () => {
           delete updateData[key];
         }
       });
-
-      console.log('Updating task with cleaned data:', updateData);
 
       const { data: taskResult, error } = await supabase
         .from('tasks')
@@ -158,11 +119,9 @@ export const useTasks = () => {
         throw error;
       }
 
-      console.log('Task updated successfully:', taskResult);
       return taskResult as Task;
     },
-    onSuccess: (data) => {
-      console.log('Task update successful, invalidating queries');
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['tasks'] });
       toast.success('Task updated successfully!');
     },
@@ -174,8 +133,6 @@ export const useTasks = () => {
 
   const deleteTask = useMutation({
     mutationFn: async (id: string) => {
-      console.log('Deleting task with ID:', id);
-      
       const { error } = await supabase
         .from('tasks')
         .delete()
@@ -185,11 +142,8 @@ export const useTasks = () => {
         console.error('Error deleting task:', error);
         throw error;
       }
-      
-      console.log('Task deleted successfully');
     },
     onSuccess: () => {
-      console.log('Task deletion successful, invalidating queries');
       queryClient.invalidateQueries({ queryKey: ['tasks'] });
       toast.success('Task deleted successfully!');
     },

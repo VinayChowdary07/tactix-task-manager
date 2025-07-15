@@ -1,49 +1,72 @@
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
-import { Plus, CheckSquare, Filter, Search, Calendar, Target } from 'lucide-react';
-import { useTasks } from '@/hooks/useTasks';
-import { useProjects } from '@/hooks/useProjects';
-import TaskCard from '@/components/TaskCard';
-import TaskModal from '@/components/TaskModal';
-import TaskFilters, { TaskFilters as TaskFiltersType } from '@/components/TaskFilters';
 import { Input } from '@/components/ui/input';
+import { 
+  Plus, 
+  CheckSquare, 
+  Search, 
+  Filter, 
+  SortAsc,
+  Target,
+  TrendingUp,
+  Calendar,
+  Clock
+} from 'lucide-react';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { useTasks, Task } from '@/hooks/useTasks';
+import { useProjects } from '@/hooks/useProjects';
+import TaskModal from '@/components/TaskModal';
+import TaskCard from '@/components/TaskCard';
 
 const Tasks = () => {
-  const { tasks = [], isLoading, deleteTask } = useTasks();
+  const { tasks, isLoading, deleteTask } = useTasks();
   const { projects = [] } = useProjects();
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editingTask, setEditingTask] = useState<any>(null);
+  const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
-  const [showFilters, setShowFilters] = useState(false);
-  const [filters, setFilters] = useState<TaskFiltersType>({
-    search: '',
-    priority: 'all',
-    status: 'all'
-  });
+  const [filterPriority, setFilterPriority] = useState<string>('all');
+  const [filterStatus, setFilterStatus] = useState<string>('all');
+  const [sortBy, setSortBy] = useState<'created_at' | 'due_date' | 'title' | 'priority'>('created_at');
 
-  console.log('Tasks page render:', { 
-    tasksCount: tasks.length, 
-    isLoading, 
-    isModalOpen, 
-    editingTask: !!editingTask 
-  });
+  const filteredAndSortedTasks = useMemo(() => {
+    let filtered = tasks.filter(task => {
+      const matchesSearch = task.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                           task.description?.toLowerCase().includes(searchTerm.toLowerCase());
+      
+      const matchesPriority = filterPriority === 'all' || task.priority === filterPriority;
+      const matchesStatus = filterStatus === 'all' || task.status === filterStatus;
+      
+      return matchesSearch && matchesPriority && matchesStatus;
+    });
 
-  const filteredTasks = tasks.filter(task => {
-    const matchesSearch = task.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      task.description?.toLowerCase().includes(searchTerm.toLowerCase());
-    
-    const matchesPriority = filters.priority === 'all' || task.priority === filters.priority;
-    const matchesStatus = filters.status === 'all' || task.status === filters.status;
-    const matchesFilterSearch = !filters.search || 
-      task.title.toLowerCase().includes(filters.search.toLowerCase()) ||
-      task.description?.toLowerCase().includes(filters.search.toLowerCase());
+    return filtered.sort((a, b) => {
+      switch (sortBy) {
+        case 'due_date':
+          if (!a.due_date && !b.due_date) return 0;
+          if (!a.due_date) return 1;
+          if (!b.due_date) return -1;
+          return new Date(a.due_date).getTime() - new Date(b.due_date).getTime();
+        case 'title':
+          return a.title.localeCompare(b.title);
+        case 'priority':
+          const priorityOrder = { 'Critical': 4, 'High': 3, 'Medium': 2, 'Low': 1 };
+          return priorityOrder[b.priority] - priorityOrder[a.priority];
+        case 'created_at':
+          return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+        default:
+          return 0;
+      }
+    });
+  }, [tasks, searchTerm, filterPriority, filterStatus, sortBy]);
 
-    return matchesSearch && matchesPriority && matchesStatus && matchesFilterSearch;
-  });
-
-  const handleEditTask = (task: any) => {
-    console.log('Edit task clicked:', task);
+  const handleEditTask = (task: Task) => {
     setEditingTask(task);
     setIsModalOpen(true);
   };
@@ -51,7 +74,6 @@ const Tasks = () => {
   const handleDeleteTask = async (id: string) => {
     if (window.confirm('Are you sure you want to delete this task?')) {
       try {
-        console.log('Delete task clicked:', id);
         await deleteTask.mutateAsync(id);
       } catch (error) {
         console.error('Error deleting task:', error);
@@ -60,15 +82,8 @@ const Tasks = () => {
   };
 
   const handleCloseModal = () => {
-    console.log('Closing modal');
     setIsModalOpen(false);
     setEditingTask(null);
-  };
-
-  const handleOpenNewTaskModal = () => {
-    console.log('Opening new task modal');
-    setEditingTask(null);
-    setIsModalOpen(true);
   };
 
   const getStatsCards = () => {
@@ -79,15 +94,15 @@ const Tasks = () => {
 
     return [
       { label: 'Total Tasks', value: totalTasks, icon: CheckSquare, color: 'text-cyan-400' },
-      { label: 'In Progress', value: inProgressTasks, icon: Target, color: 'text-blue-400' },
-      { label: 'Completed', value: completedTasks, icon: CheckSquare, color: 'text-green-400' },
+      { label: 'In Progress', value: inProgressTasks, icon: Clock, color: 'text-orange-400' },
+      { label: 'Completed', value: completedTasks, icon: Target, color: 'text-green-400' },
       { label: 'Overdue', value: overdueTasks, icon: Calendar, color: 'text-red-400' },
     ];
   };
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-slate-950 text-white flex items-center justify-center">
+      <div className="flex items-center justify-center min-h-[400px]">
         <div className="text-center">
           <div className="w-8 h-8 border-4 border-cyan-400 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
           <p className="text-slate-400">Loading your tasks...</p>
@@ -100,17 +115,15 @@ const Tasks = () => {
     <div className="min-h-screen bg-slate-950 text-white p-6">
       <div className="max-w-7xl mx-auto space-y-8">
         {/* Header */}
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-          <div className="space-y-2">
-            <h1 className="text-3xl font-bold bg-gradient-to-r from-cyan-400 to-blue-400 bg-clip-text text-transparent">
-              Tasks Dashboard
-            </h1>
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold text-white mb-2">Tasks Dashboard</h1>
             <p className="text-slate-400">Manage your tasks and track progress efficiently</p>
           </div>
           
           <Button 
-            onClick={handleOpenNewTaskModal}
-            className="bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 text-white font-medium shadow-lg hover:shadow-cyan-500/25 transition-all transform hover:scale-105"
+            onClick={() => setIsModalOpen(true)}
+            className="bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 text-white shadow-lg hover:shadow-cyan-500/25 transition-all transform hover:scale-105"
           >
             <Plus className="w-4 h-4 mr-2" />
             New Task
@@ -118,78 +131,100 @@ const Tasks = () => {
         </div>
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
           {getStatsCards().map((stat, index) => (
             <div
               key={index}
-              className="bg-slate-900/50 backdrop-blur-xl border border-slate-700/50 rounded-xl p-6 hover:border-cyan-400/50 hover:shadow-lg hover:shadow-cyan-500/10 transition-all duration-300 group cursor-pointer"
+              className="bg-slate-900 border border-slate-800 rounded-xl p-6 hover:border-slate-700 transition-colors"
             >
               <div className="flex items-center justify-between">
-                <div className="space-y-1">
-                  <p className="text-slate-400 text-sm font-medium">{stat.label}</p>
-                  <p className={`text-2xl font-bold ${stat.color} group-hover:scale-110 transition-transform`}>
-                    {stat.value}
-                  </p>
+                <div>
+                  <p className="text-slate-400 text-sm">{stat.label}</p>
+                  <p className={`text-2xl font-bold ${stat.color}`}>{stat.value}</p>
                 </div>
-                <div className={`p-3 rounded-full bg-slate-800/50 ${stat.color} group-hover:scale-110 transition-transform`}>
-                  <stat.icon className="w-6 h-6" />
-                </div>
+                <stat.icon className={`w-8 h-8 ${stat.color}`} />
               </div>
             </div>
           ))}
         </div>
 
-        {/* Search and Filters */}
-        <div className="bg-slate-900/50 backdrop-blur-xl border border-slate-700/50 rounded-xl p-6">
-          <div className="flex flex-col sm:flex-row items-center gap-4">
-            <div className="relative flex-1 w-full">
+        {/* Filters and Search */}
+        <div className="bg-slate-900 border border-slate-800 rounded-xl p-6">
+          <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+            <div className="relative md:col-span-2">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 w-4 h-4" />
               <Input
-                placeholder="Search tasks by title or description..."
+                placeholder="Search tasks..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10 bg-slate-800/50 border-slate-600 text-white placeholder-slate-400 focus:border-cyan-400 focus:ring-cyan-400/20"
+                className="pl-10 bg-slate-800 border-slate-700 text-white placeholder-slate-400"
               />
             </div>
-            <Button
-              variant="outline"
-              onClick={() => setShowFilters(!showFilters)}
-              className="bg-slate-800/50 border-slate-600 text-white hover:bg-slate-700/50 hover:border-cyan-400 transition-all whitespace-nowrap"
-            >
-              <Filter className="w-4 h-4 mr-2" />
-              Filters {showFilters ? '▲' : '▼'}
-            </Button>
+            
+            <Select value={filterPriority} onValueChange={setFilterPriority}>
+              <SelectTrigger className="bg-slate-800 border-slate-700 text-white">
+                <div className="flex items-center gap-2">
+                  <Filter className="w-4 h-4" />
+                  <SelectValue placeholder="Priority" />
+                </div>
+              </SelectTrigger>
+              <SelectContent className="bg-slate-800 border-slate-700">
+                <SelectItem value="all">All Priorities</SelectItem>
+                <SelectItem value="Critical">Critical</SelectItem>
+                <SelectItem value="High">High</SelectItem>
+                <SelectItem value="Medium">Medium</SelectItem>
+                <SelectItem value="Low">Low</SelectItem>
+              </SelectContent>
+            </Select>
+
+            <Select value={filterStatus} onValueChange={setFilterStatus}>
+              <SelectTrigger className="bg-slate-800 border-slate-700 text-white">
+                <SelectValue placeholder="Status" />
+              </SelectTrigger>
+              <SelectContent className="bg-slate-800 border-slate-700">
+                <SelectItem value="all">All Status</SelectItem>
+                <SelectItem value="Todo">Todo</SelectItem>
+                <SelectItem value="In Progress">In Progress</SelectItem>
+                <SelectItem value="Done">Done</SelectItem>
+              </SelectContent>
+            </Select>
+
+            <Select value={sortBy} onValueChange={(value: any) => setSortBy(value)}>
+              <SelectTrigger className="bg-slate-800 border-slate-700 text-white">
+                <div className="flex items-center gap-2">
+                  <SortAsc className="w-4 h-4" />
+                  <SelectValue placeholder="Sort by" />
+                </div>
+              </SelectTrigger>
+              <SelectContent className="bg-slate-800 border-slate-700">
+                <SelectItem value="created_at">Newest</SelectItem>
+                <SelectItem value="due_date">Due Date</SelectItem>
+                <SelectItem value="priority">Priority</SelectItem>
+                <SelectItem value="title">Title</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
-          
-          {showFilters && (
-            <div className="mt-6 pt-6 border-t border-slate-700/50 animate-fade-in">
-              <TaskFilters 
-                filters={filters}
-                onFiltersChange={setFilters}
-              />
-            </div>
-          )}
         </div>
 
         {/* Tasks Grid */}
-        {filteredTasks.length === 0 ? (
-          <div className="text-center py-20 bg-slate-900/50 backdrop-blur-xl border border-slate-700/50 rounded-xl">
-            <div className="w-20 h-20 bg-slate-800/50 rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg shadow-cyan-500/10">
-              <CheckSquare className="w-10 h-10 text-cyan-400" />
+        {filteredAndSortedTasks.length === 0 ? (
+          <div className="text-center py-20 bg-slate-900 border border-slate-800 rounded-xl">
+            <div className="w-20 h-20 bg-slate-800 rounded-full flex items-center justify-center mx-auto mb-6">
+              <CheckSquare className="w-10 h-10 text-slate-500" />
             </div>
             <h3 className="text-xl font-semibold text-white mb-2">
-              {searchTerm || filters.search || filters.priority !== 'all' || filters.status !== 'all' ? 'No tasks found' : 'No tasks yet'}
+              {searchTerm || filterPriority !== 'all' || filterStatus !== 'all' ? 'No tasks found' : 'No tasks yet'}
             </h3>
-            <p className="text-slate-400 mb-6 max-w-md mx-auto leading-relaxed">
-              {searchTerm || filters.search || filters.priority !== 'all' || filters.status !== 'all'
-                ? 'Try adjusting your search criteria or clear filters to see more tasks.'
-                : 'Start by creating your first task to organize your work and track progress efficiently.'
+            <p className="text-slate-400 mb-6 max-w-md mx-auto">
+              {searchTerm || filterPriority !== 'all' || filterStatus !== 'all'
+                ? 'Try adjusting your search or filters to find what you\'re looking for.'
+                : 'Create your first task to start organizing your work and tracking progress.'
               }
             </p>
-            {(!searchTerm && !filters.search && filters.priority === 'all' && filters.status === 'all') && (
+            {(!searchTerm && filterPriority === 'all' && filterStatus === 'all') && (
               <Button 
-                onClick={handleOpenNewTaskModal}
-                className="bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 font-medium shadow-lg hover:shadow-cyan-500/25 transition-all transform hover:scale-105"
+                onClick={() => setIsModalOpen(true)}
+                className="bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600"
               >
                 <Plus className="w-4 h-4 mr-2" />
                 Create First Task
@@ -198,15 +233,14 @@ const Tasks = () => {
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-            {filteredTasks.map((task, index) => (
-              <div key={task.id} className="animate-fade-in" style={{ animationDelay: `${index * 0.1}s` }}>
-                <TaskCard
-                  task={task}
-                  projects={projects}
-                  onEdit={handleEditTask}
-                  onDelete={handleDeleteTask}
-                />
-              </div>
+            {filteredAndSortedTasks.map((task) => (
+              <TaskCard
+                key={task.id}
+                task={task}
+                projects={projects}
+                onEdit={handleEditTask}
+                onDelete={handleDeleteTask}
+              />
             ))}
           </div>
         )}

@@ -19,7 +19,7 @@ import {
 } from '@/components/ui/select';
 import { useTasks, Task } from '@/hooks/useTasks';
 import { useProjects } from '@/hooks/useProjects';
-import { X, CheckSquare, Calendar, Flag } from 'lucide-react';
+import { CheckSquare, Calendar, Flag } from 'lucide-react';
 
 interface TaskModalProps {
   isOpen: boolean;
@@ -28,7 +28,7 @@ interface TaskModalProps {
 }
 
 const TaskModal: React.FC<TaskModalProps> = ({ isOpen, onClose, task }) => {
-  const { createTask, updateTask, deleteTask } = useTasks();
+  const { createTask, updateTask } = useTasks();
   const { projects = [] } = useProjects();
   
   const [formData, setFormData] = useState({
@@ -37,41 +37,31 @@ const TaskModal: React.FC<TaskModalProps> = ({ isOpen, onClose, task }) => {
     due_date: '',
     priority: 'Medium' as 'Low' | 'Medium' | 'High' | 'Critical',
     status: 'Todo' as 'Todo' | 'In Progress' | 'Done',
-    project_id: '',
-    time_estimate: 0
+    project_id: ''
   });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
 
-  // Reset form when modal opens/closes or task changes
   useEffect(() => {
-    console.log('TaskModal effect triggered:', { isOpen, task });
-    
     if (isOpen) {
       if (task) {
-        // Editing existing task
-        console.log('Setting form data for editing task:', task);
         setFormData({
           title: task.title || '',
           description: task.description || '',
           due_date: task.due_date ? task.due_date.split('T')[0] : '',
           priority: task.priority || 'Medium',
           status: task.status || 'Todo',
-          project_id: task.project_id || '',
-          time_estimate: task.time_estimate || 0
+          project_id: task.project_id || ''
         });
       } else {
-        // Creating new task
-        console.log('Setting form data for new task');
         setFormData({
           title: '',
           description: '',
           due_date: '',
           priority: 'Medium',
           status: 'Todo',
-          project_id: '',
-          time_estimate: 0
+          project_id: ''
         });
       }
       setError('');
@@ -80,17 +70,14 @@ const TaskModal: React.FC<TaskModalProps> = ({ isOpen, onClose, task }) => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('Form submission started');
     
-    setError('');
-    
-    // Validate required fields
     if (!formData.title.trim()) {
       setError('Task title is required');
       return;
     }
 
     setIsSubmitting(true);
+    setError('');
 
     try {
       const taskData = {
@@ -99,42 +86,20 @@ const TaskModal: React.FC<TaskModalProps> = ({ isOpen, onClose, task }) => {
         due_date: formData.due_date || undefined,
         priority: formData.priority,
         status: formData.status,
-        project_id: formData.project_id || undefined,
-        time_estimate: formData.time_estimate || undefined
+        project_id: formData.project_id || undefined
       };
 
-      console.log('Submitting task data:', taskData);
-
       if (task) {
-        // Update existing task
-        console.log('Updating existing task with ID:', task.id);
         await updateTask.mutateAsync({ id: task.id, ...taskData });
       } else {
-        // Create new task
-        console.log('Creating new task');
         await createTask.mutateAsync(taskData);
       }
       
-      console.log('Task operation successful, closing modal');
       onClose();
     } catch (error) {
-      console.error('Error saving task:', error);
       setError('Failed to save task. Please try again.');
     } finally {
       setIsSubmitting(false);
-    }
-  };
-
-  const handleDelete = async () => {
-    if (task && window.confirm('Are you sure you want to delete this task?')) {
-      try {
-        console.log('Deleting task with ID:', task.id);
-        await deleteTask.mutateAsync(task.id);
-        onClose();
-      } catch (error) {
-        console.error('Error deleting task:', error);
-        setError('Failed to delete task. Please try again.');
-      }
     }
   };
 
@@ -145,26 +110,14 @@ const TaskModal: React.FC<TaskModalProps> = ({ isOpen, onClose, task }) => {
     Critical: '#dc2626'
   };
 
-  console.log('TaskModal render:', { isOpen, task: !!task, isSubmitting });
-
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="bg-slate-900/95 backdrop-blur-xl border border-slate-700/50 text-white max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl shadow-cyan-500/10">
-        <DialogHeader className="relative border-b border-slate-700/50 pb-4">
+        <DialogHeader className="border-b border-slate-700/50 pb-4">
           <DialogTitle className="text-xl font-bold flex items-center gap-2 bg-gradient-to-r from-cyan-400 to-blue-400 bg-clip-text text-transparent">
             <CheckSquare className="w-5 h-5 text-cyan-400" />
             {task ? 'Edit Task' : 'Create New Task'}
           </DialogTitle>
-          {task && (
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={handleDelete}
-              className="absolute right-0 top-0 text-red-400 hover:text-red-300 hover:bg-red-500/10 h-8 w-8 transition-all"
-            >
-              <X className="w-4 h-4" />
-            </Button>
-          )}
         </DialogHeader>
 
         {error && (
@@ -212,19 +165,6 @@ const TaskModal: React.FC<TaskModalProps> = ({ isOpen, onClose, task }) => {
                   value={formData.due_date}
                   onChange={(e) => setFormData({ ...formData, due_date: e.target.value })}
                   className="bg-slate-800/50 border-slate-600/50 text-white focus:border-cyan-400 focus:ring-cyan-400/20 mt-2"
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="time_estimate" className="text-slate-300 font-medium">Time Estimate (minutes)</Label>
-                <Input
-                  id="time_estimate"
-                  type="number"
-                  value={formData.time_estimate || ''}
-                  onChange={(e) => setFormData({ ...formData, time_estimate: parseInt(e.target.value) || 0 })}
-                  className="bg-slate-800/50 border-slate-600/50 text-white placeholder-slate-400 focus:border-cyan-400 focus:ring-cyan-400/20 mt-2"
-                  placeholder="0"
-                  min="0"
                 />
               </div>
             </div>
@@ -278,7 +218,7 @@ const TaskModal: React.FC<TaskModalProps> = ({ isOpen, onClose, task }) => {
                   </SelectTrigger>
                   <SelectContent className="bg-slate-800 border-slate-600">
                     <SelectItem value="">No Project</SelectItem>
-                    {Array.from(projects || []).map((project) => (
+                    {projects.map((project) => (
                       <SelectItem key={project.id} value={project.id}>
                         <div className="flex items-center gap-2">
                           <div 
