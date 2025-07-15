@@ -206,7 +206,6 @@ const Tasks = () => {
         )}
 
         {/* Task Modal */}
-        {console.log('Rendering TaskModal - isOpen:', isModalOpen, 'task:', editingTask)}
         <TaskModal
           isOpen={isModalOpen}
           onClose={handleCloseModal}
