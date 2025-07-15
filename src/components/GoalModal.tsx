@@ -99,17 +99,26 @@ const GoalModal: React.FC<GoalModalProps> = ({ isOpen, onClose, goal }) => {
     
     if (!formData.title.trim()) return;
 
-    const goalData = {
-      ...formData,
-      start_date: formData.start_date ? new Date(formData.start_date).toISOString() : undefined,
-      target_date: formData.target_date ? new Date(formData.target_date).toISOString() : undefined,
-      milestones: formData.milestones.map(m => ({
-        ...m,
-        target_date: m.target_date ? new Date(m.target_date).toISOString() : undefined
-      }))
-    };
-
     try {
+      const goalData = {
+        title: formData.title,
+        description: formData.description || null,
+        start_date: formData.start_date ? new Date(formData.start_date).toISOString() : null,
+        target_date: formData.target_date ? new Date(formData.target_date).toISOString() : null,
+        goal_type: formData.goal_type,
+        tags: formData.tags,
+        color: formData.color,
+        notes: formData.notes || null,
+        status: formData.status,
+        taskIds: formData.taskIds,
+        milestones: formData.milestones.map(m => ({
+          title: m.title,
+          description: m.description || null,
+          target_date: m.target_date ? new Date(m.target_date).toISOString() : null,
+          completed: false
+        }))
+      };
+
       if (goal) {
         await updateGoal.mutateAsync({ id: goal.id, ...goalData });
       } else {
@@ -192,14 +201,6 @@ const GoalModal: React.FC<GoalModalProps> = ({ isOpen, onClose, goal }) => {
                   <X className="w-4 h-4" />
                 </Button>
               )}
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={onClose}
-                className="text-slate-400 hover:text-white h-8 w-8"
-              >
-                <X className="w-4 h-4" />
-              </Button>
             </div>
           </DialogTitle>
         </DialogHeader>

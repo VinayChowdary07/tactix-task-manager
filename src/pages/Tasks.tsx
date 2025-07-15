@@ -1,84 +1,28 @@
 
-import React, { useState, useMemo } from 'react';
+import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
-import { Plus, Target, CheckCircle2, Clock, Star, Loader2 } from 'lucide-react';
-import { useTasks, Task } from '@/hooks/useTasks';
+import { Plus, CheckSquare, Filter, Search, Calendar, Target } from 'lucide-react';
+import { useTasks } from '@/hooks/useTasks';
 import { useProjects } from '@/hooks/useProjects';
-import TaskModal from '@/components/TaskModal';
 import TaskCard from '@/components/TaskCard';
-import TaskFiltersComponent, { TaskFilters } from '@/components/TaskFilters';
-import { useOutletContext } from 'react-router-dom';
-
-interface OutletContext {
-  selectedProjectId: string | null;
-  projects: Array<{ id: string; name: string; color?: string }>;
-  setSelectedProjectId?: (id: string | null) => void;
-}
+import TaskModal from '@/components/TaskModal';
+import TaskFilters from '@/components/TaskFilters';
+import { Input } from '@/components/ui/input';
 
 const Tasks = () => {
   const { tasks, isLoading, deleteTask } = useTasks();
   const { projects } = useProjects();
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editingTask, setEditingTask] = useState<Task | null>(null);
-  
-  // Safely get context with fallback
-  const context = useOutletContext<OutletContext>();
-  const selectedProjectId = context?.selectedProjectId || null;
+  const [editingTask, setEditingTask] = useState<any>(null);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [showFilters, setShowFilters] = useState(false);
 
-  const [filters, setFilters] = useState<TaskFilters>({
-    search: '',
-    priority: 'all',
-    status: 'all'
-  });
+  const filteredTasks = tasks.filter(task =>
+    task.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    task.description?.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
-  // Filter tasks based on all criteria
-  const filteredTasks = useMemo(() => {
-    let filtered = tasks;
-
-    // Filter by selected project if any
-    if (selectedProjectId) {
-      filtered = filtered.filter(task => task.project_id === selectedProjectId);
-    }
-
-    // Apply search filter
-    if (filters.search) {
-      const searchLower = filters.search.toLowerCase();
-      filtered = filtered.filter(task => 
-        task.title.toLowerCase().includes(searchLower) ||
-        task.description?.toLowerCase().includes(searchLower)
-      );
-    }
-
-    // Apply priority filter
-    if (filters.priority !== 'all') {
-      filtered = filtered.filter(task => task.priority === filters.priority);
-    }
-
-    // Apply status filter
-    if (filters.status !== 'all') {
-      filtered = filtered.filter(task => task.status === filters.status);
-    }
-
-    return filtered;
-  }, [tasks, selectedProjectId, filters]);
-
-  // Group tasks by project
-  const groupedTasks = useMemo(() => {
-    const grouped: Record<string, Task[]> = {};
-    
-    filteredTasks.forEach(task => {
-      const projectId = task.project_id || 'no-project';
-      if (!grouped[projectId]) {
-        grouped[projectId] = [];
-      }
-      grouped[projectId].push(task);
-    });
-
-    return grouped;
-  }, [filteredTasks]);
-
-  const handleEditTask = (task: Task) => {
+  const handleEditTask = (task: any) => {
     setEditingTask(task);
     setIsModalOpen(true);
   };
@@ -98,216 +42,152 @@ const Tasks = () => {
     setEditingTask(null);
   };
 
-  const handleCreateTask = () => {
-    setEditingTask(null);
-    setIsModalOpen(true);
-  };
+  const getStatsCards = () => {
+    const totalTasks = tasks.length;
+    const completedTasks = tasks.filter(t => t.status === 'Done').length;
+    const inProgressTasks = tasks.filter(t => t.status === 'In Progress').length;
+    const overdueTasks = tasks.filter(t => t.due_date && new Date(t.due_date) < new Date() && t.status !== 'Done').length;
 
-  // Calculate stats from filtered data
-  const todoTasks = filteredTasks.filter(task => task.status === 'Todo');
-  const inProgressTasks = filteredTasks.filter(task => task.status === 'In Progress');
-  const completedTasks = filteredTasks.filter(task => task.status === 'Done');
-  const highPriorityTasks = filteredTasks.filter(task => task.priority === 'High' || task.priority === 'Critical');
-
-  const stats = [
-    { 
-      label: selectedProjectId ? 'Project Tasks' : 'Total Tasks', 
-      value: filteredTasks.length.toString(), 
-      icon: Target, 
-      gradient: 'btn-gradient-blue',
-      glow: 'glow-cyan'
-    },
-    { 
-      label: 'Completed', 
-      value: completedTasks.length.toString(), 
-      icon: CheckCircle2, 
-      gradient: 'btn-gradient-green',
-      glow: 'glow-green'
-    },
-    { 
-      label: 'In Progress', 
-      value: inProgressTasks.length.toString(), 
-      icon: Clock, 
-      gradient: 'btn-gradient-orange',
-      glow: 'glow-orange'
-    },
-    { 
-      label: 'High Priority', 
-      value: highPriorityTasks.length.toString(), 
-      icon: Star, 
-      gradient: 'btn-gradient-pink',
-      glow: 'glow-pink'
-    },
-  ];
-
-  const getBorderClass = (index: number) => {
-    const classes = ['neon-border-blue', 'neon-border-green', 'neon-border-orange', 'neon-border-pink'];
-    return classes[index % classes.length];
+    return [
+      { label: 'Total Tasks', value: totalTasks, icon: CheckSquare, color: 'text-cyan-400' },
+      { label: 'In Progress', value: inProgressTasks, icon: Target, color: 'text-blue-400' },
+      { label: 'Completed', value: completedTasks, icon: CheckSquare, color: 'text-green-400' },
+      { label: 'Overdue', value: overdueTasks, icon: Calendar, color: 'text-red-400' },
+    ];
   };
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-[600px]">
+      <div className="flex items-center justify-center min-h-[400px]">
         <div className="text-center">
-          <div className="w-16 h-16 btn-gradient-purple rounded-full flex items-center justify-center mx-auto mb-6 animate-pulse-glow">
-            <Loader2 className="w-8 h-8 text-white animate-spin" />
-          </div>
-          <p className="text-slate-400 text-lg">Loading your tasks...</p>
+          <div className="w-8 h-8 border-4 border-cyan-400 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+          <p className="text-slate-400">Loading your tasks...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="space-y-8">
-      {/* Hero Section */}
-      <div className="text-center py-8">
-        <h1 className="text-4xl font-bold text-gradient-pink mb-4">
-          {selectedProjectId ? 'Project Tasks' : 'Your Tasks'}
-        </h1>
-        <p className="text-xl text-slate-400 max-w-2xl mx-auto">
-          {selectedProjectId 
-            ? `Tasks for ${projects.find(p => p.id === selectedProjectId)?.name || 'this project'}`
-            : 'Manage and track your productivity with style'
-          }
-        </p>
-      </div>
-
-      {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {stats.map((stat, index) => {
-          const Icon = stat.icon;
-          return (
-            <Card key={index} className={`glass-card ${getBorderClass(index)} hover:scale-105 transition-all duration-300`}>
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-slate-400 text-sm font-medium">{stat.label}</p>
-                    <p className="text-3xl font-bold text-white mt-2">{stat.value}</p>
-                  </div>
-                  <div className={`p-4 rounded-xl ${stat.gradient} ${stat.glow}`}>
-                    <Icon className="w-8 h-8 text-white" />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          );
-        })}
-      </div>
-
-      {/* Header with Create Task Button */}
-      <div className="flex items-center justify-between">
-        <Button 
-          onClick={handleCreateTask}
-          className="btn-gradient-purple glow-purple text-white font-semibold px-8 py-3 rounded-xl hover:scale-105 transition-all duration-300"
-        >
-          <Plus className="w-5 h-5 mr-2" />
-          New Task
-        </Button>
-      </div>
-
-      {/* Smart Filters */}
-      <TaskFiltersComponent 
-        filters={filters}
-        onFiltersChange={setFilters}
-        className="glass-card neon-border-purple p-6 rounded-xl"
-      />
-
-      {/* Tasks Content */}
-      {filteredTasks.length === 0 ? (
-        <div className="text-center py-16">
-          <div className="w-24 h-24 btn-gradient-purple rounded-full flex items-center justify-center mx-auto mb-6 glow-purple">
-            <Target className="w-12 h-12 text-white" />
+    <div className="min-h-screen bg-slate-950 text-white p-6">
+      <div className="max-w-7xl mx-auto space-y-8">
+        {/* Header */}
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold text-white mb-2">Tasks Dashboard</h1>
+            <p className="text-slate-400">Manage your tasks and track progress</p>
           </div>
-          <h3 className="text-white text-2xl font-bold mb-4">
-            {filters.search || filters.priority !== 'all' || filters.status !== 'all'
-              ? 'No tasks match your filters'
-              : selectedProjectId 
-                ? 'No tasks in this project'
-                : 'No tasks yet'
-            }
-          </h3>
-          <p className="text-slate-400 text-lg mb-8 max-w-md mx-auto">
-            {filters.search || filters.priority !== 'all' || filters.status !== 'all'
-              ? 'Try adjusting your search criteria or filters'
-              : selectedProjectId 
-                ? 'Create your first task for this project to get started'
-                : 'Create your first task to get started with productivity tracking'
-            }
-          </p>
+          
           <Button 
-            onClick={handleCreateTask}
-            className="btn-gradient-blue glow-cyan text-white font-semibold px-8 py-3 rounded-xl hover:scale-105 transition-all duration-300"
+            onClick={() => setIsModalOpen(true)}
+            className="bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 text-white shadow-lg hover:shadow-cyan-500/25 transition-all transform hover:scale-105"
           >
-            <Plus className="w-5 h-5 mr-2" />
-            Create First Task
+            <Plus className="w-4 h-4 mr-2" />
+            New Task
           </Button>
         </div>
-      ) : (
-        <div className="space-y-8">
-          {/* Show grouped tasks by project */}
-          {Object.entries(groupedTasks).map(([projectId, projectTasks]) => {
-            const project = projects.find(p => p.id === projectId);
-            const isNoProject = projectId === 'no-project';
-            
-            return (
-              <div key={projectId} className="space-y-4">
-                {/* Project Header */}
-                {!selectedProjectId && (
-                  <div className="flex items-center gap-3 mb-6">
-                    {!isNoProject && project && (
-                      <>
-                        <div
-                          className="w-4 h-4 rounded-full"
-                          style={{ backgroundColor: project.color || '#6366f1' }}
-                        />
-                        <h2 className="text-2xl font-bold text-white">{project.name}</h2>
-                      </>
-                    )}
-                    {isNoProject && (
-                      <>
-                        <div className="w-4 h-4 rounded-full bg-slate-500" />
-                        <h2 className="text-2xl font-bold text-slate-400">No Project</h2>
-                      </>
-                    )}
-                    <span className="text-slate-500 text-lg">({projectTasks.length})</span>
-                  </div>
-                )}
 
-                {/* Tasks Grid */}
-                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-                  {projectTasks.map((task) => (
-                    <TaskCard
-                      key={task.id}
-                      task={task}
-                      projects={projects}
-                      onEdit={handleEditTask}
-                      onDelete={handleDeleteTask}
-                    />
-                  ))}
+        {/* Stats Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+          {getStatsCards().map((stat, index) => (
+            <div
+              key={index}
+              className="bg-slate-900 border border-slate-800 rounded-xl p-6 hover:border-slate-700 transition-colors"
+            >
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-slate-400 text-sm">{stat.label}</p>
+                  <p className={`text-2xl font-bold ${stat.color}`}>{stat.value}</p>
                 </div>
+                <stat.icon className={`w-8 h-8 ${stat.color}`} />
               </div>
-            );
-          })}
+            </div>
+          ))}
         </div>
-      )}
 
-      {/* Floating Action Button */}
-      <Button 
-        onClick={handleCreateTask}
-        size="lg"
-        className="fixed bottom-8 right-8 w-16 h-16 rounded-full btn-gradient-purple glow-purple shadow-2xl hover:scale-110 transition-all duration-300 z-50"
-      >
-        <Plus className="w-8 h-8" />
-      </Button>
+        {/* Search and Filters */}
+        <div className="bg-slate-900 border border-slate-800 rounded-xl p-6">
+          <div className="flex items-center gap-4">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 w-4 h-4" />
+              <Input
+                placeholder="Search tasks..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10 bg-slate-800 border-slate-700 text-white placeholder-slate-400"
+              />
+            </div>
+            <Button
+              variant="outline"
+              onClick={() => setShowFilters(!showFilters)}
+              className="bg-slate-800 border-slate-700 text-white hover:bg-slate-700"
+            >
+              <Filter className="w-4 h-4 mr-2" />
+              Filters
+            </Button>
+          </div>
+          
+          {showFilters && (
+            <div className="mt-4 pt-4 border-t border-slate-700">
+              <TaskFilters />
+            </div>
+          )}
+        </div>
 
-      {/* Task Modal */}
-      <TaskModal
-        isOpen={isModalOpen}
-        onClose={handleCloseModal}
-        task={editingTask}
-        defaultProjectId={selectedProjectId}
-      />
+        {/* Tasks Grid */}
+        {filteredTasks.length === 0 ? (
+          <div className="text-center py-20 bg-slate-900 border border-slate-800 rounded-xl">
+            <div className="w-20 h-20 bg-slate-800 rounded-full flex items-center justify-center mx-auto mb-6">
+              <CheckSquare className="w-10 h-10 text-slate-500" />
+            </div>
+            <h3 className="text-xl font-semibold text-white mb-2">
+              {searchTerm ? 'No tasks found' : 'No tasks yet'}
+            </h3>
+            <p className="text-slate-400 mb-6 max-w-md mx-auto">
+              {searchTerm 
+                ? 'Try adjusting your search to find what you\'re looking for.'
+                : 'Create your first task to start organizing your work and tracking progress.'
+              }
+            </p>
+            {!searchTerm && (
+              <Button 
+                onClick={() => setIsModalOpen(true)}
+                className="bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600"
+              >
+                <Plus className="w-4 h-4 mr-2" />
+                Create First Task
+              </Button>
+            )}
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+            {filteredTasks.map((task) => (
+              <TaskCard
+                key={task.id}
+                task={task}
+                projects={projects}
+                onEdit={handleEditTask}
+                onDelete={handleDeleteTask}
+              />
+            ))}
+          </div>
+        )}
+
+        {/* Floating Action Button */}
+        <Button 
+          onClick={() => setIsModalOpen(true)}
+          size="lg"
+          className="fixed bottom-8 right-8 w-16 h-16 rounded-full bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 shadow-2xl hover:shadow-cyan-500/25 hover:scale-110 transition-all z-50"
+        >
+          <Plus className="w-6 h-6" />
+        </Button>
+
+        {/* Task Modal */}
+        <TaskModal
+          isOpen={isModalOpen}
+          onClose={handleCloseModal}
+          task={editingTask}
+        />
+      </div>
     </div>
   );
 };
