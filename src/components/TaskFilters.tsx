@@ -73,7 +73,7 @@ const TaskFiltersComponent: React.FC<TaskFiltersProps> = ({
             <Flag className="w-4 h-4 mr-2" />
             <SelectValue placeholder="Priority" />
           </SelectTrigger>
-          <SelectContent className="bg-slate-800 border-slate-600">
+          <SelectContent className="glass-card border-slate-700/50 neon-border-blue">
             <SelectItem value="all" className="text-slate-400">All Priorities</SelectItem>
             <SelectItem value="Critical" className="text-red-400">Critical</SelectItem>
             <SelectItem value="High" className="text-red-400">High</SelectItem>
@@ -88,7 +88,7 @@ const TaskFiltersComponent: React.FC<TaskFiltersProps> = ({
             <CheckCircle className="w-4 h-4 mr-2" />
             <SelectValue placeholder="Status" />
           </SelectTrigger>
-          <SelectContent className="bg-slate-800 border-slate-600">
+          <SelectContent className="glass-card border-slate-700/50 neon-border-blue">
             <SelectItem value="all" className="text-slate-400">All Status</SelectItem>
             <SelectItem value="Todo" className="text-slate-400">Todo</SelectItem>
             <SelectItem value="In Progress" className="text-blue-400">In Progress</SelectItem>
@@ -102,7 +102,7 @@ const TaskFiltersComponent: React.FC<TaskFiltersProps> = ({
             size="sm"
             variant="outline"
             onClick={clearAllFilters}
-            className="bg-slate-800/50 border-slate-600 text-slate-300 hover:bg-slate-700/50 hover:text-white"
+            className="bg-slate-800/50 border-slate-600 text-slate-300 hover:bg-slate-700/50 hover:text-white hover:border-cyan-400 transition-all"
           >
             <X className="w-4 h-4 mr-1" />
             Clear All
