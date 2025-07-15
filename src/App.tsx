@@ -13,6 +13,7 @@ import Calendar from './pages/Calendar';
 import Goals from './pages/Goals';
 import Settings from './pages/Settings';
 import NotFound from './pages/NotFound';
+import PrivacyPolicy from './pages/PrivacyPolicy';
 import Layout from './components/Layout';
 import WeeklyReview from './pages/WeeklyReview';
 
@@ -26,6 +27,7 @@ function App() {
           <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-indigo-900">
             <Routes>
               <Route path="/auth" element={<Auth />} />
+              <Route path="/privacy-policy" element={<PrivacyPolicy />} />
               <Route path="/" element={<Layout />}>
                 <Route index element={<Index />} />
                 <Route path="tasks" element={<Tasks />} />
