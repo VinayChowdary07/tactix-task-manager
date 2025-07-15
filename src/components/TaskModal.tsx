@@ -41,8 +41,7 @@ const TaskModal: React.FC<TaskModalProps> = ({ isOpen, onClose, task }) => {
     status: 'Todo' as 'Todo' | 'In Progress' | 'Done',
     project_id: '',
     repeat_type: 'none' as 'none' | 'daily' | 'weekly' | 'monthly' | 'custom',
-    time_estimate: 0,
-    google_calendar_sync: false
+    time_estimate: 0
   });
 
   useEffect(() => {
@@ -56,8 +55,7 @@ const TaskModal: React.FC<TaskModalProps> = ({ isOpen, onClose, task }) => {
           status: task.status,
           project_id: task.project_id || '',
           repeat_type: task.repeat_type || 'none',
-          time_estimate: task.time_estimate || 0,
-          google_calendar_sync: task.google_calendar_sync || false
+          time_estimate: task.time_estimate || 0
         });
       } else {
         setFormData({
@@ -68,8 +66,7 @@ const TaskModal: React.FC<TaskModalProps> = ({ isOpen, onClose, task }) => {
           status: 'Todo',
           project_id: '',
           repeat_type: 'none',
-          time_estimate: 0,
-          google_calendar_sync: false
+          time_estimate: 0
         });
       }
     }
@@ -89,8 +86,7 @@ const TaskModal: React.FC<TaskModalProps> = ({ isOpen, onClose, task }) => {
         status: formData.status,
         project_id: formData.project_id || null,
         repeat_type: formData.repeat_type,
-        time_estimate: formData.time_estimate,
-        google_calendar_sync: formData.google_calendar_sync
+        time_estimate: formData.time_estimate
       };
 
       if (task) {
@@ -278,17 +274,6 @@ const TaskModal: React.FC<TaskModalProps> = ({ isOpen, onClose, task }) => {
                 </Select>
               </div>
 
-              <div className="flex items-center space-x-2">
-                <Checkbox
-                  id="google_calendar_sync"
-                  checked={formData.google_calendar_sync}
-                  onCheckedChange={(checked) => setFormData({ ...formData, google_calendar_sync: !!checked })}
-                  className="border-slate-600"
-                />
-                <Label htmlFor="google_calendar_sync" className="text-slate-300 text-sm">
-                  Sync with Google Calendar
-                </Label>
-              </div>
             </div>
           </div>
 
