@@ -69,7 +69,7 @@ export const useProjects = () => {
           task_count: totalTasks,
           completed_task_count: completedTasks,
           progress,
-          priority: project.priority || 'Medium'
+          priority: project.priority || 'Medium' as 'Low' | 'Medium' | 'High'
         };
       });
       
