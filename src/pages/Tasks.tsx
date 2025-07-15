@@ -6,7 +6,7 @@ import { useTasks } from '@/hooks/useTasks';
 import { useProjects } from '@/hooks/useProjects';
 import TaskCard from '@/components/TaskCard';
 import TaskModal from '@/components/TaskModal';
-import TaskFilters from '@/components/TaskFilters';
+import TaskFilters, { TaskFilters as TaskFiltersType } from '@/components/TaskFilters';
 import { Input } from '@/components/ui/input';
 
 const Tasks = () => {
@@ -16,11 +16,24 @@ const Tasks = () => {
   const [editingTask, setEditingTask] = useState<any>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [showFilters, setShowFilters] = useState(false);
+  const [filters, setFilters] = useState<TaskFiltersType>({
+    search: '',
+    priority: 'all',
+    status: 'all'
+  });
 
-  const filteredTasks = tasks.filter(task =>
-    task.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    task.description?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredTasks = tasks.filter(task => {
+    const matchesSearch = task.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      task.description?.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    const matchesPriority = filters.priority === 'all' || task.priority === filters.priority;
+    const matchesStatus = filters.status === 'all' || task.status === filters.status;
+    const matchesFilterSearch = !filters.search || 
+      task.title.toLowerCase().includes(filters.search.toLowerCase()) ||
+      task.description?.toLowerCase().includes(filters.search.toLowerCase());
+
+    return matchesSearch && matchesPriority && matchesStatus && matchesFilterSearch;
+  });
 
   const handleEditTask = (task: any) => {
     setEditingTask(task);
@@ -128,7 +141,10 @@ const Tasks = () => {
           
           {showFilters && (
             <div className="mt-4 pt-4 border-t border-slate-700">
-              <TaskFilters />
+              <TaskFilters 
+                filters={filters}
+                onFiltersChange={setFilters}
+              />
             </div>
           )}
         </div>
@@ -140,15 +156,15 @@ const Tasks = () => {
               <CheckSquare className="w-10 h-10 text-slate-500" />
             </div>
             <h3 className="text-xl font-semibold text-white mb-2">
-              {searchTerm ? 'No tasks found' : 'No tasks yet'}
+              {searchTerm || filters.search || filters.priority !== 'all' || filters.status !== 'all' ? 'No tasks found' : 'No tasks yet'}
             </h3>
             <p className="text-slate-400 mb-6 max-w-md mx-auto">
-              {searchTerm 
-                ? 'Try adjusting your search to find what you\'re looking for.'
+              {searchTerm || filters.search || filters.priority !== 'all' || filters.status !== 'all'
+                ? 'Try adjusting your search or filters to find what you\'re looking for.'
                 : 'Create your first task to start organizing your work and tracking progress.'
               }
             </p>
-            {!searchTerm && (
+            {(!searchTerm && !filters.search && filters.priority === 'all' && filters.status === 'all') && (
               <Button 
                 onClick={() => setIsModalOpen(true)}
                 className="bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600"

@@ -10,6 +10,7 @@ export interface Project {
   description?: string;
   color?: string;
   priority?: 'Low' | 'Medium' | 'High';
+  status?: 'active' | 'completed' | 'on_hold' | 'archived';
   user_id: string;
   created_at: string;
   updated_at: string;
@@ -20,6 +21,7 @@ export interface Project {
   task_count?: number;
   completed_task_count?: number;
   progress?: number;
+  team_members?: Array<{ id: string; name: string; avatar?: string }>;
 }
 
 export interface ProjectInput {
@@ -69,7 +71,9 @@ export const useProjects = () => {
           task_count: totalTasks,
           completed_task_count: completedTasks,
           progress,
-          priority: project.priority || 'Medium' as 'Low' | 'Medium' | 'High'
+          priority: project.priority || 'Medium' as 'Low' | 'Medium' | 'High',
+          status: 'active' as 'active' | 'completed' | 'on_hold' | 'archived', // Default status since it's not in DB
+          team_members: [] // Default empty array since it's not in DB yet
         };
       });
       
