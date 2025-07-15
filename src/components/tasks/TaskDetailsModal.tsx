@@ -20,7 +20,9 @@ import {
   RotateCw,
   Folder,
   Clock,
-  Edit
+  Edit,
+  FileText,
+  Target
 } from 'lucide-react';
 import { Task, Subtask, useTasks } from '@/hooks/useTasks';
 import { Project as ProjectType } from '@/hooks/useProjects';
@@ -45,11 +47,14 @@ const TaskDetailsModal: React.FC<TaskDetailsModalProps> = ({
   const [subtasks, setSubtasks] = useState<Subtask[]>([]);
   const [newSubtask, setNewSubtask] = useState('');
   const [isCompleted, setIsCompleted] = useState(false);
+  const [showAddSubtask, setShowAddSubtask] = useState(false);
 
   useEffect(() => {
     if (task) {
       setSubtasks(task.subtasks || []);
       setIsCompleted(task.completed || false);
+      setShowAddSubtask(false);
+      setNewSubtask('');
     }
   }, [task]);
 
@@ -63,9 +68,9 @@ const TaskDetailsModal: React.FC<TaskDetailsModalProps> = ({
   };
 
   const statusConfig = {
-    Todo: { color: 'text-slate-400', bg: 'bg-slate-800/50' },
-    'In Progress': { color: 'text-orange-400', bg: 'bg-orange-500/10' },
-    Done: { color: 'text-green-400', bg: 'bg-green-500/10' },
+    Todo: { color: 'text-slate-400', bg: 'bg-slate-800/50', border: 'border-slate-600/50' },
+    'In Progress': { color: 'text-orange-400', bg: 'bg-orange-500/10', border: 'border-orange-500/20' },
+    Done: { color: 'text-green-400', bg: 'bg-green-500/10', border: 'border-green-500/20' },
   };
 
   const priorityStyle = priorityConfig[task.priority];
@@ -88,7 +93,6 @@ const TaskDetailsModal: React.FC<TaskDetailsModalProps> = ({
       });
     } catch (error) {
       console.error('Error updating subtask:', error);
-      // Revert on error
       setSubtasks(task.subtasks || []);
     }
   };
@@ -105,6 +109,7 @@ const TaskDetailsModal: React.FC<TaskDetailsModalProps> = ({
     const updatedSubtasks = [...subtasks, newSubtaskItem];
     setSubtasks(updatedSubtasks);
     setNewSubtask('');
+    setShowAddSubtask(false);
 
     try {
       await updateTask.mutateAsync({
@@ -113,7 +118,6 @@ const TaskDetailsModal: React.FC<TaskDetailsModalProps> = ({
       });
     } catch (error) {
       console.error('Error adding subtask:', error);
-      // Revert on error
       setSubtasks(subtasks);
       setNewSubtask(newSubtaskItem.title);
     }
@@ -130,7 +134,6 @@ const TaskDetailsModal: React.FC<TaskDetailsModalProps> = ({
       });
     } catch (error) {
       console.error('Error removing subtask:', error);
-      // Revert on error
       setSubtasks(task.subtasks || []);
     }
   };
@@ -146,44 +149,65 @@ const TaskDetailsModal: React.FC<TaskDetailsModalProps> = ({
       });
     } catch (error) {
       console.error('Error updating task completion:', error);
-      // Revert on error
       setIsCompleted(!completed);
     }
   };
 
-  // Auto-suggest completion when all subtasks are done
   const allSubtasksCompleted = totalSubtasks > 0 && completedSubtasks === totalSubtasks;
   const shouldSuggestCompletion = allSubtasksCompleted && !isCompleted;
 
+  const handleClose = () => {
+    setShowAddSubtask(false);
+    setNewSubtask('');
+    onClose();
+  };
+
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="bg-slate-900/95 backdrop-blur-xl border border-slate-700/50 text-white max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl shadow-cyan-500/10">
-        <DialogHeader className="border-b border-slate-700/50 pb-4">
-          <div className="flex items-center justify-between">
-            <DialogTitle className="text-xl font-bold flex items-center gap-2 bg-gradient-to-r from-cyan-400 to-blue-400 bg-clip-text text-transparent">
-              <CheckSquare className="w-5 h-5 text-cyan-400" />
-              Task Details
-            </DialogTitle>
-            <Button
-              onClick={() => onEdit(task)}
-              variant="ghost"
-              size="sm"
-              className="text-slate-400 hover:text-cyan-400 hover:bg-slate-800/50"
-            >
-              <Edit className="w-4 h-4" />
-            </Button>
+    <Dialog open={isOpen} onOpenChange={handleClose}>
+      <DialogContent className="bg-slate-900/95 backdrop-blur-xl border border-slate-700/50 text-white max-w-3xl max-h-[90vh] overflow-y-auto shadow-2xl shadow-cyan-500/10 rounded-2xl">
+        <DialogHeader className="border-b border-slate-700/30 pb-6">
+          <div className="flex items-start justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 bg-gradient-to-br from-cyan-500/20 to-blue-500/20 rounded-xl flex items-center justify-center border border-cyan-500/30">
+                <CheckSquare className="w-6 h-6 text-cyan-400" />
+              </div>
+              <div>
+                <DialogTitle className="text-2xl font-bold bg-gradient-to-r from-cyan-400 to-blue-400 bg-clip-text text-transparent">
+                  Task Details
+                </DialogTitle>
+                <p className="text-slate-400 text-sm">Manage and track your task progress</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <Button
+                onClick={() => onEdit(task)}
+                variant="ghost"
+                size="sm"
+                className="text-slate-400 hover:text-cyan-400 hover:bg-slate-800/50 rounded-xl p-2"
+              >
+                <Edit className="w-5 h-5" />
+              </Button>
+              <Button
+                onClick={handleClose}
+                variant="ghost"
+                size="sm"
+                className="text-slate-400 hover:text-red-400 hover:bg-slate-800/50 rounded-xl p-2"
+              >
+                <X className="w-5 h-5" />
+              </Button>
+            </div>
           </div>
         </DialogHeader>
 
-        <div className="space-y-6 mt-6">
+        <div className="space-y-8 mt-6">
           {/* Task Header */}
-          <div className="space-y-4">
-            <div className="flex items-start justify-between">
-              <h2 className={`text-2xl font-bold ${isCompleted ? 'line-through text-slate-400' : 'text-white'}`}>
+          <div className="bg-slate-800/30 rounded-2xl p-6 border border-slate-700/30">
+            <div className="flex items-start justify-between mb-4">
+              <h2 className={`text-3xl font-bold leading-tight ${isCompleted ? 'line-through text-slate-400' : 'text-white'}`}>
                 {task.title}
               </h2>
-              <div className="flex items-center gap-2">
-                <span className="text-sm text-slate-400">Mark Complete</span>
+              <div className="flex items-center gap-3">
+                <span className="text-sm text-slate-400 font-medium">Mark Complete</span>
                 <Switch
                   checked={isCompleted}
                   onCheckedChange={handleTaskCompletion}
@@ -193,20 +217,29 @@ const TaskDetailsModal: React.FC<TaskDetailsModalProps> = ({
             </div>
 
             {task.description && (
-              <p className={`text-slate-300 leading-relaxed ${isCompleted ? 'line-through text-slate-500' : ''}`}>
-                {task.description}
-              </p>
+              <div className="mb-6">
+                <div className="flex items-center gap-2 mb-3">
+                  <FileText className="w-4 h-4 text-slate-500" />
+                  <span className="text-sm font-medium text-slate-300">Description</span>
+                </div>
+                <p className={`text-slate-300 leading-relaxed pl-6 ${isCompleted ? 'line-through text-slate-500' : ''}`}>
+                  {task.description}
+                </p>
+              </div>
             )}
 
             {/* Auto-completion suggestion */}
             {shouldSuggestCompletion && (
-              <div className="bg-green-500/10 border border-green-500/20 rounded-lg p-3 animate-pulse">
+              <div className="bg-green-500/10 border border-green-500/20 rounded-xl p-4 mb-6 animate-pulse">
                 <div className="flex items-center justify-between">
-                  <span className="text-green-400 text-sm">🎉 All subtasks completed! Mark this task as done?</span>
+                  <div className="flex items-center gap-3">
+                    <Target className="w-5 h-5 text-green-400" />
+                    <span className="text-green-400 font-medium">🎉 All subtasks completed! Ready to mark this task as done?</span>
+                  </div>
                   <Button
                     onClick={() => handleTaskCompletion(true)}
                     size="sm"
-                    className="bg-green-500 hover:bg-green-600 text-white"
+                    className="bg-green-500 hover:bg-green-600 text-white font-medium px-4 py-2 rounded-lg"
                   >
                     Mark Complete
                   </Button>
@@ -216,148 +249,216 @@ const TaskDetailsModal: React.FC<TaskDetailsModalProps> = ({
           </div>
 
           {/* Task Metadata */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {/* Dates */}
-            <div className="space-y-3">
-              {task.start_date && (
-                <div className="flex items-center gap-2">
-                  <Calendar className="w-4 h-4 text-slate-500" />
-                  <span className="text-sm text-slate-400">
-                    Start: {format(new Date(task.start_date), 'MMM d, yyyy')}
-                  </span>
-                </div>
-              )}
-              {task.due_date && (
-                <div className="flex items-center gap-2">
-                  <Clock className="w-4 h-4 text-slate-500" />
-                  <span className="text-sm text-slate-400">
-                    Due: {format(new Date(task.due_date), 'MMM d, yyyy')}
-                  </span>
-                </div>
-              )}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Dates & Project */}
+            <div className="bg-slate-800/30 rounded-2xl p-6 border border-slate-700/30">
+              <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+                <Calendar className="w-5 h-5 text-cyan-400" />
+                Schedule & Project
+              </h3>
+              <div className="space-y-4">
+                {task.start_date && (
+                  <div className="flex items-center gap-3 p-3 bg-slate-700/30 rounded-lg">
+                    <Calendar className="w-4 h-4 text-slate-500" />
+                    <div>
+                      <span className="text-xs text-slate-400 block">Start Date</span>
+                      <span className="text-sm text-white font-medium">
+                        {format(new Date(task.start_date), 'MMM d, yyyy')}
+                      </span>
+                    </div>
+                  </div>
+                )}
+                {task.due_date && (
+                  <div className="flex items-center gap-3 p-3 bg-slate-700/30 rounded-lg">
+                    <Clock className="w-4 h-4 text-slate-500" />
+                    <div>
+                      <span className="text-xs text-slate-400 block">Due Date</span>
+                      <span className="text-sm text-white font-medium">
+                        {format(new Date(task.due_date), 'MMM d, yyyy')}
+                      </span>
+                    </div>
+                  </div>
+                )}
+                {project && (
+                  <div className="flex items-center gap-3 p-3 bg-slate-700/30 rounded-lg">
+                    <Folder className="w-4 h-4 text-slate-500" />
+                    <div className="flex items-center gap-2">
+                      <div
+                        className="w-3 h-3 rounded-full"
+                        style={{ backgroundColor: project.color || '#6366f1' }}
+                      />
+                      <div>
+                        <span className="text-xs text-slate-400 block">Project</span>
+                        <span className="text-sm text-white font-medium">{project.name}</span>
+                      </div>
+                    </div>
+                  </div>
+                )}
+                {task.recurring && (
+                  <div className="flex items-center gap-3 p-3 bg-slate-700/30 rounded-lg">
+                    <RotateCw className="w-4 h-4 text-slate-500" />
+                    <div>
+                      <span className="text-xs text-slate-400 block">Recurrence</span>
+                      <span className="text-sm text-white font-medium">
+                        Repeats {task.repeat_type} (every {task.repeat_interval})
+                      </span>
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
 
-            {/* Status and Priority */}
-            <div className="space-y-3">
-              <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full ${statusStyle.bg}`}>
-                <div className={`w-2 h-2 rounded-full ${statusStyle.color.replace('text-', 'bg-')}`} />
-                <span className={`text-sm font-medium ${statusStyle.color}`}>
-                  {task.status}
-                </span>
-              </div>
+            {/* Status & Priority */}
+            <div className="bg-slate-800/30 rounded-2xl p-6 border border-slate-700/30">
+              <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+                <Flag className="w-5 h-5 text-cyan-400" />
+                Status & Priority
+              </h3>
+              <div className="space-y-4">
+                <div className={`p-4 rounded-xl ${statusStyle.bg} border ${statusStyle.border || 'border-slate-600/50'}`}>
+                  <div className="flex items-center gap-3">
+                    <div className={`w-3 h-3 rounded-full ${statusStyle.color.replace('text-', 'bg-')}`} />
+                    <div>
+                      <span className="text-xs text-slate-400 block">Status</span>
+                      <span className={`text-lg font-bold ${statusStyle.color}`}>
+                        {task.status}
+                      </span>
+                    </div>
+                  </div>
+                </div>
 
-              <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full ${priorityStyle.bg} ${priorityStyle.border} border ml-2`}>
-                <Flag className={`w-3 h-3 ${priorityStyle.color}`} />
-                <span className={`text-sm font-medium ${priorityStyle.color}`}>
-                  {task.priority}
-                </span>
+                <div className={`p-4 rounded-xl ${priorityStyle.bg} border ${priorityStyle.border}`}>
+                  <div className="flex items-center gap-3">
+                    <Flag className={`w-4 h-4 ${priorityStyle.color}`} />
+                    <div>
+                      <span className="text-xs text-slate-400 block">Priority</span>
+                      <span className={`text-lg font-bold ${priorityStyle.color}`}>
+                        {task.priority}
+                      </span>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
-          </div>
-
-          {/* Project and Recurring Info */}
-          <div className="flex flex-wrap items-center gap-4">
-            {project && (
-              <div className="flex items-center gap-2">
-                <Folder className="w-4 h-4 text-slate-500" />
-                <div
-                  className="w-3 h-3 rounded-full"
-                  style={{ backgroundColor: project.color || '#6366f1' }}
-                />
-                <span className="text-sm text-slate-400">{project.name}</span>
-              </div>
-            )}
-            
-            {task.recurring && (
-              <div className="flex items-center gap-2">
-                <RotateCw className="w-4 h-4 text-slate-500" />
-                <span className="text-sm text-slate-400">
-                  Repeats {task.repeat_type} (every {task.repeat_interval})
-                </span>
-              </div>
-            )}
           </div>
 
           {/* Subtasks Section */}
-          {(totalSubtasks > 0 || newSubtask) && (
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <h3 className="text-lg font-semibold text-white flex items-center gap-2">
-                  <CheckSquare className="w-5 h-5" />
-                  Subtasks ({completedSubtasks}/{totalSubtasks})
-                </h3>
-              </div>
+          <div className="bg-slate-800/30 rounded-2xl p-6 border border-slate-700/30">
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-xl font-semibold text-white flex items-center gap-3">
+                <CheckSquare className="w-6 h-6 text-cyan-400" />
+                Subtasks
+                {totalSubtasks > 0 && (
+                  <Badge variant="secondary" className="bg-cyan-500/20 text-cyan-400 border-cyan-500/30">
+                    {completedSubtasks}/{totalSubtasks}
+                  </Badge>
+                )}
+              </h3>
+              <Button
+                onClick={() => setShowAddSubtask(true)}
+                className="bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 text-white font-medium px-4 py-2 rounded-lg shadow-lg hover:shadow-cyan-500/25 transition-all transform hover:scale-105"
+              >
+                <Plus className="w-4 h-4 mr-2" />
+                Add Subtask
+              </Button>
+            </div>
 
-              {/* Progress Bar */}
-              {totalSubtasks > 0 && (
-                <div className="space-y-2">
-                  <div className="flex justify-between text-sm">
-                    <span className="text-slate-400">Progress</span>
-                    <span className="text-cyan-400 font-medium">{Math.round(progressPercentage)}%</span>
-                  </div>
-                  <Progress 
-                    value={progressPercentage} 
-                    className="h-2 bg-slate-800"
-                  />
+            {/* Progress Bar */}
+            {totalSubtasks > 0 && (
+              <div className="mb-6">
+                <div className="flex justify-between text-sm mb-2">
+                  <span className="text-slate-400">Progress</span>
+                  <span className="text-cyan-400 font-bold">{Math.round(progressPercentage)}% Complete</span>
                 </div>
-              )}
+                <Progress 
+                  value={progressPercentage} 
+                  className="h-3 bg-slate-700/50 rounded-full overflow-hidden"
+                />
+              </div>
+            )}
 
-              {/* Subtasks List */}
-              <div className="space-y-2 max-h-60 overflow-y-auto">
+            {/* Add New Subtask Input */}
+            {showAddSubtask && (
+              <div className="mb-6 p-4 bg-slate-700/30 rounded-xl border border-slate-600/30">
+                <div className="flex gap-3">
+                  <Input
+                    value={newSubtask}
+                    onChange={(e) => setNewSubtask(e.target.value)}
+                    placeholder="Enter subtask description..."
+                    className="bg-slate-800/50 border-slate-600/50 text-white placeholder-slate-400 focus:border-cyan-400 rounded-lg"
+                    onKeyPress={(e) => {
+                      if (e.key === 'Enter') {
+                        handleAddSubtask();
+                      } else if (e.key === 'Escape') {
+                        setShowAddSubtask(false);
+                        setNewSubtask('');
+                      }
+                    }}
+                    autoFocus
+                  />
+                  <Button
+                    onClick={handleAddSubtask}
+                    disabled={!newSubtask.trim()}
+                    className="bg-cyan-500 hover:bg-cyan-600 text-white px-4 rounded-lg"
+                  >
+                    <Plus className="w-4 h-4" />
+                  </Button>
+                  <Button
+                    onClick={() => {
+                      setShowAddSubtask(false);
+                      setNewSubtask('');
+                    }}
+                    variant="ghost"
+                    className="text-slate-400 hover:text-white hover:bg-slate-700/50 px-4 rounded-lg"
+                  >
+                    <X className="w-4 h-4" />
+                  </Button>
+                </div>
+              </div>
+            )}
+
+            {/* Subtasks List */}
+            {totalSubtasks > 0 ? (
+              <div className="space-y-3 max-h-80 overflow-y-auto">
                 {subtasks.map((subtask) => (
-                  <div key={subtask.id} className="flex items-center gap-3 p-3 bg-slate-800/30 rounded-lg border border-slate-700/50 group">
+                  <div key={subtask.id} className="flex items-center gap-4 p-4 bg-slate-700/30 rounded-xl border border-slate-600/30 group hover:bg-slate-700/50 transition-all">
                     <input
                       type="checkbox"
                       checked={subtask.completed}
                       onChange={() => handleSubtaskToggle(subtask.id)}
-                      className="w-4 h-4 text-cyan-400 bg-slate-700 border-slate-600 rounded focus:ring-cyan-400 focus:ring-2"
+                      className="w-5 h-5 text-cyan-400 bg-slate-700 border-slate-600 rounded focus:ring-cyan-400 focus:ring-2"
                     />
-                    <span className={`flex-1 text-sm ${subtask.completed ? 'line-through text-slate-400' : 'text-white'}`}>
+                    <span className={`flex-1 text-base ${subtask.completed ? 'line-through text-slate-400' : 'text-white'} transition-all`}>
                       {subtask.title}
                     </span>
                     <Button
                       onClick={() => handleRemoveSubtask(subtask.id)}
                       variant="ghost"
                       size="sm"
-                      className="h-6 w-6 p-0 text-slate-400 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-opacity"
+                      className="h-8 w-8 p-0 text-slate-400 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-all rounded-lg"
                     >
-                      <X className="w-3 h-3" />
+                      <X className="w-4 h-4" />
                     </Button>
                   </div>
                 ))}
               </div>
-
-              {/* Add New Subtask */}
-              <div className="flex gap-2">
-                <Input
-                  value={newSubtask}
-                  onChange={(e) => setNewSubtask(e.target.value)}
-                  placeholder="Add a new subtask..."
-                  className="bg-slate-800/50 border-slate-600/50 text-white placeholder-slate-400 focus:border-cyan-400"
-                  onKeyPress={(e) => e.key === 'Enter' && handleAddSubtask()}
-                />
+            ) : !showAddSubtask ? (
+              <div className="text-center py-12">
+                <div className="w-16 h-16 bg-slate-700/30 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <CheckSquare className="w-8 h-8 text-slate-500" />
+                </div>
+                <p className="text-slate-400 mb-4">No subtasks yet</p>
                 <Button
-                  onClick={handleAddSubtask}
-                  disabled={!newSubtask.trim()}
-                  className="bg-cyan-500 hover:bg-cyan-600 text-white px-4"
+                  onClick={() => setShowAddSubtask(true)}
+                  variant="outline"
+                  className="border-slate-600/50 text-slate-300 hover:bg-slate-800/50 hover:border-cyan-400/50 hover:text-cyan-400 rounded-lg"
                 >
-                  <Plus className="w-4 h-4" />
+                  <Plus className="w-4 h-4 mr-2" />
+                  Add First Subtask
                 </Button>
               </div>
-            </div>
-          )}
-
-          {/* Add First Subtask Button */}
-          {totalSubtasks === 0 && !newSubtask && (
-            <Button
-              onClick={() => setNewSubtask('')}
-              variant="outline"
-              className="w-full border-slate-600/50 text-slate-300 hover:bg-slate-800/50 hover:border-cyan-400/50 hover:text-cyan-400"
-            >
-              <Plus className="w-4 h-4 mr-2" />
-              Add Subtasks
-            </Button>
-          )}
+            ) : null}
+          </div>
         </div>
       </DialogContent>
     </Dialog>
