@@ -30,17 +30,23 @@ export interface TaskInput {
 }
 
 export const useTasks = () => {
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const queryClient = useQueryClient();
 
   const { data: tasks = [], isLoading, error } = useQuery({
-    queryKey: ['tasks'],
+    queryKey: ['tasks', user?.id],
     queryFn: async () => {
-      if (!user) return [];
+      if (!user?.id) {
+        console.log('No user ID available for tasks query');
+        return [];
+      }
+      
+      console.log('Fetching tasks for user:', user.id);
       
       const { data, error } = await supabase
         .from('tasks')
         .select('*')
+        .eq('user_id', user.id)
         .order('created_at', { ascending: false });
       
       if (error) {
@@ -48,14 +54,19 @@ export const useTasks = () => {
         throw error;
       }
       
+      console.log('Tasks fetched successfully:', data?.length);
       return data as Task[];
     },
-    enabled: !!user,
+    enabled: !!user?.id && !authLoading,
   });
 
   const createTask = useMutation({
     mutationFn: async (taskData: TaskInput) => {
-      if (!user) throw new Error('User not authenticated');
+      if (!user?.id) {
+        throw new Error('User not authenticated. Please sign in to create tasks.');
+      }
+      
+      console.log('Creating task for user:', user.id);
       
       const insertData = {
         title: taskData.title.trim(),
@@ -79,6 +90,7 @@ export const useTasks = () => {
         throw taskError;
       }
 
+      console.log('Task created successfully:', taskResult.id);
       return taskResult as Task;
     },
     onSuccess: () => {
@@ -93,7 +105,11 @@ export const useTasks = () => {
 
   const updateTask = useMutation({
     mutationFn: async ({ id, ...taskData }: Partial<Task> & { id: string }) => {
-      if (!user) throw new Error('User not authenticated');
+      if (!user?.id) {
+        throw new Error('User not authenticated. Please sign in to update tasks.');
+      }
+      
+      console.log('Updating task:', id);
       
       const updateData = {
         title: taskData.title?.trim(),
@@ -116,6 +132,7 @@ export const useTasks = () => {
         .from('tasks')
         .update(updateData)
         .eq('id', id)
+        .eq('user_id', user.id) // Ensure user can only update their own tasks
         .select()
         .single();
       
@@ -124,6 +141,7 @@ export const useTasks = () => {
         throw error;
       }
 
+      console.log('Task updated successfully:', taskResult.id);
       return taskResult as Task;
     },
     onSuccess: () => {
@@ -138,15 +156,24 @@ export const useTasks = () => {
 
   const deleteTask = useMutation({
     mutationFn: async (id: string) => {
+      if (!user?.id) {
+        throw new Error('User not authenticated. Please sign in to delete tasks.');
+      }
+      
+      console.log('Deleting task:', id);
+      
       const { error } = await supabase
         .from('tasks')
         .delete()
-        .eq('id', id);
+        .eq('id', id)
+        .eq('user_id', user.id); // Ensure user can only delete their own tasks
       
       if (error) {
         console.error('Error deleting task:', error);
         throw error;
       }
+
+      console.log('Task deleted successfully:', id);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['tasks'] });
@@ -160,7 +187,7 @@ export const useTasks = () => {
 
   return {
     tasks,
-    isLoading,
+    isLoading: isLoading || authLoading,
     error,
     createTask,
     updateTask,

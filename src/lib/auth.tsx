@@ -29,9 +29,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Set up auth state listener
+    let mounted = true;
+
+    // Set up auth state listener first
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
+        if (!mounted) return;
+        
         console.log('Auth state changed:', event, session?.user?.email);
         setSession(session);
         setUser(session?.user ?? null);
@@ -40,14 +44,33 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     );
 
     // Get initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      console.log('Initial session:', session?.user?.email);
-      setSession(session);
-      setUser(session?.user ?? null);
-      setLoading(false);
-    });
+    const getInitialSession = async () => {
+      try {
+        const { data: { session }, error } = await supabase.auth.getSession();
+        if (error) {
+          console.error('Error getting session:', error);
+        }
+        
+        if (mounted) {
+          console.log('Initial session:', session?.user?.email);
+          setSession(session);
+          setUser(session?.user ?? null);
+          setLoading(false);
+        }
+      } catch (error) {
+        console.error('Session fetch error:', error);
+        if (mounted) {
+          setLoading(false);
+        }
+      }
+    };
 
-    return () => subscription.unsubscribe();
+    getInitialSession();
+
+    return () => {
+      mounted = false;
+      subscription.unsubscribe();
+    };
   }, []);
 
   const signUp = async (email: string, password: string) => {
@@ -86,9 +109,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     console.log('Starting sign out process...');
     
     try {
-      // Clear localStorage and sessionStorage
-      localStorage.clear();
-      sessionStorage.clear();
+      setLoading(true);
       
       // Sign out from Supabase
       const { error } = await supabase.auth.signOut();
@@ -103,6 +124,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       // Clear state immediately
       setUser(null);
       setSession(null);
+      setLoading(false);
+      
+      // Clear any cached data
+      localStorage.clear();
+      sessionStorage.clear();
       
       // Force redirect to auth page
       window.location.href = '/auth';
@@ -111,6 +137,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       // Even if there's an error, clear state and redirect
       setUser(null);
       setSession(null);
+      setLoading(false);
       window.location.href = '/auth';
     }
   };

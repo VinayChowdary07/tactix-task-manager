@@ -17,7 +17,20 @@ import PrivacyPolicy from './pages/PrivacyPolicy';
 import Layout from './components/Layout';
 import WeeklyReview from './pages/WeeklyReview';
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: (failureCount, error: any) => {
+        // Don't retry if it's an auth error
+        if (error?.message?.includes('not authenticated')) {
+          return false;
+        }
+        return failureCount < 3;
+      },
+      staleTime: 5 * 60 * 1000, // 5 minutes
+    },
+  },
+});
 
 // Protected Routes Component
 const ProtectedRoutes = () => {
@@ -26,7 +39,7 @@ const ProtectedRoutes = () => {
   const location = useLocation();
 
   useEffect(() => {
-    console.log('ProtectedRoutes: user:', user?.email, 'loading:', loading, 'path:', location.pathname);
+    console.log('ProtectedRoutes: user:', user?.email || 'none', 'loading:', loading, 'path:', location.pathname);
     
     if (!loading && !user) {
       console.log('No user found, redirecting to auth');
@@ -37,7 +50,10 @@ const ProtectedRoutes = () => {
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-indigo-900 flex items-center justify-center">
-        <div className="text-white text-lg">Loading...</div>
+        <div className="text-center">
+          <div className="w-8 h-8 border-4 border-cyan-400 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+          <div className="text-white text-lg">Loading...</div>
+        </div>
       </div>
     );
   }
@@ -67,7 +83,7 @@ const AuthRoute = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    console.log('AuthRoute: user:', user?.email, 'loading:', loading);
+    console.log('AuthRoute: user:', user?.email || 'none', 'loading:', loading);
     
     if (!loading && user) {
       console.log('User found, redirecting to dashboard');
@@ -78,7 +94,10 @@ const AuthRoute = () => {
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-indigo-900 flex items-center justify-center">
-        <div className="text-white text-lg">Loading...</div>
+        <div className="text-center">
+          <div className="w-8 h-8 border-4 border-cyan-400 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+          <div className="text-white text-lg">Loading...</div>
+        </div>
       </div>
     );
   }

@@ -19,6 +19,7 @@ import {
 } from '@/components/ui/select';
 import { useTasks, Task } from '@/hooks/useTasks';
 import { useProjects } from '@/hooks/useProjects';
+import { useAuth } from '@/lib/auth';
 import { CheckSquare, Calendar, Flag } from 'lucide-react';
 
 interface TaskModalProps {
@@ -28,6 +29,7 @@ interface TaskModalProps {
 }
 
 const TaskModal: React.FC<TaskModalProps> = ({ isOpen, onClose, task }) => {
+  const { user, loading: authLoading } = useAuth();
   const { createTask, updateTask } = useTasks();
   const { projects = [] } = useProjects();
   
@@ -42,6 +44,20 @@ const TaskModal: React.FC<TaskModalProps> = ({ isOpen, onClose, task }) => {
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
+
+  // Don't render the modal if auth is still loading
+  if (authLoading) {
+    return null;
+  }
+
+  // Don't render if user is not authenticated
+  if (!user) {
+    console.log('TaskModal: User not authenticated, closing modal');
+    if (isOpen) {
+      onClose();
+    }
+    return null;
+  }
 
   useEffect(() => {
     if (isOpen) {
@@ -71,6 +87,11 @@ const TaskModal: React.FC<TaskModalProps> = ({ isOpen, onClose, task }) => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    if (!user?.id) {
+      setError('Please sign in to create or edit tasks.');
+      return;
+    }
+    
     if (!formData.title.trim()) {
       setError('Task title is required');
       return;
@@ -89,6 +110,8 @@ const TaskModal: React.FC<TaskModalProps> = ({ isOpen, onClose, task }) => {
         project_id: formData.project_id === 'none' ? undefined : formData.project_id
       };
 
+      console.log('Submitting task data:', taskData);
+
       if (task) {
         await updateTask.mutateAsync({ id: task.id, ...taskData });
       } else {
@@ -96,8 +119,9 @@ const TaskModal: React.FC<TaskModalProps> = ({ isOpen, onClose, task }) => {
       }
       
       onClose();
-    } catch (error) {
-      setError('Failed to save task. Please try again.');
+    } catch (error: any) {
+      console.error('Task submission error:', error);
+      setError(error?.message || 'Failed to save task. Please try again.');
     } finally {
       setIsSubmitting(false);
     }
@@ -139,6 +163,7 @@ const TaskModal: React.FC<TaskModalProps> = ({ isOpen, onClose, task }) => {
                   className="bg-slate-800/50 border-slate-600/50 text-white placeholder-slate-400 focus:border-cyan-400 focus:ring-cyan-400/20 mt-2"
                   placeholder="Enter task title"
                   required
+                  disabled={isSubmitting}
                 />
               </div>
 
@@ -151,6 +176,7 @@ const TaskModal: React.FC<TaskModalProps> = ({ isOpen, onClose, task }) => {
                   className="bg-slate-800/50 border-slate-600/50 text-white placeholder-slate-400 resize-none focus:border-cyan-400 focus:ring-cyan-400/20 mt-2"
                   placeholder="Describe the task"
                   rows={3}
+                  disabled={isSubmitting}
                 />
               </div>
 
@@ -165,6 +191,7 @@ const TaskModal: React.FC<TaskModalProps> = ({ isOpen, onClose, task }) => {
                   value={formData.due_date}
                   onChange={(e) => setFormData({ ...formData, due_date: e.target.value })}
                   className="bg-slate-800/50 border-slate-600/50 text-white focus:border-cyan-400 focus:ring-cyan-400/20 mt-2"
+                  disabled={isSubmitting}
                 />
               </div>
             </div>
@@ -176,7 +203,11 @@ const TaskModal: React.FC<TaskModalProps> = ({ isOpen, onClose, task }) => {
                   <Flag className="w-4 h-4" />
                   Priority
                 </Label>
-                <Select value={formData.priority} onValueChange={(value: any) => setFormData({ ...formData, priority: value })}>
+                <Select 
+                  value={formData.priority} 
+                  onValueChange={(value: any) => setFormData({ ...formData, priority: value })}
+                  disabled={isSubmitting}
+                >
                   <SelectTrigger className="bg-slate-800/50 border-slate-600/50 text-white focus:border-cyan-400 mt-2">
                     <SelectValue />
                   </SelectTrigger>
@@ -198,7 +229,11 @@ const TaskModal: React.FC<TaskModalProps> = ({ isOpen, onClose, task }) => {
 
               <div>
                 <Label className="text-slate-300 font-medium">Status</Label>
-                <Select value={formData.status} onValueChange={(value: any) => setFormData({ ...formData, status: value })}>
+                <Select 
+                  value={formData.status} 
+                  onValueChange={(value: any) => setFormData({ ...formData, status: value })}
+                  disabled={isSubmitting}
+                >
                   <SelectTrigger className="bg-slate-800/50 border-slate-600/50 text-white focus:border-cyan-400 mt-2">
                     <SelectValue />
                   </SelectTrigger>
@@ -212,7 +247,11 @@ const TaskModal: React.FC<TaskModalProps> = ({ isOpen, onClose, task }) => {
 
               <div>
                 <Label className="text-slate-300 font-medium">Project</Label>
-                <Select value={formData.project_id} onValueChange={(value) => setFormData({ ...formData, project_id: value })}>
+                <Select 
+                  value={formData.project_id} 
+                  onValueChange={(value) => setFormData({ ...formData, project_id: value })}
+                  disabled={isSubmitting}
+                >
                   <SelectTrigger className="bg-slate-800/50 border-slate-600/50 text-white focus:border-cyan-400 mt-2">
                     <SelectValue placeholder="Select project" />
                   </SelectTrigger>
@@ -247,7 +286,7 @@ const TaskModal: React.FC<TaskModalProps> = ({ isOpen, onClose, task }) => {
             </Button>
             <Button
               type="submit"
-              disabled={isSubmitting || !formData.title.trim()}
+              disabled={isSubmitting || !formData.title.trim() || !user?.id}
               className="flex-1 bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 text-white font-medium shadow-lg hover:shadow-cyan-500/25 transition-all transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isSubmitting ? 'Saving...' : (task ? 'Update Task' : 'Create Task')}
