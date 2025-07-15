@@ -178,7 +178,7 @@ const TaskDetailsModal: React.FC<TaskDetailsModalProps> = ({
                 <p className="text-slate-400 text-sm">Manage and track your task progress</p>
               </div>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-3">
               <Button
                 onClick={() => onEdit(task)}
                 variant="ghost"
@@ -186,14 +186,6 @@ const TaskDetailsModal: React.FC<TaskDetailsModalProps> = ({
                 className="text-slate-400 hover:text-cyan-400 hover:bg-slate-800/50 rounded-xl p-2"
               >
                 <Edit className="w-5 h-5" />
-              </Button>
-              <Button
-                onClick={handleClose}
-                variant="ghost"
-                size="sm"
-                className="text-slate-400 hover:text-red-400 hover:bg-slate-800/50 rounded-xl p-2"
-              >
-                <X className="w-5 h-5" />
               </Button>
             </div>
           </div>
@@ -215,6 +207,25 @@ const TaskDetailsModal: React.FC<TaskDetailsModalProps> = ({
                 />
               </div>
             </div>
+
+            {/* Project Display */}
+            {project && (
+              <div className="mb-4">
+                <div className="flex items-center gap-3 p-3 bg-slate-700/30 rounded-lg">
+                  <Folder className="w-4 h-4 text-slate-500" />
+                  <div className="flex items-center gap-2">
+                    <div
+                      className="w-3 h-3 rounded-full"
+                      style={{ backgroundColor: project.color || '#6366f1' }}
+                    />
+                    <div>
+                      <span className="text-xs text-slate-400 block">Project</span>
+                      <span className="text-sm text-white font-medium">{project.name}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
 
             {task.description && (
               <div className="mb-6">
@@ -250,11 +261,11 @@ const TaskDetailsModal: React.FC<TaskDetailsModalProps> = ({
 
           {/* Task Metadata */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Dates & Project */}
+            {/* Dates & Schedule */}
             <div className="bg-slate-800/30 rounded-2xl p-6 border border-slate-700/30">
               <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
                 <Calendar className="w-5 h-5 text-cyan-400" />
-                Schedule & Project
+                Schedule
               </h3>
               <div className="space-y-4">
                 {task.start_date && (
@@ -276,21 +287,6 @@ const TaskDetailsModal: React.FC<TaskDetailsModalProps> = ({
                       <span className="text-sm text-white font-medium">
                         {format(new Date(task.due_date), 'MMM d, yyyy')}
                       </span>
-                    </div>
-                  </div>
-                )}
-                {project && (
-                  <div className="flex items-center gap-3 p-3 bg-slate-700/30 rounded-lg">
-                    <Folder className="w-4 h-4 text-slate-500" />
-                    <div className="flex items-center gap-2">
-                      <div
-                        className="w-3 h-3 rounded-full"
-                        style={{ backgroundColor: project.color || '#6366f1' }}
-                      />
-                      <div>
-                        <span className="text-xs text-slate-400 block">Project</span>
-                        <span className="text-sm text-white font-medium">{project.name}</span>
-                      </div>
                     </div>
                   </div>
                 )}
