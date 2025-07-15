@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Save, LogOut } from 'lucide-react';
@@ -13,16 +13,21 @@ import { toast } from 'sonner';
 
 const Settings = () => {
   const { signOut } = useAuth();
+  const [isSigningOut, setIsSigningOut] = useState(false);
 
   const handleSignOut = async () => {
+    if (isSigningOut) return;
+    
+    setIsSigningOut(true);
     try {
-      console.log('Starting sign out process...');
+      console.log('Settings: Starting sign out process...');
       toast.success('Signing out...');
       await signOut();
-      // The signOut function now handles the redirect automatically
+      // No need to handle redirect here - signOut function handles it
     } catch (error) {
-      console.error('Error signing out:', error);
+      console.error('Settings: Error signing out:', error);
       toast.error('Failed to sign out');
+      setIsSigningOut(false);
     }
   };
 
@@ -43,11 +48,12 @@ const Settings = () => {
         <div className="flex space-x-3">
           <Button 
             onClick={handleSignOut}
+            disabled={isSigningOut}
             variant="outline"
             className="bg-slate-800/50 border-slate-600 hover:bg-slate-700/50 text-slate-300"
           >
             <LogOut className="w-4 h-4 mr-2" />
-            Sign Out
+            {isSigningOut ? 'Signing Out...' : 'Sign Out'}
           </Button>
           <Button 
             onClick={handleSaveAll}

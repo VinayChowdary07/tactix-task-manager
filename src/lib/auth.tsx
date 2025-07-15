@@ -32,6 +32,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
+        console.log('Auth state changed:', event, session?.user?.email);
         setSession(session);
         setUser(session?.user ?? null);
         setLoading(false);
@@ -40,6 +41,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     // Get initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
+      console.log('Initial session:', session?.user?.email);
       setSession(session);
       setUser(session?.user ?? null);
       setLoading(false);
@@ -81,15 +83,36 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const signOut = async () => {
-    // Clear localStorage and sessionStorage
-    localStorage.clear();
-    sessionStorage.clear();
+    console.log('Starting sign out process...');
     
-    // Sign out from Supabase
-    await supabase.auth.signOut();
-    
-    // Force redirect to auth page
-    window.location.href = '/auth';
+    try {
+      // Clear localStorage and sessionStorage
+      localStorage.clear();
+      sessionStorage.clear();
+      
+      // Sign out from Supabase
+      const { error } = await supabase.auth.signOut();
+      
+      if (error) {
+        console.error('Sign out error:', error);
+        throw error;
+      }
+      
+      console.log('Sign out successful');
+      
+      // Clear state immediately
+      setUser(null);
+      setSession(null);
+      
+      // Force redirect to auth page
+      window.location.href = '/auth';
+    } catch (error) {
+      console.error('Error during sign out:', error);
+      // Even if there's an error, clear state and redirect
+      setUser(null);
+      setSession(null);
+      window.location.href = '/auth';
+    }
   };
 
   const value = {

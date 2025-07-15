@@ -25,6 +25,7 @@ const Layout = () => {
   const { projects } = useProjects();
   const [isProjectModalOpen, setIsProjectModalOpen] = useState(false);
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
+  const [isSigningOut, setIsSigningOut] = useState(false);
 
   useEffect(() => {
     // Extract project ID from URL if on the projects page
@@ -38,11 +39,16 @@ const Layout = () => {
   }, [location]);
 
   const handleSignOut = async () => {
+    if (isSigningOut) return;
+    
+    setIsSigningOut(true);
     try {
+      console.log('Layout: Starting sign out process...');
       await signOut();
-      // The signOut function now handles the redirect automatically
+      // No need to handle redirect here - signOut function handles it
     } catch (error) {
-      console.error('Error signing out:', error);
+      console.error('Layout: Error signing out:', error);
+      setIsSigningOut(false);
     }
   };
 
@@ -74,14 +80,18 @@ const Layout = () => {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent className="w-56 mr-2 glass-dark border-slate-700/50">
-              <DropdownMenuItem className="text-white">
+              <DropdownMenuItem className="text-white" disabled>
                 {user?.email}
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => navigate('/settings')} className="text-white">
                 Settings
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={handleSignOut} className="text-red-500">
-                Sign Out
+              <DropdownMenuItem 
+                onClick={handleSignOut} 
+                disabled={isSigningOut}
+                className="text-red-500 focus:text-red-400"
+              >
+                {isSigningOut ? 'Signing Out...' : 'Sign Out'}
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
