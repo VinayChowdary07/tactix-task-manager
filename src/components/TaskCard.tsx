@@ -38,17 +38,16 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, projects, onEdit, onDelete })
   };
 
   const statusConfig = {
-    Todo: { border: 'neon-border-blue', color: 'text-blue-400' },
-    'In Progress': { border: 'neon-border-orange', color: 'text-orange-400' },
-    Done: { border: 'neon-border-green', color: 'text-green-400' },
+    Todo: { border: 'border-cyan-400/50', color: 'text-blue-400' },
+    'In Progress': { border: 'border-orange-400/50', color: 'text-orange-400' },
+    Done: { border: 'border-green-400/50', color: 'text-green-400' },
   };
 
   const priorityStyle = priorityConfig[task.priority];
   const statusStyle = statusConfig[task.status];
 
-
   return (
-    <Card className={`glass-card ${statusStyle.border} hover:scale-[1.02] transition-all duration-300 group cursor-pointer animate-fade-in`}>
+    <Card className={`bg-slate-900/50 backdrop-blur-xl border ${statusStyle.border} hover:border-cyan-400/50 hover:shadow-lg hover:shadow-cyan-500/10 hover:scale-[1.02] transition-all duration-300 group cursor-pointer animate-fade-in rounded-xl`}>
       <CardContent className="p-6">
         <div className="space-y-4">
           {/* Header with Title and Actions */}
@@ -85,7 +84,7 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, projects, onEdit, onDelete })
                   <span className="sr-only">Open menu</span>
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-48 glass-card border-slate-700/50 neon-border-blue">
+              <DropdownMenuContent align="end" className="w-48 bg-slate-900/95 backdrop-blur-xl border border-slate-700/50 rounded-xl">
                 <DropdownMenuItem 
                   onClick={() => onEdit(task)} 
                   className="hover:bg-slate-700/50 text-slate-300 hover:text-white cursor-pointer"

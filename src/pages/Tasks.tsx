@@ -106,7 +106,7 @@ const Tasks = () => {
           {getStatsCards().map((stat, index) => (
             <div
               key={index}
-              className="glass-card neon-border-blue hover:neon-glow-blue transition-all duration-300 group cursor-pointer"
+              className="bg-slate-900/50 backdrop-blur-xl border border-slate-700/50 rounded-xl p-6 hover:border-cyan-400/50 hover:shadow-lg hover:shadow-cyan-500/10 transition-all duration-300 group cursor-pointer"
             >
               <div className="flex items-center justify-between">
                 <div className="space-y-1">
@@ -115,7 +115,7 @@ const Tasks = () => {
                     {stat.value}
                   </p>
                 </div>
-                <div className={`p-3 rounded-full bg-slate-800/50 ${stat.color.replace('text-', 'text-')} group-hover:scale-110 transition-transform`}>
+                <div className={`p-3 rounded-full bg-slate-800/50 ${stat.color} group-hover:scale-110 transition-transform`}>
                   <stat.icon className="w-6 h-6" />
                 </div>
               </div>
@@ -124,7 +124,7 @@ const Tasks = () => {
         </div>
 
         {/* Search and Filters */}
-        <div className="glass-card neon-border-blue">
+        <div className="bg-slate-900/50 backdrop-blur-xl border border-slate-700/50 rounded-xl p-6">
           <div className="flex flex-col sm:flex-row items-center gap-4">
             <div className="relative flex-1 w-full">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 w-4 h-4" />
@@ -157,8 +157,8 @@ const Tasks = () => {
 
         {/* Tasks Grid */}
         {filteredTasks.length === 0 ? (
-          <div className="text-center py-20 glass-card neon-border-blue">
-            <div className="w-20 h-20 bg-slate-800/50 rounded-full flex items-center justify-center mx-auto mb-6 neon-glow-blue">
+          <div className="text-center py-20 bg-slate-900/50 backdrop-blur-xl border border-slate-700/50 rounded-xl">
+            <div className="w-20 h-20 bg-slate-800/50 rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg shadow-cyan-500/10">
               <CheckSquare className="w-10 h-10 text-cyan-400" />
             </div>
             <h3 className="text-xl font-semibold text-white mb-2">
@@ -194,15 +194,6 @@ const Tasks = () => {
             ))}
           </div>
         )}
-
-        {/* Floating Action Button */}
-        <Button 
-          onClick={() => setIsModalOpen(true)}
-          size="lg"
-          className="fixed bottom-8 right-8 w-16 h-16 rounded-full bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 shadow-2xl hover:shadow-cyan-500/50 hover:scale-110 transition-all z-50 neon-glow-blue"
-        >
-          <Plus className="w-6 h-6" />
-        </Button>
 
         {/* Task Modal */}
         <TaskModal

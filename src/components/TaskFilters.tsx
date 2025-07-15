@@ -73,7 +73,7 @@ const TaskFiltersComponent: React.FC<TaskFiltersProps> = ({
             <Flag className="w-4 h-4 mr-2" />
             <SelectValue placeholder="Priority" />
           </SelectTrigger>
-          <SelectContent className="glass-card border-slate-700/50 neon-border-blue">
+          <SelectContent className="bg-slate-900/95 backdrop-blur-xl border border-slate-700/50 rounded-xl">
             <SelectItem value="all" className="text-slate-400">All Priorities</SelectItem>
             <SelectItem value="Critical" className="text-red-400">Critical</SelectItem>
             <SelectItem value="High" className="text-red-400">High</SelectItem>
@@ -88,7 +88,7 @@ const TaskFiltersComponent: React.FC<TaskFiltersProps> = ({
             <CheckCircle className="w-4 h-4 mr-2" />
             <SelectValue placeholder="Status" />
           </SelectTrigger>
-          <SelectContent className="glass-card border-slate-700/50 neon-border-blue">
+          <SelectContent className="bg-slate-900/95 backdrop-blur-xl border border-slate-700/50 rounded-xl">
             <SelectItem value="all" className="text-slate-400">All Status</SelectItem>
             <SelectItem value="Todo" className="text-slate-400">Todo</SelectItem>
             <SelectItem value="In Progress" className="text-blue-400">In Progress</SelectItem>
@@ -115,7 +115,7 @@ const TaskFiltersComponent: React.FC<TaskFiltersProps> = ({
         <div className="flex flex-wrap gap-2">
           {filters.priority !== 'all' && (
             <div
-              className="flex items-center gap-1 px-2 py-1 bg-orange-500/20 text-orange-400 border-orange-500/50 cursor-pointer rounded border"
+              className="flex items-center gap-1 px-2 py-1 bg-orange-500/20 text-orange-400 border-orange-500/50 cursor-pointer rounded border transition-all hover:bg-orange-500/30"
               onClick={() => updateFilter('priority', 'all')}
             >
               <Flag className="w-3 h-3" />
@@ -126,7 +126,7 @@ const TaskFiltersComponent: React.FC<TaskFiltersProps> = ({
           
           {filters.status !== 'all' && (
             <div
-              className="flex items-center gap-1 px-2 py-1 bg-blue-500/20 text-blue-400 border-blue-500/50 cursor-pointer rounded border"
+              className="flex items-center gap-1 px-2 py-1 bg-blue-500/20 text-blue-400 border-blue-500/50 cursor-pointer rounded border transition-all hover:bg-blue-500/30"
               onClick={() => updateFilter('status', 'all')}
             >
               <CheckCircle className="w-3 h-3" />
