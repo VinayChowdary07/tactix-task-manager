@@ -15,6 +15,8 @@ export interface Task {
   user_id: string;
   created_at: string;
   updated_at: string;
+  time_estimate?: number; // in minutes
+  time_spent?: number; // in minutes
 }
 
 export interface TaskInput {
@@ -24,6 +26,7 @@ export interface TaskInput {
   priority: 'Low' | 'Medium' | 'High' | 'Critical';
   status: 'Todo' | 'In Progress' | 'Done';
   project_id?: string;
+  time_estimate?: number;
 }
 
 export const useTasks = () => {
@@ -61,6 +64,7 @@ export const useTasks = () => {
         priority: taskData.priority,
         status: taskData.status,
         project_id: taskData.project_id || null,
+        time_estimate: taskData.time_estimate || null,
         user_id: user.id
       };
 
@@ -97,7 +101,8 @@ export const useTasks = () => {
         due_date: taskData.due_date || null,
         priority: taskData.priority,
         status: taskData.status,
-        project_id: taskData.project_id || null
+        project_id: taskData.project_id || null,
+        time_estimate: taskData.time_estimate || null
       };
 
       // Remove undefined values
