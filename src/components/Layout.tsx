@@ -37,6 +37,15 @@ const Layout = () => {
     }
   }, [location]);
 
+  const handleSignOut = async () => {
+    try {
+      await signOut();
+      // The signOut function now handles the redirect automatically
+    } catch (error) {
+      console.error('Error signing out:', error);
+    }
+  };
+
   const navItems = [
     { to: '/', icon: Home, label: 'Dashboard' },
     { to: '/tasks', icon: CheckSquare, label: 'Tasks' },
@@ -71,7 +80,7 @@ const Layout = () => {
               <DropdownMenuItem onClick={() => navigate('/settings')} className="text-white">
                 Settings
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => signOut()} className="text-red-500">
+              <DropdownMenuItem onClick={handleSignOut} className="text-red-500">
                 Sign Out
               </DropdownMenuItem>
             </DropdownMenuContent>

@@ -17,11 +17,9 @@ const Settings = () => {
   const handleSignOut = async () => {
     try {
       console.log('Starting sign out process...');
+      toast.success('Signing out...');
       await signOut();
-      // Clear any localStorage if needed
-      localStorage.clear();
-      console.log('Sign out successful');
-      toast.success('Signed out successfully');
+      // The signOut function now handles the redirect automatically
     } catch (error) {
       console.error('Error signing out:', error);
       toast.error('Failed to sign out');
