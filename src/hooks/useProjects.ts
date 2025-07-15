@@ -12,6 +12,13 @@ export interface Project {
   user_id: string;
   created_at: string;
   updated_at: string;
+  tasks?: Array<{
+    id: string;
+    status: string;
+  }>;
+  task_count?: number;
+  completed_task_count?: number;
+  progress?: number;
 }
 
 export interface ProjectInput {
@@ -29,13 +36,33 @@ export const useProjects = () => {
     queryFn: async () => {
       if (!user) return [];
       
+      // Fetch projects with task counts
       const { data, error } = await supabase
         .from('projects')
-        .select('*')
+        .select(`
+          *,
+          tasks:tasks(id, status)
+        `)
         .order('name', { ascending: true });
       
       if (error) throw error;
-      return data as Project[];
+      
+      // Calculate progress for each project
+      const projectsWithProgress = data.map(project => {
+        const tasks = project.tasks || [];
+        const totalTasks = tasks.length;
+        const completedTasks = tasks.filter(task => task.status === 'Done').length;
+        const progress = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
+        
+        return {
+          ...project,
+          task_count: totalTasks,
+          completed_task_count: completedTasks,
+          progress
+        };
+      });
+      
+      return projectsWithProgress as Project[];
     },
     enabled: !!user,
   });
@@ -65,9 +92,12 @@ export const useProjects = () => {
 
   const updateProject = useMutation({
     mutationFn: async ({ id, ...projectData }: Partial<Project> & { id: string }) => {
+      // Remove non-database fields before updating
+      const { tasks, task_count, completed_task_count, progress, ...updateData } = projectData;
+      
       const { data, error } = await supabase
         .from('projects')
-        .update(projectData)
+        .update(updateData)
         .eq('id', id)
         .select()
         .single();
@@ -77,6 +107,7 @@ export const useProjects = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['projects'] });
+      queryClient.invalidateQueries({ queryKey: ['tasks'] });
       toast.success('Project updated successfully!');
     },
     onError: (error) => {

@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -9,14 +10,13 @@ import {
   Users, 
   Calendar,
   Star,
-  TrendingUp,
   Clock,
   CheckCircle2,
   Search,
-  Filter,
   MoreVertical,
   Edit3,
-  Trash2
+  Trash2,
+  Target
 } from 'lucide-react';
 import { useProjects } from '@/hooks/useProjects';
 import ProjectModal from '@/components/ProjectModal';
@@ -33,39 +33,10 @@ const Projects = () => {
   const [selectedProject, setSelectedProject] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
 
-  // Mock progress data - in a real app, this would come from task completion rates
-  const projectsWithProgress = projects.map(project => ({
-    ...project,
-    progress: Math.floor(Math.random() * 100),
-    dueDate: new Date(Date.now() + Math.random() * 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-    status: ['active', 'completed', 'on-hold'][Math.floor(Math.random() * 3)],
-    teamSize: Math.floor(Math.random() * 8) + 1,
-    priority: ['high', 'medium', 'low'][Math.floor(Math.random() * 3)]
-  }));
-
-  const filteredProjects = projectsWithProgress.filter(project =>
+  const filteredProjects = projects.filter(project =>
     project.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     (project.description && project.description.toLowerCase().includes(searchTerm.toLowerCase()))
   );
-
-  const getPriorityColor = (priority: string) => {
-    switch (priority) {
-      case 'high': return 'bg-red-500/20 text-red-400 border-red-500/50';
-      case 'medium': return 'bg-yellow-500/20 text-yellow-400 border-yellow-500/50';
-      case 'low': return 'bg-green-500/20 text-green-400 border-green-500/50';
-      default: return 'bg-slate-500/20 text-slate-400 border-slate-500/50';
-    }
-  };
-
-  const getBorderClass = (index: number) => {
-    const classes = ['neon-border-blue', 'neon-border-pink', 'neon-border-green', 'neon-border-orange', 'neon-border-purple'];
-    return classes[index % classes.length];
-  };
-
-  const getProgressBarClass = (index: number) => {
-    const classes = ['progress-bar-blue', 'progress-bar-pink', 'progress-bar-green', 'progress-bar-orange', 'progress-bar-purple'];
-    return classes[index % classes.length];
-  };
 
   const handleEditProject = (project: any) => {
     setSelectedProject(project);
@@ -87,6 +58,10 @@ const Projects = () => {
     setSelectedProject(null);
   };
 
+  const getProjectColorStyle = (color?: string) => {
+    return color ? { backgroundColor: color } : { backgroundColor: '#6366f1' };
+  };
+
   const stats = [
     { 
       label: 'Total Projects', 
@@ -96,23 +71,23 @@ const Projects = () => {
       glow: 'glow-cyan'
     },
     { 
-      label: 'Active Projects', 
-      value: filteredProjects.filter(p => p.status === 'active').length.toString(), 
+      label: 'In Progress', 
+      value: filteredProjects.filter(p => p.progress && p.progress > 0 && p.progress < 100).length.toString(), 
       icon: Clock, 
       gradient: 'btn-gradient-orange',
       glow: 'glow-orange'
     },
     { 
       label: 'Completed', 
-      value: filteredProjects.filter(p => p.status === 'completed').length.toString(), 
+      value: filteredProjects.filter(p => p.progress === 100).length.toString(), 
       icon: CheckCircle2, 
       gradient: 'btn-gradient-green',
       glow: 'glow-green'
     },
     { 
-      label: 'Team Members', 
-      value: filteredProjects.reduce((sum, p) => sum + p.teamSize, 0).toString(), 
-      icon: Users, 
+      label: 'Total Tasks', 
+      value: filteredProjects.reduce((sum, p) => sum + (p.task_count || 0), 0).toString(), 
+      icon: Target, 
       gradient: 'btn-gradient-purple',
       glow: 'glow-purple'
     },
@@ -133,7 +108,7 @@ const Projects = () => {
         {stats.map((stat, index) => {
           const Icon = stat.icon;
           return (
-            <Card key={index} className={`glass-card ${getBorderClass(index)} hover:scale-105 transition-all duration-300`}>
+            <Card key={index} className="glass-card neon-border-blue hover:scale-105 transition-all duration-300">
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
                   <div>
@@ -200,15 +175,18 @@ const Projects = () => {
         </Card>
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-8">
-          {filteredProjects.map((project, index) => (
+          {filteredProjects.map((project) => (
             <Card 
               key={project.id} 
-              className={`glass-card ${getBorderClass(index)} hover:scale-105 transition-all duration-300 cursor-pointer group overflow-hidden`}
+              className="glass-card neon-border-blue hover:scale-105 transition-all duration-300 cursor-pointer group overflow-hidden"
             >
               <CardHeader className="pb-4">
                 <div className="flex items-start justify-between">
                   <div className="flex items-center space-x-4 flex-1">
-                    <div className={`p-3 rounded-xl ${getBorderClass(index).includes('blue') ? 'btn-gradient-blue' : getBorderClass(index).includes('pink') ? 'btn-gradient-pink' : getBorderClass(index).includes('green') ? 'btn-gradient-green' : getBorderClass(index).includes('orange') ? 'btn-gradient-orange' : 'btn-gradient-purple'}`}>
+                    <div 
+                      className="p-3 rounded-xl"
+                      style={getProjectColorStyle(project.color)}
+                    >
                       <FolderOpen className="w-6 h-6 text-white" />
                     </div>
                     <div className="flex-1 min-w-0">
@@ -222,7 +200,7 @@ const Projects = () => {
                   </div>
                   
                   <div className="flex items-center gap-2">
-                    {project.status === 'completed' && (
+                    {project.progress === 100 && (
                       <CheckCircle2 className="w-6 h-6 text-green-400" />
                     )}
                     <DropdownMenu>
@@ -258,12 +236,15 @@ const Projects = () => {
                   <div className="space-y-3">
                     <div className="flex items-center justify-between text-sm">
                       <span className="text-slate-400 font-medium">Progress</span>
-                      <span className="text-white font-bold text-lg">{project.progress}%</span>
+                      <span className="text-white font-bold text-lg">{project.progress || 0}%</span>
                     </div>
                     <div className="w-full bg-slate-800 rounded-full h-3 overflow-hidden">
                       <div 
-                        className={`h-3 rounded-full transition-all duration-1000 ${getProgressBarClass(index)}`}
-                        style={{ width: `${project.progress}%` }}
+                        className="h-3 rounded-full transition-all duration-1000"
+                        style={{
+                          width: `${project.progress || 0}%`,
+                          backgroundColor: project.color || '#6366f1'
+                        }}
                       ></div>
                     </div>
                   </div>
@@ -271,44 +252,27 @@ const Projects = () => {
                   {/* Project Details */}
                   <div className="grid grid-cols-2 gap-4">
                     <div className="flex items-center space-x-3 p-3 rounded-lg glass-card">
-                      <Calendar className="w-5 h-5 text-cyan-400" />
+                      <Target className="w-5 h-5 text-cyan-400" />
                       <div>
-                        <p className="text-xs text-slate-500">Due Date</p>
-                        <p className="text-sm text-white font-medium">{new Date(project.dueDate).toLocaleDateString()}</p>
+                        <p className="text-xs text-slate-500">Tasks</p>
+                        <p className="text-sm text-white font-medium">
+                          {project.completed_task_count || 0}/{project.task_count || 0}
+                        </p>
                       </div>
                     </div>
                     <div className="flex items-center space-x-3 p-3 rounded-lg glass-card">
-                      <Users className="w-5 h-5 text-purple-400" />
+                      <div 
+                        className="w-5 h-5 rounded-full"
+                        style={getProjectColorStyle(project.color)}
+                      />
                       <div>
-                        <p className="text-xs text-slate-500">Team</p>
-                        <p className="text-sm text-white font-medium">{project.teamSize} members</p>
+                        <p className="text-xs text-slate-500">Status</p>
+                        <p className="text-sm text-white font-medium">
+                          {project.progress === 100 ? 'Complete' : 
+                           project.progress === 0 ? 'Not Started' : 'In Progress'}
+                        </p>
                       </div>
                     </div>
-                  </div>
-
-                  {/* Priority and Status */}
-                  <div className="flex items-center justify-between">
-                    <Badge className={`border px-3 py-1 ${getPriorityColor(project.priority)}`}>
-                      <Star className="w-3 h-3 mr-1" />
-                      {project.priority}
-                    </Badge>
-                    <Badge 
-                      variant="outline" 
-                      className={`px-3 py-1 ${
-                        project.status === 'completed' 
-                          ? 'bg-green-500/20 text-green-400 border-green-500/50' 
-                          : project.status === 'on-hold'
-                          ? 'bg-orange-500/20 text-orange-400 border-orange-500/50'
-                          : 'bg-blue-500/20 text-blue-400 border-blue-500/50'
-                      }`}
-                    >
-                      {project.status === 'completed' ? (
-                        <CheckCircle2 className="w-3 h-3 mr-1" />
-                      ) : (
-                        <Clock className="w-3 h-3 mr-1" />
-                      )}
-                      {project.status}
-                    </Badge>
                   </div>
                 </div>
               </CardContent>
