@@ -124,7 +124,7 @@ export const useTasks = () => {
 
       const { data: taskResult, error: taskError } = await supabase
         .from('tasks')
-        .insert([insertData])
+        .insert([convertTaskToDbFormat(insertData)])
         .select()
         .single();
       
@@ -180,7 +180,7 @@ export const useTasks = () => {
 
       const { data: taskResult, error } = await supabase
         .from('tasks')
-        .update(updateData)
+        .update(convertTaskToDbFormat(updateData))
         .eq('id', id)
         .eq('user_id', user.id)
         .select()
