@@ -1,4 +1,3 @@
-
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/lib/auth';
@@ -65,16 +64,38 @@ export const useTasks = () => {
 
   const syncToGoogleCalendar = async (task: Task): Promise<string | null> => {
     if (!task.google_calendar_sync || !task.due_date) {
+      console.log('⏭️ Skipping calendar sync - sync disabled or no due date');
       return null;
     }
 
     try {
+      console.log('🔄 Starting Google Calendar sync for task:', task.title);
       const event = googleCalendarService.createEventFromTask(task);
       const eventId = await googleCalendarService.createEvent(event);
+      
+      if (eventId) {
+        toast.success('Task synced to Google Calendar successfully!');
+      }
+      
       return eventId;
     } catch (error) {
-      console.error('Failed to sync to Google Calendar:', error);
-      toast.error('Failed to sync task to Google Calendar');
+      console.error('❌ Failed to sync to Google Calendar:', error);
+      
+      // Show user-friendly error messages
+      if (error instanceof Error) {
+        if (error.message.includes('expired') || error.message.includes('access')) {
+          toast.error('Google Calendar access expired. Please sign out and sign in with Google again.');
+        } else if (error.message.includes('denied') || error.message.includes('permissions')) {
+          toast.error('Google Calendar access denied. Please check your permissions.');
+        } else if (error.message.includes('Invalid')) {
+          toast.error('Invalid task data for calendar sync. Please check your task details.');
+        } else {
+          toast.error('Failed to sync task to Google Calendar. Please try again.');
+        }
+      } else {
+        toast.error('Failed to sync task to Google Calendar');
+      }
+      
       return null;
     }
   };
@@ -85,20 +106,34 @@ export const useTasks = () => {
     }
 
     try {
+      console.log('🔄 Updating Google Calendar event for task:', task.title);
       const event = googleCalendarService.createEventFromTask(task);
       await googleCalendarService.updateEvent(task.google_calendar_event_id, event);
+      toast.success('Calendar event updated successfully!');
     } catch (error) {
-      console.error('Failed to update Google Calendar event:', error);
-      toast.error('Failed to update Google Calendar event');
+      console.error('❌ Failed to update Google Calendar event:', error);
+      
+      if (error instanceof Error && error.message.includes('expired')) {
+        toast.error('Google Calendar access expired. Please sign out and sign in with Google again.');
+      } else {
+        toast.error('Failed to update Google Calendar event');
+      }
     }
   };
 
   const deleteGoogleCalendarEvent = async (eventId: string): Promise<void> => {
     try {
+      console.log('🗑️ Deleting Google Calendar event:', eventId);
       await googleCalendarService.deleteEvent(eventId);
+      toast.success('Calendar event deleted successfully!');
     } catch (error) {
-      console.error('Failed to delete Google Calendar event:', error);
-      toast.error('Failed to delete Google Calendar event');
+      console.error('❌ Failed to delete Google Calendar event:', error);
+      
+      if (error instanceof Error && error.message.includes('expired')) {
+        toast.error('Google Calendar access expired. Please sign out and sign in with Google again.');
+      } else {
+        toast.error('Failed to delete Google Calendar event');
+      }
     }
   };
 
