@@ -69,9 +69,17 @@ const TaskCard: React.FC<TaskCardProps> = ({
 
   return (
     <Card 
-      className={`bg-slate-900/50 backdrop-blur-xl border ${statusStyle.border} hover:border-cyan-400/50 hover:shadow-lg hover:shadow-cyan-500/10 hover:scale-[1.02] transition-all duration-300 group cursor-pointer animate-fade-in rounded-xl ${task.completed ? 'opacity-75' : ''}`}
+      className={`bg-slate-900/50 backdrop-blur-xl border hover:border-cyan-400/50 hover:shadow-lg hover:shadow-cyan-500/10 hover:scale-[1.02] transition-all duration-300 group cursor-pointer animate-fade-in rounded-xl ${task.completed ? 'opacity-75' : ''} relative overflow-hidden`}
       onClick={handleCardClick}
     >
+      {/* Task Color Strip */}
+      {task.color && (
+        <div 
+          className="absolute top-0 left-0 right-0 h-1 z-10"
+          style={{ backgroundColor: task.color }}
+        />
+      )}
+      
       <CardContent className="p-6">
         <div className="space-y-4">
           {/* Header with Checkbox, Title and Actions */}
@@ -88,9 +96,17 @@ const TaskCard: React.FC<TaskCardProps> = ({
             
             <div className="flex-1 min-w-0">
               <div className="flex items-start justify-between">
-                <h3 className={`font-semibold text-lg truncate group-hover:text-cyan-400 transition-colors mb-2 ${task.completed ? 'line-through text-slate-400' : 'text-white'}`}>
-                  {task.title}
-                </h3>
+                <div className="flex items-center gap-2 mb-2">
+                  {task.color && (
+                    <div 
+                      className="w-3 h-3 rounded-full flex-shrink-0"
+                      style={{ backgroundColor: task.color }}
+                    />
+                  )}
+                  <h3 className={`font-semibold text-lg truncate group-hover:text-cyan-400 transition-colors ${task.completed ? 'line-through text-slate-400' : 'text-white'}`}>
+                    {task.title}
+                  </h3>
+                </div>
                 
                 {/* View Details Icon */}
                 <div className="flex items-center gap-1">

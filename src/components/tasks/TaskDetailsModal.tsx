@@ -22,7 +22,8 @@ import {
   Clock,
   Edit,
   FileText,
-  Target
+  Target,
+  Palette
 } from 'lucide-react';
 import { Task, Subtask, useTasks } from '@/hooks/useTasks';
 import { Project as ProjectType } from '@/hooks/useProjects';
@@ -51,6 +52,8 @@ const TaskDetailsModal: React.FC<TaskDetailsModalProps> = ({
 
   useEffect(() => {
     if (task) {
+      console.log('TaskDetailsModal: Loading task data:', task);
+      console.log('TaskDetailsModal: Task subtasks:', task.subtasks);
       setSubtasks(task.subtasks || []);
       setIsCompleted(task.completed || false);
       setShowAddSubtask(false);
@@ -195,9 +198,17 @@ const TaskDetailsModal: React.FC<TaskDetailsModalProps> = ({
           {/* Task Header */}
           <div className="bg-slate-800/30 rounded-2xl p-6 border border-slate-700/30">
             <div className="flex items-start justify-between mb-4">
-              <h2 className={`text-3xl font-bold leading-tight ${isCompleted ? 'line-through text-slate-400' : 'text-white'}`}>
-                {task.title}
-              </h2>
+              <div className="flex items-center gap-3 flex-1">
+                {task.color && (
+                  <div 
+                    className="w-4 h-4 rounded-full flex-shrink-0"
+                    style={{ backgroundColor: task.color }}
+                  />
+                )}
+                <h2 className={`text-3xl font-bold leading-tight ${isCompleted ? 'line-through text-slate-400' : 'text-white'}`}>
+                  {task.title}
+                </h2>
+              </div>
               <div className="flex items-center gap-3">
                 <span className="text-sm text-slate-400 font-medium">Mark Complete</span>
                 <Switch
@@ -207,6 +218,25 @@ const TaskDetailsModal: React.FC<TaskDetailsModalProps> = ({
                 />
               </div>
             </div>
+
+            {/* Task Color Display */}
+            {task.color && (
+              <div className="mb-4">
+                <div className="flex items-center gap-3 p-3 bg-slate-700/30 rounded-lg">
+                  <Palette className="w-4 h-4 text-slate-500" />
+                  <div className="flex items-center gap-2">
+                    <div
+                      className="w-6 h-6 rounded-lg border border-slate-600"
+                      style={{ backgroundColor: task.color }}
+                    />
+                    <div>
+                      <span className="text-xs text-slate-400 block">Task Color</span>
+                      <span className="text-sm text-white font-medium">{task.color}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
 
             {/* Project Display */}
             {project && (

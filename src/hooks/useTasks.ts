@@ -1,4 +1,3 @@
-
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/lib/auth';
@@ -30,6 +29,7 @@ export interface Task {
   repeat_until?: string;
   subtasks?: Subtask[];
   completed?: boolean;
+  color?: string; // Add color field
 }
 
 export interface TaskInput {
@@ -47,13 +47,15 @@ export interface TaskInput {
   repeat_until?: string;
   subtasks?: Subtask[];
   completed?: boolean;
+  color?: string; // Add color field
 }
 
 // Helper function to convert database task to our Task interface
 const convertDbTaskToTask = (dbTask: any): Task => {
   return {
     ...dbTask,
-    subtasks: Array.isArray(dbTask.subtasks) ? dbTask.subtasks as Subtask[] : []
+    subtasks: Array.isArray(dbTask.subtasks) ? dbTask.subtasks as Subtask[] : 
+              (dbTask.subtasks ? JSON.parse(dbTask.subtasks) : [])
   };
 };
 
@@ -102,7 +104,7 @@ export const useTasks = () => {
         throw new Error('User not authenticated. Please sign in to create tasks.');
       }
       
-      console.log('Creating task for user:', user.id);
+      console.log('Creating task for user:', user.id, 'with data:', taskData);
       
       const insertData = {
         title: taskData.title.trim(),
@@ -119,6 +121,7 @@ export const useTasks = () => {
         repeat_until: taskData.repeat_until || null,
         subtasks: taskData.subtasks || [],
         completed: taskData.completed || false,
+        color: taskData.color || null,
         user_id: user.id
       };
 
@@ -152,7 +155,7 @@ export const useTasks = () => {
         throw new Error('User not authenticated. Please sign in to update tasks.');
       }
       
-      console.log('Updating task:', id);
+      console.log('Updating task:', id, 'with data:', taskData);
       
       const updateData = {
         title: taskData.title?.trim(),
@@ -168,7 +171,8 @@ export const useTasks = () => {
         repeat_interval: taskData.repeat_interval,
         repeat_until: taskData.repeat_until || null,
         subtasks: taskData.subtasks || [],
-        completed: taskData.completed
+        completed: taskData.completed,
+        color: taskData.color
       };
 
       // Remove undefined values

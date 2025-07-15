@@ -18,10 +18,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { ColorPicker } from '@/components/ui/color-picker';
 import { useTasks, Task, Subtask } from '@/hooks/useTasks';
 import { useProjects } from '@/hooks/useProjects';
 import { useAuth } from '@/lib/auth';
-import { CheckSquare, Calendar, Flag, Plus, X, RotateCw } from 'lucide-react';
+import { CheckSquare, Calendar, Flag, Plus, X, RotateCw, Palette } from 'lucide-react';
 
 interface TaskModalProps {
   isOpen: boolean;
@@ -46,7 +47,8 @@ const TaskModal: React.FC<TaskModalProps> = ({ isOpen, onClose, task }) => {
     repeat_type: 'none' as 'daily' | 'weekly' | 'monthly' | 'none',
     repeat_interval: 1,
     repeat_until: '',
-    completed: false
+    completed: false,
+    color: '#6366f1'
   });
 
   const [subtasks, setSubtasks] = useState<Subtask[]>([]);
@@ -83,7 +85,8 @@ const TaskModal: React.FC<TaskModalProps> = ({ isOpen, onClose, task }) => {
           repeat_type: task.repeat_type || 'none',
           repeat_interval: task.repeat_interval || 1,
           repeat_until: task.repeat_until ? task.repeat_until.split('T')[0] : '',
-          completed: task.completed || false
+          completed: task.completed || false,
+          color: task.color || '#6366f1'
         });
         setSubtasks(task.subtasks || []);
       } else {
@@ -99,7 +102,8 @@ const TaskModal: React.FC<TaskModalProps> = ({ isOpen, onClose, task }) => {
           repeat_type: 'none',
           repeat_interval: 1,
           repeat_until: '',
-          completed: false
+          completed: false,
+          color: '#6366f1'
         });
         setSubtasks([]);
       }
@@ -160,7 +164,8 @@ const TaskModal: React.FC<TaskModalProps> = ({ isOpen, onClose, task }) => {
         repeat_interval: formData.recurring ? formData.repeat_interval : undefined,
         repeat_until: formData.recurring && formData.repeat_until ? formData.repeat_until : undefined,
         subtasks: subtasks,
-        completed: formData.completed
+        completed: formData.completed,
+        color: formData.color
       };
 
       console.log('Submitting task data:', taskData);
@@ -261,6 +266,20 @@ const TaskModal: React.FC<TaskModalProps> = ({ isOpen, onClose, task }) => {
                     onChange={(e) => setFormData({ ...formData, due_date: e.target.value })}
                     className="bg-slate-800/50 border-slate-600/50 text-white focus:border-cyan-400 focus:ring-cyan-400/20 mt-2"
                     disabled={isSubmitting}
+                  />
+                </div>
+              </div>
+
+              {/* Color Picker */}
+              <div>
+                <Label className="text-slate-300 font-medium flex items-center gap-2 mb-3">
+                  <Palette className="w-4 h-4" />
+                  Task Color
+                </Label>
+                <div className="p-4 bg-slate-800/30 rounded-lg border border-slate-700/50">
+                  <ColorPicker
+                    selectedColor={formData.color}
+                    onColorChange={(color) => setFormData({ ...formData, color })}
                   />
                 </div>
               </div>
