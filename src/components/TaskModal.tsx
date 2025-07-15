@@ -35,7 +35,7 @@ const TaskModal: React.FC<TaskModalProps> = ({ isOpen, onClose, task }) => {
     title: '',
     description: '',
     due_date: '',
-    priority: 'Medium' as 'Low' | 'Medium' | 'High',
+    priority: 'Medium' as 'Low' | 'Medium' | 'High' | 'Critical',
     status: 'Todo' as 'Todo' | 'In Progress' | 'Done',
     project_id: 'none'
   });
@@ -106,7 +106,8 @@ const TaskModal: React.FC<TaskModalProps> = ({ isOpen, onClose, task }) => {
   const priorityColors = {
     Low: '#22c55e',
     Medium: '#f59e0b',
-    High: '#ef4444'
+    High: '#ef4444',
+    Critical: '#dc2626'
   };
 
   return (
