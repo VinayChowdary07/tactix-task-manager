@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -26,13 +27,14 @@ export const ProfileSettings = () => {
   const { user } = useAuth();
   const { profile, updateProfile, uploadAvatar, isUpdating } = useProfile();
   const [formData, setFormData] = useState({
-    first_name: profile?.first_name || '',
-    last_name: profile?.last_name || '',
-    timezone: profile?.timezone || 'UTC',
+    first_name: '',
+    last_name: '',
+    timezone: 'UTC',
   });
 
   React.useEffect(() => {
     if (profile) {
+      console.log('Profile loaded, updating form data:', profile);
       setFormData({
         first_name: profile.first_name || '',
         last_name: profile.last_name || '',
@@ -43,12 +45,30 @@ export const ProfileSettings = () => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    updateProfile(formData);
+    
+    console.log('Submitting profile form with data:', formData);
+    
+    // Validate required fields
+    if (!formData.first_name.trim() && !formData.last_name.trim()) {
+      toast.error('Please enter at least a first name or last name');
+      return;
+    }
+
+    // Clean up form data - remove empty strings
+    const cleanData = {
+      first_name: formData.first_name.trim() || null,
+      last_name: formData.last_name.trim() || null,
+      timezone: formData.timezone,
+    };
+
+    updateProfile(cleanData);
   };
 
   const handleAvatarUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+
+    console.log('Avatar file selected:', file.name, file.type, file.size);
 
     // Validate file type and size
     if (!file.type.match(/^image\/(jpeg|jpg|png|gif)$/)) {
@@ -63,6 +83,16 @@ export const ProfileSettings = () => {
 
     uploadAvatar(file);
   };
+
+  if (!user) {
+    return (
+      <Card className="glass-dark border-slate-700/50">
+        <CardContent className="p-6">
+          <p className="text-slate-400">Please log in to view profile settings.</p>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Card className="glass-dark border-slate-700/50">
@@ -87,10 +117,11 @@ export const ProfileSettings = () => {
                 variant="outline" 
                 className="bg-slate-800/50 border-slate-600 hover:bg-slate-700/50 cursor-pointer"
                 asChild
+                disabled={isUpdating}
               >
                 <span>
                   <Upload className="w-4 h-4 mr-2" />
-                  Upload New Avatar
+                  {isUpdating ? 'Uploading...' : 'Upload New Avatar'}
                 </span>
               </Button>
             </Label>
@@ -100,6 +131,7 @@ export const ProfileSettings = () => {
               accept="image/jpeg,image/jpg,image/png,image/gif"
               className="hidden"
               onChange={handleAvatarUpload}
+              disabled={isUpdating}
             />
             <p className="text-slate-400 text-sm">JPG, PNG or GIF. Max 2MB.</p>
           </div>

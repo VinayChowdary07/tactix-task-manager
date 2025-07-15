@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
@@ -30,9 +31,10 @@ const privacySettings = [
 ];
 
 export const PrivacySettings = () => {
-  const { preferences, updateSinglePreference } = useUserPreferences();
+  const { preferences, updateSinglePreference, isUpdating } = useUserPreferences();
 
   const handleToggle = (key: keyof typeof preferences, value: boolean) => {
+    console.log(`Toggling privacy setting: ${key} = ${value}`);
     updateSinglePreference(key, value);
   };
 
@@ -40,6 +42,16 @@ export const PrivacySettings = () => {
     // TODO: Implement 2FA setup flow
     toast.info('Two-Factor Authentication setup will be available soon');
   };
+
+  if (!preferences) {
+    return (
+      <Card className="glass-dark border-slate-700/50">
+        <CardContent className="p-6">
+          <p className="text-slate-400">Loading privacy preferences...</p>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Card className="glass-dark border-slate-700/50">
@@ -59,6 +71,7 @@ export const PrivacySettings = () => {
             <Switch
               checked={preferences?.[setting.key] || false}
               onCheckedChange={(checked) => handleToggle(setting.key, checked)}
+              disabled={isUpdating}
             />
           </div>
         ))}
@@ -68,14 +81,18 @@ export const PrivacySettings = () => {
           <div>
             <h4 className="text-white font-medium">Two-Factor Authentication</h4>
             <p className="text-slate-400 text-sm mt-1">Add an extra layer of security to your account</p>
+            <p className="text-slate-500 text-xs mt-1">
+              Status: {preferences?.two_factor_enabled ? 'Enabled' : 'Disabled'}
+            </p>
           </div>
           <Button 
             variant="outline" 
             size="sm" 
             className="bg-slate-800/50 border-slate-600"
             onClick={handleSetup2FA}
+            disabled={isUpdating}
           >
-            Setup
+            {preferences?.two_factor_enabled ? 'Manage' : 'Setup'}
           </Button>
         </div>
       </CardContent>

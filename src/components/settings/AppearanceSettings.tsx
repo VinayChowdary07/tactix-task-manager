@@ -39,19 +39,44 @@ const interfaceOptions = [
 ];
 
 export const AppearanceSettings = () => {
-  const { preferences, updateSinglePreference } = useUserPreferences();
+  const { preferences, updateSinglePreference, isUpdating } = useUserPreferences();
 
   const handleThemeChange = (theme: string) => {
+    console.log(`Changing theme to: ${theme}`);
     updateSinglePreference('theme', theme);
     // Apply theme immediately
     document.documentElement.setAttribute('data-theme', theme);
   };
 
   const handleAccentColorChange = (color: string) => {
+    console.log(`Changing accent color to: ${color}`);
     updateSinglePreference('accent_color', color);
     // Apply accent color immediately
     document.documentElement.style.setProperty('--accent-color', color);
+    // Store in localStorage for immediate effect
+    localStorage.setItem('accent-color', color);
   };
+
+  // Apply current theme and accent color on component mount
+  React.useEffect(() => {
+    if (preferences?.theme) {
+      document.documentElement.setAttribute('data-theme', preferences.theme);
+    }
+    if (preferences?.accent_color) {
+      document.documentElement.style.setProperty('--accent-color', preferences.accent_color);
+      localStorage.setItem('accent-color', preferences.accent_color);
+    }
+  }, [preferences]);
+
+  if (!preferences) {
+    return (
+      <Card className="glass-dark border-slate-700/50">
+        <CardContent className="p-6">
+          <p className="text-slate-400">Loading appearance preferences...</p>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Card className="glass-dark border-slate-700/50">
@@ -72,12 +97,12 @@ export const AppearanceSettings = () => {
               return (
                 <div 
                   key={theme.name}
-                  onClick={() => handleThemeChange(theme.value)}
+                  onClick={() => !isUpdating && handleThemeChange(theme.value)}
                   className={`p-6 rounded-lg border-2 cursor-pointer transition-all ${
                     isActive 
                       ? 'border-primary bg-primary/10 glow-cyan' 
                       : 'border-slate-700 hover:border-slate-600 bg-slate-800/50'
-                  }`}
+                  } ${isUpdating ? 'opacity-50 cursor-not-allowed' : ''}`}
                 >
                   <Icon className={`w-8 h-8 mx-auto mb-2 ${isActive ? 'text-primary' : 'text-slate-400'}`} />
                   <p className={`text-center font-medium ${isActive ? 'text-primary' : 'text-slate-300'}`}>
@@ -98,10 +123,10 @@ export const AppearanceSettings = () => {
               return (
                 <div 
                   key={color.value}
-                  onClick={() => handleAccentColorChange(color.value)}
+                  onClick={() => !isUpdating && handleAccentColorChange(color.value)}
                   className={`w-12 h-12 rounded-full cursor-pointer border-4 ${color.class} ${
                     isActive ? 'border-white' : 'border-transparent'
-                  } hover:scale-110 transition-transform`}
+                  } hover:scale-110 transition-transform ${isUpdating ? 'opacity-50 cursor-not-allowed' : ''}`}
                   title={color.name}
                 />
               );
@@ -118,7 +143,10 @@ export const AppearanceSettings = () => {
                 <h4 className="text-white font-medium">{setting.title}</h4>
                 <p className="text-slate-400 text-sm mt-1">{setting.description}</p>
               </div>
-              <Switch defaultChecked={setting.key === 'animations' || setting.key === 'glassmorphism'} />
+              <Switch 
+                defaultChecked={setting.key === 'animations' || setting.key === 'glassmorphism'} 
+                disabled={isUpdating}
+              />
             </div>
           ))}
         </div>

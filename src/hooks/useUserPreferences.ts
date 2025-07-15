@@ -18,13 +18,52 @@ export const useUserPreferences = () => {
     queryFn: async () => {
       if (!user?.id) return null;
       
+      console.log('Fetching preferences for user:', user.id);
+      
       const { data, error } = await supabase
         .from('user_preferences')
         .select('*')
         .eq('user_id', user.id)
         .maybeSingle();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching preferences:', error);
+        throw error;
+      }
+
+      // If no preferences exist, create them automatically
+      if (!data) {
+        console.log('No preferences found, creating default ones...');
+        const { data: newPreferences, error: createError } = await supabase
+          .from('user_preferences')
+          .insert([{
+            user_id: user.id,
+            task_reminders: true,
+            team_updates: true,
+            project_milestones: true,
+            weekly_summary: true,
+            mobile_push_notifications: true,
+            email_notifications: true,
+            theme: 'dark',
+            accent_color: 'cyan',
+            profile_visibility: true,
+            task_sharing: true,
+            activity_status: true,
+            analytics_tracking: true,
+            two_factor_enabled: false
+          }])
+          .select()
+          .single();
+
+        if (createError) {
+          console.error('Error creating preferences:', createError);
+          throw createError;
+        }
+
+        console.log('Preferences created successfully:', newPreferences);
+        return newPreferences;
+      }
+
       return data;
     },
     enabled: !!user?.id,
@@ -34,6 +73,8 @@ export const useUserPreferences = () => {
     mutationFn: async (preferencesData: UserPreferencesUpdate) => {
       if (!user?.id) throw new Error('User not authenticated');
 
+      console.log('Updating preferences with data:', preferencesData);
+
       const { data, error } = await supabase
         .from('user_preferences')
         .update(preferencesData)
@@ -41,11 +82,17 @@ export const useUserPreferences = () => {
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Preferences update error:', error);
+        throw error;
+      }
+
+      console.log('Preferences updated:', data);
       return data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['user_preferences'] });
+      toast.success('Preferences updated successfully');
     },
     onError: (error) => {
       console.error('Error updating preferences:', error);
@@ -54,6 +101,7 @@ export const useUserPreferences = () => {
   });
 
   const updateSinglePreference = (key: keyof UserPreferencesUpdate, value: any) => {
+    console.log(`Updating single preference: ${key} = ${value}`);
     updatePreferencesMutation.mutate({ [key]: value });
   };
 

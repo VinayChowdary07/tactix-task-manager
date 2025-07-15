@@ -16,9 +16,11 @@ const Settings = () => {
 
   const handleSignOut = async () => {
     try {
+      console.log('Starting sign out process...');
       await signOut();
       // Clear any localStorage if needed
       localStorage.clear();
+      console.log('Sign out successful');
       toast.success('Signed out successfully');
     } catch (error) {
       console.error('Error signing out:', error);
@@ -27,7 +29,8 @@ const Settings = () => {
   };
 
   const handleSaveAll = () => {
-    toast.success('All settings saved successfully');
+    // This is just a visual feedback - individual components handle their own saves
+    toast.success('All settings have been saved automatically');
   };
 
   return (
@@ -53,7 +56,7 @@ const Settings = () => {
             className="bg-gradient-to-r from-cyan-500 to-purple-500 hover:from-cyan-600 hover:to-purple-600 glow-cyan transition-all transform hover:scale-105"
           >
             <Save className="w-4 h-4 mr-2" />
-            Save Changes
+            Save All
           </Button>
         </div>
       </div>

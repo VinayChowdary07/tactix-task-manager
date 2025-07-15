@@ -18,13 +18,42 @@ export const useProfile = () => {
     queryFn: async () => {
       if (!user?.id) return null;
       
+      console.log('Fetching profile for user:', user.id);
+      
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
         .eq('user_id', user.id)
         .maybeSingle();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching profile:', error);
+        throw error;
+      }
+
+      // If no profile exists, create one automatically
+      if (!data) {
+        console.log('No profile found, creating one...');
+        const { data: newProfile, error: createError } = await supabase
+          .from('profiles')
+          .insert([{
+            user_id: user.id,
+            first_name: user.user_metadata?.first_name || '',
+            last_name: user.user_metadata?.last_name || '',
+            timezone: 'UTC'
+          }])
+          .select()
+          .single();
+
+        if (createError) {
+          console.error('Error creating profile:', createError);
+          throw createError;
+        }
+
+        console.log('Profile created successfully:', newProfile);
+        return newProfile;
+      }
+
       return data;
     },
     enabled: !!user?.id,
@@ -32,13 +61,20 @@ export const useProfile = () => {
 
   const createProfileMutation = useMutation({
     mutationFn: async (profileData: ProfileInsert) => {
+      console.log('Creating profile with data:', profileData);
+      
       const { data, error } = await supabase
         .from('profiles')
         .insert([profileData])
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Profile creation error:', error);
+        throw error;
+      }
+      
+      console.log('Profile created:', data);
       return data;
     },
     onSuccess: () => {
@@ -55,6 +91,8 @@ export const useProfile = () => {
     mutationFn: async (profileData: ProfileUpdate) => {
       if (!user?.id) throw new Error('User not authenticated');
 
+      console.log('Updating profile with data:', profileData);
+
       const { data, error } = await supabase
         .from('profiles')
         .update(profileData)
@@ -62,7 +100,12 @@ export const useProfile = () => {
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Profile update error:', error);
+        throw error;
+      }
+
+      console.log('Profile updated:', data);
       return data;
     },
     onSuccess: () => {
@@ -79,22 +122,32 @@ export const useProfile = () => {
     mutationFn: async (file: File) => {
       if (!user?.id) throw new Error('User not authenticated');
 
+      console.log('Starting avatar upload for file:', file.name);
+
       const fileExt = file.name.split('.').pop();
       const fileName = `${user.id}/avatar.${fileExt}`;
+
+      console.log('Uploading to storage path:', fileName);
 
       const { error: uploadError } = await supabase.storage
         .from('avatars')
         .upload(fileName, file, { upsert: true });
 
-      if (uploadError) throw uploadError;
+      if (uploadError) {
+        console.error('Storage upload error:', uploadError);
+        throw uploadError;
+      }
 
       const { data } = supabase.storage
         .from('avatars')
         .getPublicUrl(fileName);
 
+      console.log('Avatar uploaded, public URL:', data.publicUrl);
+
       return data.publicUrl;
     },
     onSuccess: async (avatarUrl) => {
+      console.log('Avatar upload successful, updating profile with URL:', avatarUrl);
       await updateProfileMutation.mutateAsync({ avatar_url: avatarUrl });
     },
     onError: (error) => {

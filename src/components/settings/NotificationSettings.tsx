@@ -39,11 +39,22 @@ const notificationSettings = [
 ];
 
 export const NotificationSettings = () => {
-  const { preferences, updateSinglePreference } = useUserPreferences();
+  const { preferences, updateSinglePreference, isUpdating } = useUserPreferences();
 
   const handleToggle = (key: keyof typeof preferences, value: boolean) => {
+    console.log(`Toggling notification setting: ${key} = ${value}`);
     updateSinglePreference(key, value);
   };
+
+  if (!preferences) {
+    return (
+      <Card className="glass-dark border-slate-700/50">
+        <CardContent className="p-6">
+          <p className="text-slate-400">Loading notification preferences...</p>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Card className="glass-dark border-slate-700/50">
@@ -63,6 +74,7 @@ export const NotificationSettings = () => {
             <Switch
               checked={preferences?.[setting.key] || false}
               onCheckedChange={(checked) => handleToggle(setting.key, checked)}
+              disabled={isUpdating}
             />
           </div>
         ))}
