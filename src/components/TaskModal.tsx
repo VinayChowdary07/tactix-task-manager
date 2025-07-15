@@ -17,14 +17,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { useTasks } from '@/hooks/useTasks';
+import { useTasks, Task } from '@/hooks/useTasks';
 import { useProjects } from '@/hooks/useProjects';
 import { X, CheckSquare, Calendar, Flag } from 'lucide-react';
 
 interface TaskModalProps {
   isOpen: boolean;
   onClose: () => void;
-  task?: any;
+  task?: Task | null;
 }
 
 const TaskModal: React.FC<TaskModalProps> = ({ isOpen, onClose, task }) => {
@@ -46,9 +46,12 @@ const TaskModal: React.FC<TaskModalProps> = ({ isOpen, onClose, task }) => {
 
   // Reset form when modal opens/closes or task changes
   useEffect(() => {
+    console.log('TaskModal effect triggered:', { isOpen, task });
+    
     if (isOpen) {
       if (task) {
         // Editing existing task
+        console.log('Setting form data for editing task:', task);
         setFormData({
           title: task.title || '',
           description: task.description || '',
@@ -60,6 +63,7 @@ const TaskModal: React.FC<TaskModalProps> = ({ isOpen, onClose, task }) => {
         });
       } else {
         // Creating new task
+        console.log('Setting form data for new task');
         setFormData({
           title: '',
           description: '',
@@ -76,6 +80,8 @@ const TaskModal: React.FC<TaskModalProps> = ({ isOpen, onClose, task }) => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    console.log('Form submission started');
+    
     setError('');
     
     // Validate required fields
@@ -89,7 +95,7 @@ const TaskModal: React.FC<TaskModalProps> = ({ isOpen, onClose, task }) => {
     try {
       const taskData = {
         title: formData.title.trim(),
-        description: formData.description || undefined,
+        description: formData.description.trim() || undefined,
         due_date: formData.due_date || undefined,
         priority: formData.priority,
         status: formData.status,
@@ -97,14 +103,19 @@ const TaskModal: React.FC<TaskModalProps> = ({ isOpen, onClose, task }) => {
         time_estimate: formData.time_estimate || undefined
       };
 
+      console.log('Submitting task data:', taskData);
+
       if (task) {
         // Update existing task
+        console.log('Updating existing task with ID:', task.id);
         await updateTask.mutateAsync({ id: task.id, ...taskData });
       } else {
         // Create new task
+        console.log('Creating new task');
         await createTask.mutateAsync(taskData);
       }
       
+      console.log('Task operation successful, closing modal');
       onClose();
     } catch (error) {
       console.error('Error saving task:', error);
@@ -117,6 +128,7 @@ const TaskModal: React.FC<TaskModalProps> = ({ isOpen, onClose, task }) => {
   const handleDelete = async () => {
     if (task && window.confirm('Are you sure you want to delete this task?')) {
       try {
+        console.log('Deleting task with ID:', task.id);
         await deleteTask.mutateAsync(task.id);
         onClose();
       } catch (error) {
@@ -132,6 +144,8 @@ const TaskModal: React.FC<TaskModalProps> = ({ isOpen, onClose, task }) => {
     High: '#ef4444',
     Critical: '#dc2626'
   };
+
+  console.log('TaskModal render:', { isOpen, task: !!task, isSubmitting });
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>

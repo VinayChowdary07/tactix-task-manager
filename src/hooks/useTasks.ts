@@ -48,6 +48,8 @@ export const useTasks = () => {
     queryFn: async () => {
       if (!user) return [];
       
+      console.log('Fetching tasks for user:', user.id);
+      
       const { data, error } = await supabase
         .from('tasks')
         .select('*')
@@ -57,6 +59,8 @@ export const useTasks = () => {
         console.error('Error fetching tasks:', error);
         throw error;
       }
+      
+      console.log('Tasks fetched successfully:', data?.length || 0);
       return data as Task[];
     },
     enabled: !!user,
@@ -66,10 +70,12 @@ export const useTasks = () => {
     mutationFn: async (taskData: TaskInput) => {
       if (!user) throw new Error('User not authenticated');
       
-      // Prepare the data for insertion
+      console.log('Creating task with data:', taskData);
+      
+      // Clean and prepare the data for insertion
       const insertData = {
-        title: taskData.title,
-        description: taskData.description || null,
+        title: taskData.title.trim(),
+        description: taskData.description?.trim() || null,
         due_date: taskData.due_date || null,
         reminder_time: taskData.reminder_time || null,
         priority: taskData.priority,
@@ -82,6 +88,8 @@ export const useTasks = () => {
         user_id: user.id
       };
 
+      console.log('Inserting task data:', insertData);
+
       const { data: taskResult, error: taskError } = await supabase
         .from('tasks')
         .insert([insertData])
@@ -93,24 +101,30 @@ export const useTasks = () => {
         throw taskError;
       }
 
+      console.log('Task created successfully:', taskResult);
       return taskResult as Task;
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
+      console.log('Task creation successful, invalidating queries');
       queryClient.invalidateQueries({ queryKey: ['tasks'] });
       toast.success('Task created successfully!');
     },
     onError: (error) => {
-      console.error('Error creating task:', error);
-      toast.error('Failed to create task');
+      console.error('Task creation failed:', error);
+      toast.error('Failed to create task. Please try again.');
     },
   });
 
   const updateTask = useMutation({
     mutationFn: async ({ id, ...taskData }: Partial<Task> & { id: string }) => {
-      // Prepare the data for update
+      if (!user) throw new Error('User not authenticated');
+      
+      console.log('Updating task with ID:', id, 'Data:', taskData);
+      
+      // Clean and prepare the data for update
       const updateData = {
-        title: taskData.title,
-        description: taskData.description || null,
+        title: taskData.title?.trim(),
+        description: taskData.description?.trim() || null,
         due_date: taskData.due_date || null,
         reminder_time: taskData.reminder_time || null,
         priority: taskData.priority,
@@ -120,8 +134,17 @@ export const useTasks = () => {
         repeat_interval: taskData.repeat_interval || null,
         repeat_until: taskData.repeat_until || null,
         time_estimate: taskData.time_estimate || null,
-        time_spent: taskData.time_spent
+        time_spent: taskData.time_spent || null
       };
+
+      // Remove undefined values
+      Object.keys(updateData).forEach(key => {
+        if (updateData[key] === undefined) {
+          delete updateData[key];
+        }
+      });
+
+      console.log('Updating task with cleaned data:', updateData);
 
       const { data: taskResult, error } = await supabase
         .from('tasks')
@@ -135,20 +158,24 @@ export const useTasks = () => {
         throw error;
       }
 
+      console.log('Task updated successfully:', taskResult);
       return taskResult as Task;
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
+      console.log('Task update successful, invalidating queries');
       queryClient.invalidateQueries({ queryKey: ['tasks'] });
       toast.success('Task updated successfully!');
     },
     onError: (error) => {
-      console.error('Error updating task:', error);
-      toast.error('Failed to update task');
+      console.error('Task update failed:', error);
+      toast.error('Failed to update task. Please try again.');
     },
   });
 
   const deleteTask = useMutation({
     mutationFn: async (id: string) => {
+      console.log('Deleting task with ID:', id);
+      
       const { error } = await supabase
         .from('tasks')
         .delete()
@@ -158,14 +185,17 @@ export const useTasks = () => {
         console.error('Error deleting task:', error);
         throw error;
       }
+      
+      console.log('Task deleted successfully');
     },
     onSuccess: () => {
+      console.log('Task deletion successful, invalidating queries');
       queryClient.invalidateQueries({ queryKey: ['tasks'] });
       toast.success('Task deleted successfully!');
     },
     onError: (error) => {
-      console.error('Error deleting task:', error);
-      toast.error('Failed to delete task');
+      console.error('Task deletion failed:', error);
+      toast.error('Failed to delete task. Please try again.');
     },
   });
 

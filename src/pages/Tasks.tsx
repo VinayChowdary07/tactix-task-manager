@@ -22,6 +22,13 @@ const Tasks = () => {
     status: 'all'
   });
 
+  console.log('Tasks page render:', { 
+    tasksCount: tasks.length, 
+    isLoading, 
+    isModalOpen, 
+    editingTask: !!editingTask 
+  });
+
   const filteredTasks = tasks.filter(task => {
     const matchesSearch = task.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
       task.description?.toLowerCase().includes(searchTerm.toLowerCase());
@@ -36,6 +43,7 @@ const Tasks = () => {
   });
 
   const handleEditTask = (task: any) => {
+    console.log('Edit task clicked:', task);
     setEditingTask(task);
     setIsModalOpen(true);
   };
@@ -43,6 +51,7 @@ const Tasks = () => {
   const handleDeleteTask = async (id: string) => {
     if (window.confirm('Are you sure you want to delete this task?')) {
       try {
+        console.log('Delete task clicked:', id);
         await deleteTask.mutateAsync(id);
       } catch (error) {
         console.error('Error deleting task:', error);
@@ -51,11 +60,13 @@ const Tasks = () => {
   };
 
   const handleCloseModal = () => {
+    console.log('Closing modal');
     setIsModalOpen(false);
     setEditingTask(null);
   };
 
   const handleOpenNewTaskModal = () => {
+    console.log('Opening new task modal');
     setEditingTask(null);
     setIsModalOpen(true);
   };
