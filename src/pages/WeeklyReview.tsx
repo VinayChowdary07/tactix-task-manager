@@ -71,109 +71,89 @@ const WeeklyReview = () => {
   });
 
   return (
-    <div className="space-y-8 p-6">
-      {/* Header */}
-      <div className="text-center py-8">
-        <h1 className="text-4xl font-bold text-gradient-purple mb-4">Weekly Review</h1>
-        <p className="text-xl text-slate-400 max-w-2xl mx-auto">
-          Track your productivity and celebrate your achievements
-        </p>
-      </div>
+    <div className="min-h-screen bg-slate-950 text-white p-6">
+      <div className="max-w-7xl mx-auto space-y-8">
+        {/* Header */}
+        <div className="text-center">
+          <h1 className="text-3xl font-bold text-white mb-2">Weekly Review</h1>
+          <p className="text-slate-400">Track your productivity and celebrate your achievements</p>
+        </div>
 
-      {/* Week Selector */}
-      <div className="flex justify-center">
-        <Select 
-          value={selectedWeekOffset.toString()} 
-          onValueChange={(value) => setSelectedWeekOffset(parseInt(value))}
-        >
-          <SelectTrigger className="w-64 bg-slate-800/50 border-slate-600 text-white">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent className="bg-slate-800 border-slate-600">
-            {weekOptions.map(option => (
-              <SelectItem key={option.value} value={option.value.toString()} className="text-white">
-                {option.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
+        {/* Week Selector */}
+        <div className="flex justify-center">
+          <Select 
+            value={selectedWeekOffset.toString()} 
+            onValueChange={(value) => setSelectedWeekOffset(parseInt(value))}
+          >
+            <SelectTrigger className="w-64 bg-slate-800 border-slate-700 text-white">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent className="bg-slate-800 border-slate-700">
+              {weekOptions.map(option => (
+                <SelectItem key={option.value} value={option.value.toString()} className="text-white hover:bg-slate-700">
+                  {option.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
 
-      {/* Stats Overview */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <Card className="glass-card neon-border-blue hover:scale-105 transition-all duration-300">
-          <CardContent className="p-6">
+        {/* Stats Overview */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="bg-slate-900 border border-slate-800 rounded-xl p-6 hover:border-slate-700 transition-colors">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-slate-400 text-sm font-medium">Tasks Completed</p>
-                <p className="text-3xl font-bold text-white mt-2">
+                <p className="text-slate-400 text-sm">Tasks Completed</p>
+                <p className="text-2xl font-bold text-blue-400">
                   {weeklyStats.completedTasks}/{weeklyStats.totalTasks}
                 </p>
               </div>
-              <div className="p-4 rounded-xl btn-gradient-blue glow-cyan">
-                <CheckCircle2 className="w-8 h-8 text-white" />
-              </div>
+              <CheckCircle2 className="w-8 h-8 text-blue-400" />
             </div>
-          </CardContent>
-        </Card>
+          </div>
 
-        <Card className="glass-card neon-border-green hover:scale-105 transition-all duration-300">
-          <CardContent className="p-6">
+          <div className="bg-slate-900 border border-slate-800 rounded-xl p-6 hover:border-slate-700 transition-colors">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-slate-400 text-sm font-medium">Hours Tracked</p>
-                <p className="text-3xl font-bold text-white mt-2">{weeklyStats.totalTimeSpent}h</p>
+                <p className="text-slate-400 text-sm">Hours Tracked</p>
+                <p className="text-2xl font-bold text-green-400">{weeklyStats.totalTimeSpent}h</p>
                 {weeklyStats.totalTimeEstimated > 0 && (
                   <p className="text-xs text-slate-500">Est: {weeklyStats.totalTimeEstimated}h</p>
                 )}
               </div>
-              <div className="p-4 rounded-xl btn-gradient-green glow-green">
-                <Clock className="w-8 h-8 text-white" />
-              </div>
+              <Clock className="w-8 h-8 text-green-400" />
             </div>
-          </CardContent>
-        </Card>
+          </div>
 
-        <Card className="glass-card neon-border-purple hover:scale-105 transition-all duration-300">
-          <CardContent className="p-6">
+          <div className="bg-slate-900 border border-slate-800 rounded-xl p-6 hover:border-slate-700 transition-colors">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-slate-400 text-sm font-medium">Completion Rate</p>
-                <p className="text-3xl font-bold text-white mt-2">{weeklyStats.completionRate}%</p>
+                <p className="text-slate-400 text-sm">Completion Rate</p>
+                <p className="text-2xl font-bold text-purple-400">{weeklyStats.completionRate}%</p>
               </div>
-              <div className="p-4 rounded-xl btn-gradient-purple glow-purple">
-                <TrendingUp className="w-8 h-8 text-white" />
-              </div>
+              <TrendingUp className="w-8 h-8 text-purple-400" />
             </div>
-          </CardContent>
-        </Card>
+          </div>
 
-        <Card className="glass-card neon-border-pink hover:scale-105 transition-all duration-300">
-          <CardContent className="p-6">
+          <div className="bg-slate-900 border border-slate-800 rounded-xl p-6 hover:border-slate-700 transition-colors">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-slate-400 text-sm font-medium">Productivity Score</p>
-                <p className="text-3xl font-bold text-white mt-2">{weeklyStats.productivityScore}</p>
+                <p className="text-slate-400 text-sm">Productivity Score</p>
+                <p className="text-2xl font-bold text-pink-400">{weeklyStats.productivityScore}</p>
               </div>
-              <div className="p-4 rounded-xl btn-gradient-pink glow-pink">
-                <Star className="w-8 h-8 text-white" />
-              </div>
+              <Star className="w-8 h-8 text-pink-400" />
             </div>
-          </CardContent>
-        </Card>
-      </div>
+          </div>
+        </div>
 
-      {/* Charts Section */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Priority Breakdown */}
-        <Card className="glass-card neon-border-orange">
-          <CardHeader>
-            <CardTitle className="text-white flex items-center gap-2">
+        {/* Charts Section */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Priority Breakdown */}
+          <div className="bg-slate-900 border border-slate-800 rounded-xl p-6">
+            <div className="flex items-center gap-2 mb-6">
               <Target className="w-5 h-5 text-orange-400" />
-              Priority Breakdown
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
+              <h2 className="text-xl font-bold text-white">Priority Breakdown</h2>
+            </div>
             <div className="space-y-4">
               {Object.entries(weeklyStats.priorityBreakdown).map(([priority, count]) => {
                 const colors = {
@@ -190,7 +170,7 @@ const WeeklyReview = () => {
                       <span className="text-slate-300">{priority}</span>
                       <span className="text-slate-400">{count} tasks</span>
                     </div>
-                    <div className="w-full bg-slate-700/50 rounded-full h-2">
+                    <div className="w-full bg-slate-700 rounded-full h-2">
                       <div 
                         className={`h-2 rounded-full ${colors[priority as keyof typeof colors]} transition-all duration-500`}
                         style={{ width: `${percentage}%` }}
@@ -200,18 +180,14 @@ const WeeklyReview = () => {
                 );
               })}
             </div>
-          </CardContent>
-        </Card>
+          </div>
 
-        {/* Productivity Insights */}
-        <Card className="glass-card neon-border-cyan">
-          <CardHeader>
-            <CardTitle className="text-white flex items-center gap-2">
+          {/* Productivity Insights */}
+          <div className="bg-slate-900 border border-slate-800 rounded-xl p-6">
+            <div className="flex items-center gap-2 mb-6">
               <CalendarDays className="w-5 h-5 text-cyan-400" />
-              Weekly Insights
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
+              <h2 className="text-xl font-bold text-white">Weekly Insights</h2>
+            </div>
             <div className="grid grid-cols-1 gap-6 text-center">
               <div className="space-y-2">
                 <div className="text-2xl font-bold text-green-400">
@@ -248,8 +224,8 @@ const WeeklyReview = () => {
                 </p>
               </div>
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       </div>
     </div>
   );

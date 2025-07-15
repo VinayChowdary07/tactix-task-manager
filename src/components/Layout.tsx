@@ -63,9 +63,9 @@ const Layout = () => {
   ];
 
   return (
-    <div className="min-h-screen flex">
+    <div className="min-h-screen bg-slate-950 flex">
       {/* Sidebar */}
-      <aside className="w-64 bg-gradient-to-b from-slate-900 to-indigo-900 border-r border-r-slate-700/50 py-6 px-3 flex flex-col">
+      <aside className="w-64 bg-slate-900 border-r border-slate-800 py-6 px-3 flex flex-col">
         <div className="mb-8 flex items-center justify-between">
           <Link to="/" className="flex items-center text-lg font-semibold text-white">
             TaskZen
@@ -75,21 +75,21 @@ const Layout = () => {
               <Button variant="ghost" className="h-8 w-8 p-0 rounded-full">
                 <Avatar className="h-8 w-8">
                   <AvatarImage src={user?.user_metadata?.avatar_url as string} alt={user?.email as string} />
-                  <AvatarFallback>{user?.email?.charAt(0).toUpperCase()}</AvatarFallback>
+                  <AvatarFallback className="bg-slate-700 text-white">{user?.email?.charAt(0).toUpperCase()}</AvatarFallback>
                 </Avatar>
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent className="w-56 mr-2 glass-dark border-slate-700/50">
+            <DropdownMenuContent className="w-56 mr-2 bg-slate-800 border-slate-700">
               <DropdownMenuItem className="text-white" disabled>
                 {user?.email}
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => navigate('/settings')} className="text-white">
+              <DropdownMenuItem onClick={() => navigate('/settings')} className="text-white hover:bg-slate-700">
                 Settings
               </DropdownMenuItem>
               <DropdownMenuItem 
                 onClick={handleSignOut} 
                 disabled={isSigningOut}
-                className="text-red-500 focus:text-red-400"
+                className="text-red-400 focus:text-red-300 hover:bg-slate-700"
               >
                 {isSigningOut ? 'Signing Out...' : 'Sign Out'}
               </DropdownMenuItem>
@@ -108,8 +108,8 @@ const Layout = () => {
                     to={item.to}
                     className={`flex items-center px-4 py-2 rounded-lg transition-colors duration-200
                       ${isActive
-                        ? 'text-white bg-slate-800/30'
-                        : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/10'
+                        ? 'text-white bg-slate-800 border border-slate-700'
+                        : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
                       }`}
                   >
                     <Icon className="w-4 h-4 mr-2" />
@@ -123,12 +123,15 @@ const Layout = () => {
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 p-6">
+      <main className="flex-1 bg-slate-950">
         <Outlet context={{ selectedProjectId, projects, setSelectedProjectId }} />
       </main>
 
       {/* Project Modal */}
       <ProjectModal isOpen={isProjectModalOpen} onClose={() => setIsProjectModalOpen(false)} />
+      
+      {/* Toaster */}
+      <Toaster />
     </div>
   );
 };

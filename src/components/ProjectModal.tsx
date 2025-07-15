@@ -11,7 +11,6 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useProjects, Project } from '@/hooks/useProjects';
-import { X } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface ProjectModalProps {
@@ -145,18 +144,10 @@ const ProjectModal: React.FC<ProjectModalProps> = ({ isOpen, onClose, project })
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="glass-dark border-slate-700/50 text-white max-w-lg">
+      <DialogContent className="bg-slate-900 border-slate-700 text-white max-w-lg">
         <DialogHeader>
-          <DialogTitle className="text-xl font-bold text-gradient flex items-center justify-between">
+          <DialogTitle className="text-xl font-bold text-white">
             {project ? 'Edit Project' : 'Create New Project'}
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={handleClose}
-              className="text-slate-400 hover:text-white h-8 w-8"
-            >
-              <X className="w-4 h-4" />
-            </Button>
           </DialogTitle>
         </DialogHeader>
 
@@ -168,7 +159,7 @@ const ProjectModal: React.FC<ProjectModalProps> = ({ isOpen, onClose, project })
               id="name"
               value={formData.name}
               onChange={(e) => handleInputChange('name', e.target.value)}
-              className="bg-slate-800/50 border-slate-600 text-white placeholder-slate-400 focus:border-cyan-400 focus:ring-cyan-400/20"
+              className="bg-slate-800 border-slate-600 text-white placeholder-slate-400 focus:border-cyan-400 focus:ring-cyan-400/20"
               placeholder="Enter project name"
               required
             />
@@ -181,7 +172,7 @@ const ProjectModal: React.FC<ProjectModalProps> = ({ isOpen, onClose, project })
               id="description"
               value={formData.description}
               onChange={(e) => handleInputChange('description', e.target.value)}
-              className="bg-slate-800/50 border-slate-600 text-white placeholder-slate-400 focus:border-cyan-400 focus:ring-cyan-400/20"
+              className="bg-slate-800 border-slate-600 text-white placeholder-slate-400 focus:border-cyan-400 focus:ring-cyan-400/20"
               placeholder="Project description (optional)"
             />
           </div>
@@ -193,10 +184,10 @@ const ProjectModal: React.FC<ProjectModalProps> = ({ isOpen, onClose, project })
               value={formData.priority} 
               onValueChange={(value) => handleInputChange('priority', value)}
             >
-              <SelectTrigger className="bg-slate-800/50 border-slate-600 text-white">
+              <SelectTrigger className="bg-slate-800 border-slate-600 text-white">
                 <SelectValue />
               </SelectTrigger>
-              <SelectContent className="glass-dark border-slate-700">
+              <SelectContent className="bg-slate-800 border-slate-700">
                 {priorities.map((priority) => (
                   <SelectItem key={priority} value={priority} className="text-white hover:bg-slate-700">
                     {priority}
@@ -232,7 +223,7 @@ const ProjectModal: React.FC<ProjectModalProps> = ({ isOpen, onClose, project })
               type="button"
               variant="outline"
               onClick={handleClose}
-              className="flex-1 bg-slate-800/50 border-slate-600 text-slate-300 hover:bg-slate-700/50 hover:text-white"
+              className="flex-1 bg-slate-800 border-slate-600 text-slate-300 hover:bg-slate-700 hover:text-white"
               disabled={isSubmitting}
             >
               Cancel
@@ -240,7 +231,7 @@ const ProjectModal: React.FC<ProjectModalProps> = ({ isOpen, onClose, project })
             <Button
               type="submit"
               disabled={isSubmitting || (!project && !formData.name.trim()) || (project && !hasChanges())}
-              className="flex-1 bg-gradient-to-r from-cyan-500 to-purple-500 hover:from-cyan-600 hover:to-purple-600 glow-cyan transition-all disabled:opacity-50"
+              className="flex-1 bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 transition-all disabled:opacity-50"
             >
               {isSubmitting ? 'Saving...' : (project ? 'Update Project' : 'Create Project')}
             </Button>
