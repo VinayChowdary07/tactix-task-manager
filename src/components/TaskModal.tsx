@@ -20,7 +20,6 @@ import {
 import { useTasks } from '@/hooks/useTasks';
 import { useProjects } from '@/hooks/useProjects';
 import { X, CheckSquare, Calendar, Flag } from 'lucide-react';
-import { format } from 'date-fns';
 
 interface TaskModalProps {
   isOpen: boolean;
@@ -30,7 +29,7 @@ interface TaskModalProps {
 
 const TaskModal: React.FC<TaskModalProps> = ({ isOpen, onClose, task }) => {
   const { createTask, updateTask, deleteTask } = useTasks();
-  const { projects } = useProjects();
+  const { projects = [] } = useProjects();
   
   const [formData, setFormData] = useState({
     title: '',
@@ -49,7 +48,7 @@ const TaskModal: React.FC<TaskModalProps> = ({ isOpen, onClose, task }) => {
         setFormData({
           title: task.title || '',
           description: task.description || '',
-          due_date: task.due_date ? format(new Date(task.due_date), 'yyyy-MM-dd') : '',
+          due_date: task.due_date ? new Date(task.due_date).toISOString().split('T')[0] : '',
           priority: task.priority || 'Medium',
           status: task.status || 'Todo',
           project_id: task.project_id || '',
@@ -74,9 +73,14 @@ const TaskModal: React.FC<TaskModalProps> = ({ isOpen, onClose, task }) => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!formData.title.trim()) return;
+    if (!formData.title.trim()) {
+      console.error('Task title is required');
+      return;
+    }
 
     try {
+      console.log('Submitting task data:', formData);
+      
       const taskData = {
         title: formData.title.trim(),
         description: formData.description || undefined,
@@ -117,11 +121,13 @@ const TaskModal: React.FC<TaskModalProps> = ({ isOpen, onClose, task }) => {
     Critical: '#dc2626'
   };
 
+  if (!isOpen) return null;
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="bg-slate-900 border-slate-700 text-white max-w-2xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader className="relative">
-          <DialogTitle className="text-xl font-bold flex items-center gap-2">
+      <DialogContent className="bg-slate-900/95 backdrop-blur-xl border border-slate-700/50 text-white max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl shadow-cyan-500/10">
+        <DialogHeader className="relative border-b border-slate-700/50 pb-4">
+          <DialogTitle className="text-xl font-bold flex items-center gap-2 bg-gradient-to-r from-cyan-400 to-blue-400 bg-clip-text text-transparent">
             <CheckSquare className="w-5 h-5 text-cyan-400" />
             {task ? 'Edit Task' : 'Create New Task'}
           </DialogTitle>
@@ -130,43 +136,43 @@ const TaskModal: React.FC<TaskModalProps> = ({ isOpen, onClose, task }) => {
               variant="ghost"
               size="icon"
               onClick={handleDelete}
-              className="absolute right-0 top-0 text-red-400 hover:text-red-300 hover:bg-red-500/10 h-8 w-8"
+              className="absolute right-0 top-0 text-red-400 hover:text-red-300 hover:bg-red-500/10 h-8 w-8 transition-all"
             >
               <X className="w-4 h-4" />
             </Button>
           )}
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-6 mt-4">
+        <form onSubmit={handleSubmit} className="space-y-6 mt-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Left Column */}
             <div className="space-y-4">
               <div>
-                <Label htmlFor="title" className="text-slate-300">Task Title *</Label>
+                <Label htmlFor="title" className="text-slate-300 font-medium">Task Title *</Label>
                 <Input
                   id="title"
                   value={formData.title}
                   onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                  className="bg-slate-800 border-slate-600 text-white focus:border-cyan-400 focus:ring-cyan-400/20"
+                  className="bg-slate-800/50 border-slate-600/50 text-white placeholder-slate-400 focus:border-cyan-400 focus:ring-cyan-400/20 mt-2"
                   placeholder="Enter task title"
                   required
                 />
               </div>
 
               <div>
-                <Label htmlFor="description" className="text-slate-300">Description</Label>
+                <Label htmlFor="description" className="text-slate-300 font-medium">Description</Label>
                 <Textarea
                   id="description"
                   value={formData.description}
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  className="bg-slate-800 border-slate-600 text-white resize-none focus:border-cyan-400 focus:ring-cyan-400/20"
+                  className="bg-slate-800/50 border-slate-600/50 text-white placeholder-slate-400 resize-none focus:border-cyan-400 focus:ring-cyan-400/20 mt-2"
                   placeholder="Describe the task"
                   rows={3}
                 />
               </div>
 
               <div>
-                <Label htmlFor="due_date" className="text-slate-300 flex items-center gap-2">
+                <Label htmlFor="due_date" className="text-slate-300 font-medium flex items-center gap-2">
                   <Calendar className="w-4 h-4" />
                   Due Date
                 </Label>
@@ -175,19 +181,20 @@ const TaskModal: React.FC<TaskModalProps> = ({ isOpen, onClose, task }) => {
                   type="date"
                   value={formData.due_date}
                   onChange={(e) => setFormData({ ...formData, due_date: e.target.value })}
-                  className="bg-slate-800 border-slate-600 text-white focus:border-cyan-400 focus:ring-cyan-400/20"
+                  className="bg-slate-800/50 border-slate-600/50 text-white focus:border-cyan-400 focus:ring-cyan-400/20 mt-2"
                 />
               </div>
 
               <div>
-                <Label htmlFor="time_estimate" className="text-slate-300">Time Estimate (minutes)</Label>
+                <Label htmlFor="time_estimate" className="text-slate-300 font-medium">Time Estimate (minutes)</Label>
                 <Input
                   id="time_estimate"
                   type="number"
-                  value={formData.time_estimate}
+                  value={formData.time_estimate || ''}
                   onChange={(e) => setFormData({ ...formData, time_estimate: parseInt(e.target.value) || 0 })}
-                  className="bg-slate-800 border-slate-600 text-white focus:border-cyan-400 focus:ring-cyan-400/20"
+                  className="bg-slate-800/50 border-slate-600/50 text-white placeholder-slate-400 focus:border-cyan-400 focus:ring-cyan-400/20 mt-2"
                   placeholder="0"
+                  min="0"
                 />
               </div>
             </div>
@@ -195,12 +202,12 @@ const TaskModal: React.FC<TaskModalProps> = ({ isOpen, onClose, task }) => {
             {/* Right Column */}
             <div className="space-y-4">
               <div>
-                <Label className="text-slate-300 flex items-center gap-2">
+                <Label className="text-slate-300 font-medium flex items-center gap-2">
                   <Flag className="w-4 h-4" />
                   Priority
                 </Label>
                 <Select value={formData.priority} onValueChange={(value: any) => setFormData({ ...formData, priority: value })}>
-                  <SelectTrigger className="bg-slate-800 border-slate-600 text-white focus:border-cyan-400">
+                  <SelectTrigger className="bg-slate-800/50 border-slate-600/50 text-white focus:border-cyan-400 mt-2">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent className="bg-slate-800 border-slate-600">
@@ -220,9 +227,9 @@ const TaskModal: React.FC<TaskModalProps> = ({ isOpen, onClose, task }) => {
               </div>
 
               <div>
-                <Label className="text-slate-300">Status</Label>
+                <Label className="text-slate-300 font-medium">Status</Label>
                 <Select value={formData.status} onValueChange={(value: any) => setFormData({ ...formData, status: value })}>
-                  <SelectTrigger className="bg-slate-800 border-slate-600 text-white focus:border-cyan-400">
+                  <SelectTrigger className="bg-slate-800/50 border-slate-600/50 text-white focus:border-cyan-400 mt-2">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent className="bg-slate-800 border-slate-600">
@@ -234,9 +241,9 @@ const TaskModal: React.FC<TaskModalProps> = ({ isOpen, onClose, task }) => {
               </div>
 
               <div>
-                <Label className="text-slate-300">Project</Label>
+                <Label className="text-slate-300 font-medium">Project</Label>
                 <Select value={formData.project_id} onValueChange={(value) => setFormData({ ...formData, project_id: value })}>
-                  <SelectTrigger className="bg-slate-800 border-slate-600 text-white focus:border-cyan-400">
+                  <SelectTrigger className="bg-slate-800/50 border-slate-600/50 text-white focus:border-cyan-400 mt-2">
                     <SelectValue placeholder="Select project" />
                   </SelectTrigger>
                   <SelectContent className="bg-slate-800 border-slate-600">
@@ -257,9 +264,9 @@ const TaskModal: React.FC<TaskModalProps> = ({ isOpen, onClose, task }) => {
               </div>
 
               <div>
-                <Label className="text-slate-300">Repeat</Label>
+                <Label className="text-slate-300 font-medium">Repeat</Label>
                 <Select value={formData.repeat_type} onValueChange={(value: any) => setFormData({ ...formData, repeat_type: value })}>
-                  <SelectTrigger className="bg-slate-800 border-slate-600 text-white focus:border-cyan-400">
+                  <SelectTrigger className="bg-slate-800/50 border-slate-600/50 text-white focus:border-cyan-400 mt-2">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent className="bg-slate-800 border-slate-600">
@@ -273,20 +280,19 @@ const TaskModal: React.FC<TaskModalProps> = ({ isOpen, onClose, task }) => {
             </div>
           </div>
 
-          <div className="flex gap-3 pt-4 border-t border-slate-700">
+          <div className="flex gap-3 pt-6 border-t border-slate-700/50">
             <Button
               type="button"
               variant="outline"
               onClick={onClose}
-              className="flex-1 bg-slate-800 border-slate-600 text-slate-300 hover:bg-slate-700"
+              className="flex-1 bg-slate-800/50 border-slate-600/50 text-slate-300 hover:bg-slate-700/50 hover:border-slate-500 transition-all"
             >
               Cancel
             </Button>
             <Button
               type="submit"
               disabled={createTask.isPending || updateTask.isPending || !formData.title.trim()}
-              className="flex-1"
-              style={{ backgroundColor: '#06b6d4' }}
+              className="flex-1 bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 text-white font-medium shadow-lg hover:shadow-cyan-500/25 transition-all transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {createTask.isPending || updateTask.isPending ? 'Saving...' : (task ? 'Update Task' : 'Create Task')}
             </Button>

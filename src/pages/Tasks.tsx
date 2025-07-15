@@ -10,8 +10,8 @@ import TaskFilters, { TaskFilters as TaskFiltersType } from '@/components/TaskFi
 import { Input } from '@/components/ui/input';
 
 const Tasks = () => {
-  const { tasks, isLoading, deleteTask } = useTasks();
-  const { projects } = useProjects();
+  const { tasks = [], isLoading, deleteTask } = useTasks();
+  const { projects = [] } = useProjects();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<any>(null);
   const [searchTerm, setSearchTerm] = useState('');
@@ -21,6 +21,8 @@ const Tasks = () => {
     priority: 'all',
     status: 'all'
   });
+
+  console.log('Tasks page render - isModalOpen:', isModalOpen, 'editingTask:', editingTask);
 
   const filteredTasks = tasks.filter(task => {
     const matchesSearch = task.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -36,6 +38,7 @@ const Tasks = () => {
   });
 
   const handleEditTask = (task: any) => {
+    console.log('Opening edit modal for task:', task);
     setEditingTask(task);
     setIsModalOpen(true);
   };
@@ -51,8 +54,15 @@ const Tasks = () => {
   };
 
   const handleCloseModal = () => {
+    console.log('Closing modal');
     setIsModalOpen(false);
     setEditingTask(null);
+  };
+
+  const handleOpenNewTaskModal = () => {
+    console.log('Opening new task modal');
+    setEditingTask(null);
+    setIsModalOpen(true);
   };
 
   const getStatsCards = () => {
@@ -71,7 +81,7 @@ const Tasks = () => {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-[400px]">
+      <div className="min-h-screen bg-slate-950 text-white flex items-center justify-center">
         <div className="text-center">
           <div className="w-8 h-8 border-4 border-cyan-400 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
           <p className="text-slate-400">Loading your tasks...</p>
@@ -93,7 +103,7 @@ const Tasks = () => {
           </div>
           
           <Button 
-            onClick={() => setIsModalOpen(true)}
+            onClick={handleOpenNewTaskModal}
             className="bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 text-white font-medium shadow-lg hover:shadow-cyan-500/25 transition-all transform hover:scale-105"
           >
             <Plus className="w-4 h-4 mr-2" />
@@ -172,7 +182,7 @@ const Tasks = () => {
             </p>
             {(!searchTerm && !filters.search && filters.priority === 'all' && filters.status === 'all') && (
               <Button 
-                onClick={() => setIsModalOpen(true)}
+                onClick={handleOpenNewTaskModal}
                 className="bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 font-medium shadow-lg hover:shadow-cyan-500/25 transition-all transform hover:scale-105"
               >
                 <Plus className="w-4 h-4 mr-2" />
@@ -196,6 +206,7 @@ const Tasks = () => {
         )}
 
         {/* Task Modal */}
+        {console.log('Rendering TaskModal - isOpen:', isModalOpen, 'task:', editingTask)}
         <TaskModal
           isOpen={isModalOpen}
           onClose={handleCloseModal}
