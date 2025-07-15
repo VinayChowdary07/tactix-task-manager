@@ -43,8 +43,8 @@ const ProtectedRoutes = () => {
   }
 
   return (
-    <Layout>
-      <Routes>
+    <Routes>
+      <Route path="/" element={<Layout />}>
         <Route index element={<Index />} />
         <Route path="tasks" element={<Tasks />} />
         <Route path="projects" element={<Projects />} />
@@ -52,8 +52,8 @@ const ProtectedRoutes = () => {
         <Route path="goals" element={<Goals />} />
         <Route path="weekly-review" element={<WeeklyReview />} />
         <Route path="settings" element={<Settings />} />
-      </Routes>
-    </Layout>
+      </Route>
+    </Routes>
   );
 };
 
