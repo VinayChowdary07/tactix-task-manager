@@ -60,18 +60,18 @@ const GoalModal: React.FC<GoalModalProps> = ({ isOpen, onClose, goal }) => {
     if (isOpen) {
       if (goal) {
         setFormData({
-          title: goal.title,
+          title: goal.title || '',
           description: goal.description || '',
           start_date: goal.start_date ? format(new Date(goal.start_date), 'yyyy-MM-dd') : '',
           target_date: goal.target_date ? format(new Date(goal.target_date), 'yyyy-MM-dd') : '',
-          goal_type: goal.goal_type,
+          goal_type: goal.goal_type || 'personal',
           tags: goal.tags || [],
-          color: goal.color,
+          color: goal.color || '#6366f1',
           notes: goal.notes || '',
-          status: goal.status,
+          status: goal.status || 'active',
           taskIds: goal.goal_tasks?.map(gt => gt.task_id) || [],
           milestones: goal.goal_milestones?.map(m => ({
-            title: m.title,
+            title: m.title || '',
             description: m.description || '',
             target_date: m.target_date ? format(new Date(m.target_date), 'yyyy-MM-dd') : ''
           })) || []
@@ -97,26 +97,30 @@ const GoalModal: React.FC<GoalModalProps> = ({ isOpen, onClose, goal }) => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!formData.title.trim()) return;
+    if (!formData.title.trim()) {
+      console.error('Goal title is required');
+      return;
+    }
 
     try {
+      console.log('Submitting goal data:', formData);
+      
       const goalData = {
-        title: formData.title,
-        description: formData.description || null,
-        start_date: formData.start_date ? new Date(formData.start_date).toISOString() : null,
-        target_date: formData.target_date ? new Date(formData.target_date).toISOString() : null,
+        title: formData.title.trim(),
+        description: formData.description || undefined,
+        start_date: formData.start_date || undefined,
+        target_date: formData.target_date || undefined,
         goal_type: formData.goal_type,
-        tags: formData.tags,
+        tags: formData.tags.length > 0 ? formData.tags : undefined,
         color: formData.color,
-        notes: formData.notes || null,
+        notes: formData.notes || undefined,
         status: formData.status,
-        taskIds: formData.taskIds,
-        milestones: formData.milestones.map(m => ({
-          title: m.title,
-          description: m.description || null,
-          target_date: m.target_date ? new Date(m.target_date).toISOString() : null,
-          completed: false
-        }))
+        taskIds: formData.taskIds.length > 0 ? formData.taskIds : undefined,
+        milestones: formData.milestones.length > 0 ? formData.milestones.filter(m => m.title.trim()).map(m => ({
+          title: m.title.trim(),
+          description: m.description || undefined,
+          target_date: m.target_date || undefined
+        })) : undefined
       };
 
       if (goal) {
@@ -441,7 +445,7 @@ const GoalModal: React.FC<GoalModalProps> = ({ isOpen, onClose, goal }) => {
             </Button>
             <Button
               type="submit"
-              disabled={createGoal.isPending || updateGoal.isPending}
+              disabled={createGoal.isPending || updateGoal.isPending || !formData.title.trim()}
               className="flex-1"
               style={{ backgroundColor: formData.color }}
             >
