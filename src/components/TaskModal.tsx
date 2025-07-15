@@ -35,9 +35,9 @@ const TaskModal: React.FC<TaskModalProps> = ({ isOpen, onClose, task }) => {
     title: '',
     description: '',
     due_date: '',
-    priority: 'Medium' as 'Low' | 'Medium' | 'High' | 'Critical',
+    priority: 'Medium' as 'Low' | 'Medium' | 'High',
     status: 'Todo' as 'Todo' | 'In Progress' | 'Done',
-    project_id: ''
+    project_id: 'none'
   });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -52,7 +52,7 @@ const TaskModal: React.FC<TaskModalProps> = ({ isOpen, onClose, task }) => {
           due_date: task.due_date ? task.due_date.split('T')[0] : '',
           priority: task.priority || 'Medium',
           status: task.status || 'Todo',
-          project_id: task.project_id || ''
+          project_id: task.project_id || 'none'
         });
       } else {
         setFormData({
@@ -61,7 +61,7 @@ const TaskModal: React.FC<TaskModalProps> = ({ isOpen, onClose, task }) => {
           due_date: '',
           priority: 'Medium',
           status: 'Todo',
-          project_id: ''
+          project_id: 'none'
         });
       }
       setError('');
@@ -86,7 +86,7 @@ const TaskModal: React.FC<TaskModalProps> = ({ isOpen, onClose, task }) => {
         due_date: formData.due_date || undefined,
         priority: formData.priority,
         status: formData.status,
-        project_id: formData.project_id || undefined
+        project_id: formData.project_id === 'none' ? undefined : formData.project_id
       };
 
       if (task) {
@@ -106,8 +106,7 @@ const TaskModal: React.FC<TaskModalProps> = ({ isOpen, onClose, task }) => {
   const priorityColors = {
     Low: '#22c55e',
     Medium: '#f59e0b',
-    High: '#ef4444',
-    Critical: '#dc2626'
+    High: '#ef4444'
   };
 
   return (
@@ -217,8 +216,8 @@ const TaskModal: React.FC<TaskModalProps> = ({ isOpen, onClose, task }) => {
                     <SelectValue placeholder="Select project" />
                   </SelectTrigger>
                   <SelectContent className="bg-slate-800 border-slate-600">
-                    <SelectItem value="">No Project</SelectItem>
-                    {projects.map((project) => (
+                    <SelectItem value="none">No Project</SelectItem>
+                    {Array.from(projects || []).map((project) => (
                       <SelectItem key={project.id} value={project.id}>
                         <div className="flex items-center gap-2">
                           <div 
