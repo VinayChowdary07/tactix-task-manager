@@ -2,6 +2,7 @@
 import React, { useState, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Switch } from '@/components/ui/switch';
 import { 
   Plus, 
   CheckSquare, 
@@ -11,7 +12,9 @@ import {
   Target,
   TrendingUp,
   Calendar,
-  Clock
+  Clock,
+  Eye,
+  EyeOff
 } from 'lucide-react';
 import {
   Select,
@@ -24,9 +27,13 @@ import { useTasks, Task } from '@/hooks/useTasks';
 import { useProjects } from '@/hooks/useProjects';
 import TaskModal from '@/components/TaskModal';
 import TaskCard from '@/components/TaskCard';
+import TaskViewToggle, { TaskView } from '@/components/tasks/TaskViewToggle';
+import TaskKanbanView from '@/components/tasks/TaskKanbanView';
+import TaskGroupedView from '@/components/tasks/TaskGroupedView';
+import TaskTimelineView from '@/components/tasks/TaskTimelineView';
 
 const Tasks = () => {
-  const { tasks, isLoading, deleteTask } = useTasks();
+  const { tasks, isLoading, deleteTask, updateTask } = useTasks();
   const { projects = [] } = useProjects();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
@@ -34,6 +41,9 @@ const Tasks = () => {
   const [filterPriority, setFilterPriority] = useState<string>('all');
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [sortBy, setSortBy] = useState<'created_at' | 'due_date' | 'title' | 'priority'>('created_at');
+  const [currentView, setCurrentView] = useState<TaskView>('list');
+  const [groupBy, setGroupBy] = useState<'status' | 'project' | 'priority'>('status');
+  const [showCompleted, setShowCompleted] = useState(true);
 
   const filteredAndSortedTasks = useMemo(() => {
     let filtered = tasks.filter(task => {
@@ -42,8 +52,9 @@ const Tasks = () => {
       
       const matchesPriority = filterPriority === 'all' || task.priority === filterPriority;
       const matchesStatus = filterStatus === 'all' || task.status === filterStatus;
+      const matchesCompleted = showCompleted || !task.completed;
       
-      return matchesSearch && matchesPriority && matchesStatus;
+      return matchesSearch && matchesPriority && matchesStatus && matchesCompleted;
     });
 
     return filtered.sort((a, b) => {
@@ -64,7 +75,7 @@ const Tasks = () => {
           return 0;
       }
     });
-  }, [tasks, searchTerm, filterPriority, filterStatus, sortBy]);
+  }, [tasks, searchTerm, filterPriority, filterStatus, sortBy, showCompleted]);
 
   const handleEditTask = (task: Task) => {
     setEditingTask(task);
@@ -81,6 +92,18 @@ const Tasks = () => {
     }
   };
 
+  const handleToggleComplete = async (task: Task) => {
+    try {
+      await updateTask.mutateAsync({
+        id: task.id,
+        completed: task.completed,
+        status: task.status
+      });
+    } catch (error) {
+      console.error('Error updating task:', error);
+    }
+  };
+
   const handleCloseModal = () => {
     setIsModalOpen(false);
     setEditingTask(null);
@@ -88,9 +111,9 @@ const Tasks = () => {
 
   const getStatsCards = () => {
     const totalTasks = tasks.length;
-    const completedTasks = tasks.filter(t => t.status === 'Done').length;
+    const completedTasks = tasks.filter(t => t.completed).length;
     const inProgressTasks = tasks.filter(t => t.status === 'In Progress').length;
-    const overdueTasks = tasks.filter(t => t.due_date && new Date(t.due_date) < new Date() && t.status !== 'Done').length;
+    const overdueTasks = tasks.filter(t => t.due_date && new Date(t.due_date) < new Date() && !t.completed).length;
 
     return [
       { label: 'Total Tasks', value: totalTasks, icon: CheckSquare, color: 'text-cyan-400' },
@@ -148,9 +171,27 @@ const Tasks = () => {
           ))}
         </div>
 
-        {/* Filters and Search */}
-        <div className="bg-slate-900 border border-slate-800 rounded-xl p-6">
-          <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+        {/* Controls */}
+        <div className="bg-slate-900 border border-slate-800 rounded-xl p-6 space-y-4">
+          {/* View Toggle and Filters Row */}
+          <div className="flex flex-col lg:flex-row gap-4 items-start lg:items-center justify-between">
+            <TaskViewToggle currentView={currentView} onViewChange={setCurrentView} />
+            
+            {/* Show Completed Toggle */}
+            <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2">
+                {showCompleted ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
+                <span className="text-sm text-slate-300">Show Completed</span>
+              </div>
+              <Switch
+                checked={showCompleted}
+                onCheckedChange={setShowCompleted}
+              />
+            </div>
+          </div>
+
+          {/* Search and Filters */}
+          <div className="grid grid-cols-1 md:grid-cols-6 gap-4">
             <div className="relative md:col-span-2">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 w-4 h-4" />
               <Input
@@ -189,24 +230,39 @@ const Tasks = () => {
               </SelectContent>
             </Select>
 
-            <Select value={sortBy} onValueChange={(value: any) => setSortBy(value)}>
-              <SelectTrigger className="bg-slate-800 border-slate-700 text-white">
-                <div className="flex items-center gap-2">
-                  <SortAsc className="w-4 h-4" />
-                  <SelectValue placeholder="Sort by" />
-                </div>
-              </SelectTrigger>
-              <SelectContent className="bg-slate-800 border-slate-700">
-                <SelectItem value="created_at">Newest</SelectItem>
-                <SelectItem value="due_date">Due Date</SelectItem>
-                <SelectItem value="priority">Priority</SelectItem>
-                <SelectItem value="title">Title</SelectItem>
-              </SelectContent>
-            </Select>
+            {currentView === 'grouped' && (
+              <Select value={groupBy} onValueChange={(value: any) => setGroupBy(value)}>
+                <SelectTrigger className="bg-slate-800 border-slate-700 text-white">
+                  <SelectValue placeholder="Group by" />
+                </SelectTrigger>
+                <SelectContent className="bg-slate-800 border-slate-700">
+                  <SelectItem value="status">Status</SelectItem>
+                  <SelectItem value="project">Project</SelectItem>
+                  <SelectItem value="priority">Priority</SelectItem>
+                </SelectContent>
+              </Select>
+            )}
+
+            {(currentView === 'list') && (
+              <Select value={sortBy} onValueChange={(value: any) => setSortBy(value)}>
+                <SelectTrigger className="bg-slate-800 border-slate-700 text-white">
+                  <div className="flex items-center gap-2">
+                    <SortAsc className="w-4 h-4" />
+                    <SelectValue placeholder="Sort by" />
+                  </div>
+                </SelectTrigger>
+                <SelectContent className="bg-slate-800 border-slate-700">
+                  <SelectItem value="created_at">Newest</SelectItem>
+                  <SelectItem value="due_date">Due Date</SelectItem>
+                  <SelectItem value="priority">Priority</SelectItem>
+                  <SelectItem value="title">Title</SelectItem>
+                </SelectContent>
+              </Select>
+            )}
           </div>
         </div>
 
-        {/* Tasks Grid */}
+        {/* Tasks Content */}
         {filteredAndSortedTasks.length === 0 ? (
           <div className="text-center py-20 bg-slate-900 border border-slate-800 rounded-xl">
             <div className="w-20 h-20 bg-slate-800 rounded-full flex items-center justify-center mx-auto mb-6">
@@ -232,17 +288,52 @@ const Tasks = () => {
             )}
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-            {filteredAndSortedTasks.map((task) => (
-              <TaskCard
-                key={task.id}
-                task={task}
+          <>
+            {/* Render different views */}
+            {currentView === 'list' && (
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                {filteredAndSortedTasks.map((task) => (
+                  <TaskCard
+                    key={task.id}
+                    task={task}
+                    projects={projects}
+                    onEdit={handleEditTask}
+                    onDelete={handleDeleteTask}
+                    onToggleComplete={handleToggleComplete}
+                  />
+                ))}
+              </div>
+            )}
+
+            {currentView === 'grouped' && (
+              <TaskGroupedView
+                tasks={filteredAndSortedTasks}
+                projects={projects}
+                groupBy={groupBy}
+                onEdit={handleEditTask}
+                onDelete={handleDeleteTask}
+                onToggleComplete={handleToggleComplete}
+              />
+            )}
+
+            {currentView === 'kanban' && (
+              <TaskKanbanView
+                tasks={filteredAndSortedTasks}
                 projects={projects}
                 onEdit={handleEditTask}
                 onDelete={handleDeleteTask}
+                onToggleComplete={handleToggleComplete}
               />
-            ))}
-          </div>
+            )}
+
+            {currentView === 'timeline' && (
+              <TaskTimelineView
+                tasks={filteredAndSortedTasks}
+                projects={projects}
+                onEdit={handleEditTask}
+              />
+            )}
+          </>
         )}
 
         {/* Task Modal */}

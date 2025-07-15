@@ -4,11 +4,18 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/lib/auth';
 import { toast } from 'sonner';
 
+export interface Subtask {
+  id: string;
+  title: string;
+  completed: boolean;
+}
+
 export interface Task {
   id: string;
   title: string;
   description?: string;
   due_date?: string;
+  start_date?: string;
   priority: 'Low' | 'Medium' | 'High' | 'Critical';
   status: 'Todo' | 'In Progress' | 'Done';
   project_id?: string;
@@ -17,16 +24,29 @@ export interface Task {
   updated_at: string;
   time_estimate?: number; // in minutes
   time_spent?: number; // in minutes
+  recurring?: boolean;
+  repeat_type?: 'daily' | 'weekly' | 'monthly' | 'none';
+  repeat_interval?: number;
+  repeat_until?: string;
+  subtasks?: Subtask[];
+  completed?: boolean;
 }
 
 export interface TaskInput {
   title: string;
   description?: string;
   due_date?: string;
+  start_date?: string;
   priority: 'Low' | 'Medium' | 'High' | 'Critical';
   status: 'Todo' | 'In Progress' | 'Done';
   project_id?: string;
   time_estimate?: number;
+  recurring?: boolean;
+  repeat_type?: 'daily' | 'weekly' | 'monthly' | 'none';
+  repeat_interval?: number;
+  repeat_until?: string;
+  subtasks?: Subtask[];
+  completed?: boolean;
 }
 
 export const useTasks = () => {
@@ -72,10 +92,17 @@ export const useTasks = () => {
         title: taskData.title.trim(),
         description: taskData.description?.trim() || null,
         due_date: taskData.due_date || null,
+        start_date: taskData.start_date || null,
         priority: taskData.priority,
         status: taskData.status,
         project_id: taskData.project_id || null,
         time_estimate: taskData.time_estimate || null,
+        recurring: taskData.recurring || false,
+        repeat_type: taskData.repeat_type || 'none',
+        repeat_interval: taskData.repeat_interval || 1,
+        repeat_until: taskData.repeat_until || null,
+        subtasks: taskData.subtasks || [],
+        completed: taskData.completed || false,
         user_id: user.id
       };
 
@@ -115,10 +142,17 @@ export const useTasks = () => {
         title: taskData.title?.trim(),
         description: taskData.description?.trim() || null,
         due_date: taskData.due_date || null,
+        start_date: taskData.start_date || null,
         priority: taskData.priority,
         status: taskData.status,
         project_id: taskData.project_id || null,
-        time_estimate: taskData.time_estimate || null
+        time_estimate: taskData.time_estimate || null,
+        recurring: taskData.recurring,
+        repeat_type: taskData.repeat_type,
+        repeat_interval: taskData.repeat_interval,
+        repeat_until: taskData.repeat_until || null,
+        subtasks: taskData.subtasks || [],
+        completed: taskData.completed
       };
 
       // Remove undefined values
@@ -132,7 +166,7 @@ export const useTasks = () => {
         .from('tasks')
         .update(updateData)
         .eq('id', id)
-        .eq('user_id', user.id) // Ensure user can only update their own tasks
+        .eq('user_id', user.id)
         .select()
         .single();
       
@@ -166,7 +200,7 @@ export const useTasks = () => {
         .from('tasks')
         .delete()
         .eq('id', id)
-        .eq('user_id', user.id); // Ensure user can only delete their own tasks
+        .eq('user_id', user.id);
       
       if (error) {
         console.error('Error deleting task:', error);

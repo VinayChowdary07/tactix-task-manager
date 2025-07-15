@@ -284,6 +284,7 @@ export type Database = {
       }
       tasks: {
         Row: {
+          completed: boolean | null
           created_at: string
           description: string | null
           due_date: string | null
@@ -292,11 +293,14 @@ export type Database = {
           parent_recurring_task_id: string | null
           priority: string
           project_id: string | null
+          recurring: boolean | null
           reminder_time: string | null
           repeat_interval: number | null
           repeat_type: string | null
           repeat_until: string | null
+          start_date: string | null
           status: string
+          subtasks: Json | null
           time_estimate: number | null
           time_spent: number | null
           title: string
@@ -304,6 +308,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          completed?: boolean | null
           created_at?: string
           description?: string | null
           due_date?: string | null
@@ -312,11 +317,14 @@ export type Database = {
           parent_recurring_task_id?: string | null
           priority?: string
           project_id?: string | null
+          recurring?: boolean | null
           reminder_time?: string | null
           repeat_interval?: number | null
           repeat_type?: string | null
           repeat_until?: string | null
+          start_date?: string | null
           status?: string
+          subtasks?: Json | null
           time_estimate?: number | null
           time_spent?: number | null
           title: string
@@ -324,6 +332,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          completed?: boolean | null
           created_at?: string
           description?: string | null
           due_date?: string | null
@@ -332,11 +341,14 @@ export type Database = {
           parent_recurring_task_id?: string | null
           priority?: string
           project_id?: string | null
+          recurring?: boolean | null
           reminder_time?: string | null
           repeat_interval?: number | null
           repeat_type?: string | null
           repeat_until?: string | null
+          start_date?: string | null
           status?: string
+          subtasks?: Json | null
           time_estimate?: number | null
           time_spent?: number | null
           title?: string

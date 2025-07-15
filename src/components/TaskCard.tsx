@@ -2,27 +2,22 @@
 import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { Edit, Trash2, MoreHorizontal, Calendar, Flag } from 'lucide-react';
+import { Edit, Trash2, MoreHorizontal, Calendar, Flag, RotateCw, CheckSquare } from 'lucide-react';
 import { Project } from '@/hooks/useProjects';
+import { Task } from '@/hooks/useTasks';
 import { format } from 'date-fns';
 
 interface TaskCardProps {
-  task: {
-    id: string;
-    title: string;
-    description?: string;
-    due_date?: string;
-    priority: 'Low' | 'Medium' | 'High' | 'Critical';
-    status: 'Todo' | 'In Progress' | 'Done';
-    project_id?: string;
-  };
+  task: Task;
   projects: Array<Project>;
-  onEdit: (task: any) => void;
+  onEdit: (task: Task) => void;
   onDelete: (id: string) => void;
+  onToggleComplete?: (task: Task) => void;
 }
 
-const TaskCard: React.FC<TaskCardProps> = ({ task, projects, onEdit, onDelete }) => {
+const TaskCard: React.FC<TaskCardProps> = ({ task, projects, onEdit, onDelete, onToggleComplete }) => {
   const project = projects.find(p => p.id === task.project_id);
 
   const priorityConfig = {
@@ -41,19 +36,40 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, projects, onEdit, onDelete })
   const priorityStyle = priorityConfig[task.priority];
   const statusStyle = statusConfig[task.status];
 
+  const completedSubtasks = task.subtasks?.filter(st => st.completed).length || 0;
+  const totalSubtasks = task.subtasks?.length || 0;
+
+  const handleToggleComplete = () => {
+    if (onToggleComplete) {
+      onToggleComplete({
+        ...task,
+        completed: !task.completed,
+        status: !task.completed ? 'Done' : 'Todo'
+      });
+    }
+  };
+
   return (
-    <Card className={`bg-slate-900/50 backdrop-blur-xl border ${statusStyle.border} hover:border-cyan-400/50 hover:shadow-lg hover:shadow-cyan-500/10 hover:scale-[1.02] transition-all duration-300 group cursor-pointer animate-fade-in rounded-xl`}>
+    <Card className={`bg-slate-900/50 backdrop-blur-xl border ${statusStyle.border} hover:border-cyan-400/50 hover:shadow-lg hover:shadow-cyan-500/10 hover:scale-[1.02] transition-all duration-300 group cursor-pointer animate-fade-in rounded-xl ${task.completed ? 'opacity-75' : ''}`}>
       <CardContent className="p-6">
         <div className="space-y-4">
-          {/* Header with Title and Actions */}
-          <div className="flex items-start justify-between">
+          {/* Header with Checkbox, Title and Actions */}
+          <div className="flex items-start gap-3">
+            {onToggleComplete && (
+              <Checkbox
+                checked={task.completed || false}
+                onCheckedChange={handleToggleComplete}
+                className="mt-1 data-[state=checked]:bg-green-500 data-[state=checked]:border-green-500"
+              />
+            )}
+            
             <div className="flex-1 min-w-0">
-              <h3 className="text-white font-semibold text-lg truncate group-hover:text-cyan-400 transition-colors mb-2">
+              <h3 className={`font-semibold text-lg truncate group-hover:text-cyan-400 transition-colors mb-2 ${task.completed ? 'line-through text-slate-400' : 'text-white'}`}>
                 {task.title}
               </h3>
               
               {task.description && (
-                <p className="text-slate-400 text-sm line-clamp-2 mb-3 leading-relaxed">
+                <p className={`text-sm line-clamp-2 mb-3 leading-relaxed ${task.completed ? 'text-slate-500' : 'text-slate-400'}`}>
                   {task.description}
                 </p>
               )}
@@ -88,27 +104,64 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, projects, onEdit, onDelete })
             </DropdownMenu>
           </div>
 
-          {/* Due Date */}
-          {task.due_date && (
+          {/* Subtasks Progress */}
+          {totalSubtasks > 0 && (
             <div className="flex items-center gap-2 text-sm">
-              <Calendar className="w-4 h-4 text-slate-500" />
-              <span className="text-slate-400">
-                Due: {format(new Date(task.due_date), 'MMM d, yyyy')}
+              <CheckSquare className="w-4 h-4 text-slate-500" />
+              <span className={task.completed ? 'text-slate-500' : 'text-slate-400'}>
+                Subtasks: {completedSubtasks}/{totalSubtasks} completed
               </span>
+              <div className="flex-1 bg-slate-700 rounded-full h-2 ml-2">
+                <div 
+                  className="bg-gradient-to-r from-cyan-500 to-blue-500 h-2 rounded-full transition-all duration-300" 
+                  style={{ width: totalSubtasks > 0 ? `${(completedSubtasks / totalSubtasks) * 100}%` : '0%' }}
+                />
+              </div>
             </div>
           )}
 
-          {/* Project and Priority Row */}
-          <div className="flex items-center justify-between">
-            {project && (
+          {/* Dates */}
+          <div className="flex items-center gap-4 text-sm">
+            {task.start_date && (
               <div className="flex items-center gap-2">
-                <div
-                  className="w-3 h-3 rounded-full"
-                  style={{ backgroundColor: project.color || '#6366f1' }}
-                />
-                <span className="text-slate-400 text-sm">{project.name}</span>
+                <Calendar className="w-4 h-4 text-slate-500" />
+                <span className={task.completed ? 'text-slate-500' : 'text-slate-400'}>
+                  Start: {format(new Date(task.start_date), 'MMM d')}
+                </span>
               </div>
             )}
+            {task.due_date && (
+              <div className="flex items-center gap-2">
+                <Calendar className="w-4 h-4 text-slate-500" />
+                <span className={task.completed ? 'text-slate-500' : 'text-slate-400'}>
+                  Due: {format(new Date(task.due_date), 'MMM d, yyyy')}
+                </span>
+              </div>
+            )}
+          </div>
+
+          {/* Project, Priority and Recurring Row */}
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              {project && (
+                <div className="flex items-center gap-2">
+                  <div
+                    className="w-3 h-3 rounded-full"
+                    style={{ backgroundColor: project.color || '#6366f1' }}
+                  />
+                  <span className={`text-sm ${task.completed ? 'text-slate-500' : 'text-slate-400'}`}>
+                    {project.name}
+                  </span>
+                </div>
+              )}
+              
+              {task.recurring && (
+                <div className="flex items-center gap-1 text-xs text-slate-500">
+                  <RotateCw className="w-3 h-3" />
+                  <span>Recurring</span>
+                </div>
+              )}
+            </div>
             
             <div className={`flex items-center gap-1 px-2 py-1 rounded-full ${priorityStyle.bg} ${priorityStyle.border} border`}>
               <Flag className={`w-3 h-3 ${priorityStyle.color}`} />
