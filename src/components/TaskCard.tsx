@@ -4,7 +4,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { Edit, Trash2, MoreHorizontal, Calendar, Flag, RotateCw, CheckSquare } from 'lucide-react';
+import { Edit, Trash2, MoreHorizontal, Calendar, Flag, RotateCw, CheckSquare, ExternalLink } from 'lucide-react';
 import { Project } from '@/hooks/useProjects';
 import { Task } from '@/hooks/useTasks';
 import { format } from 'date-fns';
@@ -15,9 +15,17 @@ interface TaskCardProps {
   onEdit: (task: Task) => void;
   onDelete: (id: string) => void;
   onToggleComplete?: (task: Task) => void;
+  onViewDetails?: (task: Task) => void;
 }
 
-const TaskCard: React.FC<TaskCardProps> = ({ task, projects, onEdit, onDelete, onToggleComplete }) => {
+const TaskCard: React.FC<TaskCardProps> = ({ 
+  task, 
+  projects, 
+  onEdit, 
+  onDelete, 
+  onToggleComplete,
+  onViewDetails 
+}) => {
   const project = projects.find(p => p.id === task.project_id);
 
   const priorityConfig = {
@@ -39,7 +47,8 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, projects, onEdit, onDelete, o
   const completedSubtasks = task.subtasks?.filter(st => st.completed).length || 0;
   const totalSubtasks = task.subtasks?.length || 0;
 
-  const handleToggleComplete = () => {
+  const handleToggleComplete = (e: React.MouseEvent) => {
+    e.stopPropagation();
     if (onToggleComplete) {
       onToggleComplete({
         ...task,
@@ -49,24 +58,82 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, projects, onEdit, onDelete, o
     }
   };
 
+  const handleCardClick = () => {
+    if (onViewDetails) {
+      onViewDetails(task);
+    }
+  };
+
+  const handleDropdownClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+  };
+
   return (
-    <Card className={`bg-slate-900/50 backdrop-blur-xl border ${statusStyle.border} hover:border-cyan-400/50 hover:shadow-lg hover:shadow-cyan-500/10 hover:scale-[1.02] transition-all duration-300 group cursor-pointer animate-fade-in rounded-xl ${task.completed ? 'opacity-75' : ''}`}>
+    <Card 
+      className={`bg-slate-900/50 backdrop-blur-xl border ${statusStyle.border} hover:border-cyan-400/50 hover:shadow-lg hover:shadow-cyan-500/10 hover:scale-[1.02] transition-all duration-300 group cursor-pointer animate-fade-in rounded-xl ${task.completed ? 'opacity-75' : ''}`}
+      onClick={handleCardClick}
+    >
       <CardContent className="p-6">
         <div className="space-y-4">
           {/* Header with Checkbox, Title and Actions */}
           <div className="flex items-start gap-3">
             {onToggleComplete && (
-              <Checkbox
-                checked={task.completed || false}
-                onCheckedChange={handleToggleComplete}
-                className="mt-1 data-[state=checked]:bg-green-500 data-[state=checked]:border-green-500"
-              />
+              <div onClick={(e) => e.stopPropagation()}>
+                <Checkbox
+                  checked={task.completed || false}
+                  onCheckedChange={handleToggleComplete}
+                  className="mt-1 data-[state=checked]:bg-green-500 data-[state=checked]:border-green-500"
+                />
+              </div>
             )}
             
             <div className="flex-1 min-w-0">
-              <h3 className={`font-semibold text-lg truncate group-hover:text-cyan-400 transition-colors mb-2 ${task.completed ? 'line-through text-slate-400' : 'text-white'}`}>
-                {task.title}
-              </h3>
+              <div className="flex items-start justify-between">
+                <h3 className={`font-semibold text-lg truncate group-hover:text-cyan-400 transition-colors mb-2 ${task.completed ? 'line-through text-slate-400' : 'text-white'}`}>
+                  {task.title}
+                </h3>
+                
+                {/* View Details Icon */}
+                <div className="flex items-center gap-1">
+                  <ExternalLink className="w-4 h-4 text-slate-400 group-hover:text-cyan-400 opacity-0 group-hover:opacity-100 transition-all duration-200" />
+                  
+                  <div onClick={handleDropdownClick}>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button 
+                          variant="ghost" 
+                          className="h-8 w-8 p-0 rounded-full hover:bg-slate-700/50 opacity-0 group-hover:opacity-100 transition-all duration-200"
+                        >
+                          <MoreHorizontal className="h-4 w-4 text-slate-400 hover:text-white" />
+                          <span className="sr-only">Open menu</span>
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" className="w-48 bg-slate-900/95 backdrop-blur-xl border border-slate-700/50 rounded-xl">
+                        <DropdownMenuItem 
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onEdit(task);
+                          }} 
+                          className="hover:bg-slate-700/50 text-slate-300 hover:text-white cursor-pointer"
+                        >
+                          <Edit className="h-4 w-4 mr-2" />
+                          <span>Edit Task</span>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem 
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onDelete(task.id);
+                          }} 
+                          className="hover:bg-red-700/50 text-red-400 hover:text-red-300 cursor-pointer focus:text-red-300"
+                        >
+                          <Trash2 className="h-4 w-4 mr-2" />
+                          <span>Delete Task</span>
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </div>
+                </div>
+              </div>
               
               {task.description && (
                 <p className={`text-sm line-clamp-2 mb-3 leading-relaxed ${task.completed ? 'text-slate-500' : 'text-slate-400'}`}>
@@ -74,34 +141,6 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, projects, onEdit, onDelete, o
                 </p>
               )}
             </div>
-            
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button 
-                  variant="ghost" 
-                  className="h-8 w-8 p-0 rounded-full hover:bg-slate-700/50 opacity-0 group-hover:opacity-100 transition-all duration-200"
-                >
-                  <MoreHorizontal className="h-4 w-4 text-slate-400 hover:text-white" />
-                  <span className="sr-only">Open menu</span>
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-48 bg-slate-900/95 backdrop-blur-xl border border-slate-700/50 rounded-xl">
-                <DropdownMenuItem 
-                  onClick={() => onEdit(task)} 
-                  className="hover:bg-slate-700/50 text-slate-300 hover:text-white cursor-pointer"
-                >
-                  <Edit className="h-4 w-4 mr-2" />
-                  <span>Edit Task</span>
-                </DropdownMenuItem>
-                <DropdownMenuItem 
-                  onClick={() => onDelete(task.id)} 
-                  className="hover:bg-red-700/50 text-red-400 hover:text-red-300 cursor-pointer focus:text-red-300"
-                >
-                  <Trash2 className="h-4 w-4 mr-2" />
-                  <span>Delete Task</span>
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
           </div>
 
           {/* Subtasks Progress */}

@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -31,6 +30,7 @@ import TaskViewToggle, { TaskView } from '@/components/tasks/TaskViewToggle';
 import TaskKanbanView from '@/components/tasks/TaskKanbanView';
 import TaskGroupedView from '@/components/tasks/TaskGroupedView';
 import TaskTimelineView from '@/components/tasks/TaskTimelineView';
+import TaskDetailsModal from '@/components/tasks/TaskDetailsModal';
 
 const Tasks = () => {
   const { tasks, isLoading, deleteTask, updateTask } = useTasks();
@@ -44,6 +44,8 @@ const Tasks = () => {
   const [currentView, setCurrentView] = useState<TaskView>('list');
   const [groupBy, setGroupBy] = useState<'status' | 'project' | 'priority'>('status');
   const [showCompleted, setShowCompleted] = useState(true);
+  const [selectedTask, setSelectedTask] = useState<Task | null>(null);
+  const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
 
   const filteredAndSortedTasks = useMemo(() => {
     let filtered = tasks.filter(task => {
@@ -107,6 +109,16 @@ const Tasks = () => {
   const handleCloseModal = () => {
     setIsModalOpen(false);
     setEditingTask(null);
+  };
+
+  const handleViewTaskDetails = (task: Task) => {
+    setSelectedTask(task);
+    setIsDetailsModalOpen(true);
+  };
+
+  const handleCloseDetailsModal = () => {
+    setIsDetailsModalOpen(false);
+    setSelectedTask(null);
   };
 
   const getStatsCards = () => {
@@ -300,6 +312,7 @@ const Tasks = () => {
                     onEdit={handleEditTask}
                     onDelete={handleDeleteTask}
                     onToggleComplete={handleToggleComplete}
+                    onViewDetails={handleViewTaskDetails}
                   />
                 ))}
               </div>
@@ -342,6 +355,20 @@ const Tasks = () => {
           onClose={handleCloseModal}
           task={editingTask}
         />
+
+        {/* Task Details Modal */}
+        {selectedTask && (
+          <TaskDetailsModal
+            isOpen={isDetailsModalOpen}
+            onClose={handleCloseDetailsModal}
+            task={selectedTask}
+            projects={projects}
+            onEdit={(task) => {
+              handleCloseDetailsModal();
+              handleEditTask(task);
+            }}
+          />
+        )}
       </div>
     </div>
   );
