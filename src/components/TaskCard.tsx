@@ -64,7 +64,7 @@ const TaskCard: React.FC<TaskCardProps> = ({
       target.closest('button') || 
       target.closest('[role="checkbox"]') || 
       target.closest('.checkbox-container') ||
-      target.type === 'checkbox'
+      (target instanceof HTMLInputElement && target.type === 'checkbox')
     ) {
       return;
     }
