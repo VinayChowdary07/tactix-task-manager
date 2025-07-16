@@ -57,10 +57,25 @@ const TaskCard: React.FC<TaskCardProps> = ({
     }
   };
 
-  const handleCardClick = () => {
+  const handleCardClick = (e: React.MouseEvent) => {
+    // Don't trigger if clicking on interactive elements
+    const target = e.target as HTMLElement;
+    if (
+      target.closest('button') || 
+      target.closest('[role="checkbox"]') || 
+      target.closest('.checkbox-container') ||
+      target.type === 'checkbox'
+    ) {
+      return;
+    }
+    
     if (onViewDetails) {
       onViewDetails(task);
     }
+  };
+
+  const handleCheckboxClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
   };
 
   const handleDropdownClick = (e: React.MouseEvent) => {
@@ -85,7 +100,7 @@ const TaskCard: React.FC<TaskCardProps> = ({
           {/* Header with Checkbox, Title and Actions */}
           <div className="flex items-start gap-3">
             {onToggleComplete && (
-              <div onClick={(e) => e.stopPropagation()}>
+              <div className="checkbox-container" onClick={handleCheckboxClick}>
                 <Checkbox
                   checked={task.completed || false}
                   onCheckedChange={handleToggleComplete}
@@ -110,7 +125,9 @@ const TaskCard: React.FC<TaskCardProps> = ({
                 
                 {/* View Details Icon */}
                 <div className="flex items-center gap-1">
-                  <ExternalLink className="w-4 h-4 text-slate-400 group-hover:text-cyan-400 opacity-0 group-hover:opacity-100 transition-all duration-200" />
+                  {onViewDetails && (
+                    <ExternalLink className="w-4 h-4 text-slate-400 group-hover:text-cyan-400 opacity-0 group-hover:opacity-100 transition-all duration-200" />
+                  )}
                   
                   <div onClick={handleDropdownClick}>
                     <DropdownMenu>

@@ -54,6 +54,7 @@ const TaskKanbanView: React.FC<TaskKanbanViewProps> = ({
                   onEdit={onEdit}
                   onDelete={onDelete}
                   onToggleComplete={onToggleComplete}
+                  onViewDetails={onView}
                 />
               ))}
               

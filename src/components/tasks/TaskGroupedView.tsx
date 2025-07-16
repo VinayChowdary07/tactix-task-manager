@@ -13,6 +13,7 @@ interface TaskGroupedViewProps {
   onEdit: (task: Task) => void;
   onDelete: (id: string) => void;
   onToggleComplete: (task: Task) => void;
+  onView: (task: Task) => void;
 }
 
 const TaskGroupedView: React.FC<TaskGroupedViewProps> = ({ 
@@ -21,7 +22,8 @@ const TaskGroupedView: React.FC<TaskGroupedViewProps> = ({
   groupBy, 
   onEdit, 
   onDelete, 
-  onToggleComplete 
+  onToggleComplete,
+  onView 
 }) => {
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set());
 
@@ -123,6 +125,7 @@ const TaskGroupedView: React.FC<TaskGroupedViewProps> = ({
                       onEdit={onEdit}
                       onDelete={onDelete}
                       onToggleComplete={onToggleComplete}
+                      onViewDetails={onView}
                     />
                   ))}
                 </div>

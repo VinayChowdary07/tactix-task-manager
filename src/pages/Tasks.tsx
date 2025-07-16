@@ -142,6 +142,7 @@ const Tasks = () => {
             onEdit={handleEditTask}
             onDelete={handleDeleteTask}
             onToggleComplete={handleToggleComplete}
+            onView={handleViewTask}
           />
         );
       default:
@@ -155,6 +156,7 @@ const Tasks = () => {
                 onEdit={handleEditTask}
                 onDelete={handleDeleteTask}
                 onToggleComplete={handleToggleComplete}
+                onViewDetails={handleViewTask}
               />
             ))}
           </div>
