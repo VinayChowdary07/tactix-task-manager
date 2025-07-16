@@ -8,9 +8,17 @@ interface TaskTimelineViewProps {
   tasks: Task[];
   projects: Project[];
   onEdit: (task: Task) => void;
+  onDelete: (id: string) => void;
+  onToggleComplete: (task: Task) => void;
 }
 
-const TaskTimelineView: React.FC<TaskTimelineViewProps> = ({ tasks, projects, onEdit }) => {
+const TaskTimelineView: React.FC<TaskTimelineViewProps> = ({ 
+  tasks, 
+  projects, 
+  onEdit, 
+  onDelete, 
+  onToggleComplete 
+}) => {
   // Filter tasks that have both start and due dates
   const timelineTasks = tasks.filter(task => task.start_date && task.due_date);
 

@@ -6,11 +6,11 @@ import { List, LayoutGrid, Kanban, Calendar } from 'lucide-react';
 export type TaskView = 'list' | 'grouped' | 'kanban' | 'timeline';
 
 interface TaskViewToggleProps {
-  currentView: TaskView;
+  viewType: TaskView;
   onViewChange: (view: TaskView) => void;
 }
 
-const TaskViewToggle: React.FC<TaskViewToggleProps> = ({ currentView, onViewChange }) => {
+const TaskViewToggle: React.FC<TaskViewToggleProps> = ({ viewType, onViewChange }) => {
   const views = [
     { id: 'list' as const, label: 'List', icon: List },
     { id: 'grouped' as const, label: 'Grouped', icon: LayoutGrid },
@@ -24,10 +24,10 @@ const TaskViewToggle: React.FC<TaskViewToggleProps> = ({ currentView, onViewChan
         <Button
           key={view.id}
           onClick={() => onViewChange(view.id)}
-          variant={currentView === view.id ? 'default' : 'ghost'}
+          variant={viewType === view.id ? 'default' : 'ghost'}
           size="sm"
           className={`flex items-center gap-2 transition-all ${
-            currentView === view.id
+            viewType === view.id
               ? 'bg-gradient-to-r from-cyan-500 to-blue-500 text-white shadow-lg'
               : 'text-slate-400 hover:text-white hover:bg-slate-700/50'
           }`}

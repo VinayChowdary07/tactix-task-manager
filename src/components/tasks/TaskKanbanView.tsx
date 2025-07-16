@@ -10,6 +10,7 @@ interface TaskKanbanViewProps {
   onEdit: (task: Task) => void;
   onDelete: (id: string) => void;
   onToggleComplete: (task: Task) => void;
+  onView: (task: Task) => void;
 }
 
 const TaskKanbanView: React.FC<TaskKanbanViewProps> = ({ 
@@ -17,7 +18,8 @@ const TaskKanbanView: React.FC<TaskKanbanViewProps> = ({
   projects, 
   onEdit, 
   onDelete, 
-  onToggleComplete 
+  onToggleComplete,
+  onView 
 }) => {
   const columns = [
     { id: 'Todo', title: 'To Do', color: 'border-slate-600' },

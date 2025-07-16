@@ -35,6 +35,8 @@ interface TaskDetailsModalProps {
   task: Task;
   projects: ProjectType[];
   onEdit: (task: Task) => void;
+  onDelete: (id: string) => void;
+  onToggleComplete: (task: Task) => void;
 }
 
 const TaskDetailsModal: React.FC<TaskDetailsModalProps> = ({ 
@@ -42,7 +44,9 @@ const TaskDetailsModal: React.FC<TaskDetailsModalProps> = ({
   onClose, 
   task, 
   projects, 
-  onEdit 
+  onEdit,
+  onDelete,
+  onToggleComplete 
 }) => {
   const { updateTask } = useTasks();
   const [subtasks, setSubtasks] = useState<Subtask[]>([]);
@@ -143,17 +147,7 @@ const TaskDetailsModal: React.FC<TaskDetailsModalProps> = ({
 
   const handleTaskCompletion = async (completed: boolean) => {
     setIsCompleted(completed);
-
-    try {
-      await updateTask.mutateAsync({
-        id: task.id,
-        completed,
-        status: completed ? 'Done' : 'Todo'
-      });
-    } catch (error) {
-      console.error('Error updating task completion:', error);
-      setIsCompleted(!completed);
-    }
+    await onToggleComplete(task);
   };
 
   const allSubtasksCompleted = totalSubtasks > 0 && completedSubtasks === totalSubtasks;

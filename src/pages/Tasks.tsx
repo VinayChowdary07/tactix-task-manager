@@ -277,7 +277,7 @@ const Tasks = () => {
       <TaskModal
         isOpen={isModalOpen}
         onClose={closeModal}
-        onSubmit={editingTask ? handleUpdateTask : handleCreateTask}
+        onSave={editingTask ? handleUpdateTask : handleCreateTask}
         task={editingTask}
         projects={projects}
       />
