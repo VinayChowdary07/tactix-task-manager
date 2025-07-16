@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { Plus, Filter, Calendar, List, Layout, Clock } from 'lucide-react';
+import { Plus, Filter, Calendar, List, Layout } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import TaskCard from '@/components/TaskCard';
 import TaskModal from '@/components/TaskModal';
@@ -9,11 +9,9 @@ import TaskKanbanView from '@/components/tasks/TaskKanbanView';
 import TaskTimelineView from '@/components/tasks/TaskTimelineView';
 import TaskGroupedView from '@/components/tasks/TaskGroupedView';
 import TaskViewToggle from '@/components/tasks/TaskViewToggle';
-import RecurringTaskProcessor from '@/components/RecurringTaskProcessor';
 import { useTasks } from '@/hooks/useTasks';
 import { useProjects } from '@/hooks/useProjects';
 import { Task } from '@/hooks/useTasks';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 type ViewType = 'list' | 'kanban' | 'timeline' | 'grouped';
@@ -180,101 +178,71 @@ const Tasks = () => {
         </Button>
       </div>
 
-      <Tabs defaultValue="tasks" className="w-full">
-        <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="tasks" className="flex items-center gap-2">
-            <List className="w-4 h-4" />
-            Tasks
-          </TabsTrigger>
-          <TabsTrigger value="recurring" className="flex items-center gap-2">
-            <Clock className="w-4 h-4" />
-            Recurring
-          </TabsTrigger>
-        </TabsList>
-        
-        <TabsContent value="tasks" className="space-y-6">
-          <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
-            <div className="flex flex-col sm:flex-row gap-4">
-              <Select value={filterStatus} onValueChange={setFilterStatus}>
+      <div className="space-y-6">
+        <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
+          <div className="flex flex-col sm:flex-row gap-4">
+            <Select value={filterStatus} onValueChange={setFilterStatus}>
+              <SelectTrigger className="w-[180px] bg-slate-800 border-slate-700">
+                <SelectValue placeholder="Filter by status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Status</SelectItem>
+                <SelectItem value="Todo">Todo</SelectItem>
+                <SelectItem value="In Progress">In Progress</SelectItem>
+                <SelectItem value="Done">Done</SelectItem>
+              </SelectContent>
+            </Select>
+
+            <Select value={filterPriority} onValueChange={setFilterPriority}>
+              <SelectTrigger className="w-[180px] bg-slate-800 border-slate-700">
+                <SelectValue placeholder="Filter by priority" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Priorities</SelectItem>
+                <SelectItem value="Low">Low</SelectItem>
+                <SelectItem value="Medium">Medium</SelectItem>
+                <SelectItem value="High">High</SelectItem>
+                <SelectItem value="Critical">Critical</SelectItem>
+              </SelectContent>
+            </Select>
+
+            {viewType === 'grouped' && (
+              <Select value={groupBy} onValueChange={(value: 'status' | 'project' | 'priority') => setGroupBy(value)}>
                 <SelectTrigger className="w-[180px] bg-slate-800 border-slate-700">
-                  <SelectValue placeholder="Filter by status" />
+                  <SelectValue placeholder="Group by" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All Status</SelectItem>
-                  <SelectItem value="Todo">Todo</SelectItem>
-                  <SelectItem value="In Progress">In Progress</SelectItem>
-                  <SelectItem value="Done">Done</SelectItem>
+                  <SelectItem value="status">Group by Status</SelectItem>
+                  <SelectItem value="project">Group by Project</SelectItem>
+                  <SelectItem value="priority">Group by Priority</SelectItem>
                 </SelectContent>
               </Select>
-
-              <Select value={filterPriority} onValueChange={setFilterPriority}>
-                <SelectTrigger className="w-[180px] bg-slate-800 border-slate-700">
-                  <SelectValue placeholder="Filter by priority" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Priorities</SelectItem>
-                  <SelectItem value="Low">Low</SelectItem>
-                  <SelectItem value="Medium">Medium</SelectItem>
-                  <SelectItem value="High">High</SelectItem>
-                  <SelectItem value="Critical">Critical</SelectItem>
-                </SelectContent>
-              </Select>
-
-              {viewType === 'grouped' && (
-                <Select value={groupBy} onValueChange={(value: 'status' | 'project' | 'priority') => setGroupBy(value)}>
-                  <SelectTrigger className="w-[180px] bg-slate-800 border-slate-700">
-                    <SelectValue placeholder="Group by" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="status">Group by Status</SelectItem>
-                    <SelectItem value="project">Group by Project</SelectItem>
-                    <SelectItem value="priority">Group by Priority</SelectItem>
-                  </SelectContent>
-                </Select>
-              )}
-            </div>
-
-            <TaskViewToggle viewType={viewType} onViewChange={setViewType} />
+            )}
           </div>
 
-          {filteredTasks.length === 0 ? (
-            <div className="text-center py-20 bg-slate-900 border border-slate-800 rounded-xl">
-              <List className="w-12 h-12 text-slate-600 mx-auto mb-4" />
-              <p className="text-slate-400 text-lg mb-2">No tasks found</p>
-              <p className="text-slate-500 text-sm mb-4">
-                {tasks.length === 0 ? "Create your first task to get started" : "Try adjusting your filters"}
-              </p>
-              <Button 
-                onClick={() => setIsModalOpen(true)}
-                variant="outline"
-                className="border-slate-600 text-slate-300 hover:bg-slate-800"
-              >
-                <Plus className="w-4 h-4 mr-2" />
-                Add Task
-              </Button>
-            </div>
-          ) : (
-            renderTaskView()
-          )}
-        </TabsContent>
-        
-        <TabsContent value="recurring" className="space-y-6">
-          <RecurringTaskProcessor />
-          
-          <div className="bg-slate-900/50 backdrop-blur-xl rounded-xl border border-slate-800 p-6">
-            <h3 className="text-lg font-semibold text-slate-200 mb-4">How Recurring Tasks Work</h3>
-            <div className="space-y-3 text-slate-400 text-sm">
-              <p>• Recurring tasks are automatically processed every day at midnight (00:00 UTC)</p>
-              <p>• When you create a task with recurrence, new instances are generated based on the schedule</p>
-              <p>• Daily tasks: Create a new task every day at the specified interval</p>
-              <p>• Weekly tasks: Create a new task every week on the same day</p>
-              <p>• Monthly tasks: Create a new task every month on the same date</p>
-              <p>• Each recurring task instance is independent and can be edited or deleted separately</p>
-              <p>• The original recurring task remains intact and continues generating new instances</p>
-            </div>
+          <TaskViewToggle viewType={viewType} onViewChange={setViewType} />
+        </div>
+
+        {filteredTasks.length === 0 ? (
+          <div className="text-center py-20 bg-slate-900 border border-slate-800 rounded-xl">
+            <List className="w-12 h-12 text-slate-600 mx-auto mb-4" />
+            <p className="text-slate-400 text-lg mb-2">No tasks found</p>
+            <p className="text-slate-500 text-sm mb-4">
+              {tasks.length === 0 ? "Create your first task to get started" : "Try adjusting your filters"}
+            </p>
+            <Button 
+              onClick={() => setIsModalOpen(true)}
+              variant="outline"
+              className="border-slate-600 text-slate-300 hover:bg-slate-800"
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              Add Task
+            </Button>
           </div>
-        </TabsContent>
-      </Tabs>
+        ) : (
+          renderTaskView()
+        )}
+      </div>
 
       <TaskModal
         isOpen={isModalOpen}

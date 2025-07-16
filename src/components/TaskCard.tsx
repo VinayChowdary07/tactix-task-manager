@@ -226,7 +226,7 @@ const TaskCard: React.FC<TaskCardProps> = ({
                 </div>
               )}
               
-              {task.recurring && (
+              {(task.recurring || task.is_recurring_parent || task.parent_recurring_task_id) && (
                 <div className="flex items-center gap-1 text-xs text-slate-500">
                   <RotateCw className="w-3 h-3" />
                   <span>Recurring</span>
