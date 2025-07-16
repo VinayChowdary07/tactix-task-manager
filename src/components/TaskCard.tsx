@@ -58,7 +58,6 @@ const TaskCard: React.FC<TaskCardProps> = ({
   };
 
   const handleCardClick = (e: React.MouseEvent) => {
-    // Don't trigger if clicking on interactive elements
     const target = e.target as HTMLElement;
     if (
       target.closest('button') || 
@@ -82,9 +81,13 @@ const TaskCard: React.FC<TaskCardProps> = ({
     e.stopPropagation();
   };
 
+  const isCompleted = task.completed || task.status === 'Done';
+
   return (
     <Card 
-      className={`bg-slate-900/50 backdrop-blur-xl border hover:border-cyan-400/50 hover:shadow-lg hover:shadow-cyan-500/10 hover:scale-[1.02] transition-all duration-300 group cursor-pointer animate-fade-in rounded-xl ${task.completed ? 'opacity-75' : ''} relative overflow-hidden`}
+      className={`bg-slate-900/50 backdrop-blur-xl border hover:border-cyan-400/50 hover:shadow-lg hover:shadow-cyan-500/10 hover:scale-[1.02] transition-all duration-300 group cursor-pointer animate-fade-in rounded-xl relative overflow-hidden ${
+        isCompleted ? 'opacity-60' : ''
+      }`}
       onClick={handleCardClick}
     >
       {/* Task Color Strip */}
@@ -102,9 +105,9 @@ const TaskCard: React.FC<TaskCardProps> = ({
             {onToggleComplete && (
               <div className="checkbox-container" onClick={handleCheckboxClick}>
                 <Checkbox
-                  checked={task.completed || false}
+                  checked={isCompleted}
                   onCheckedChange={handleToggleComplete}
-                  className="mt-1 data-[state=checked]:bg-green-500 data-[state=checked]:border-green-500"
+                  className="mt-1 data-[state=checked]:bg-green-500 data-[state=checked]:border-green-500 transition-all duration-200"
                 />
               </div>
             )}
@@ -118,7 +121,11 @@ const TaskCard: React.FC<TaskCardProps> = ({
                       style={{ backgroundColor: task.color }}
                     />
                   )}
-                  <h3 className={`font-semibold text-lg truncate group-hover:text-cyan-400 transition-colors ${task.completed ? 'line-through text-slate-400' : 'text-white'}`}>
+                  <h3 className={`font-semibold text-lg truncate group-hover:text-cyan-400 transition-all duration-200 ${
+                    isCompleted 
+                      ? 'line-through text-slate-400' 
+                      : 'text-white'
+                  }`}>
                     {task.title}
                   </h3>
                 </div>
@@ -168,7 +175,9 @@ const TaskCard: React.FC<TaskCardProps> = ({
               </div>
               
               {task.description && (
-                <p className={`text-sm line-clamp-2 mb-3 leading-relaxed ${task.completed ? 'text-slate-500' : 'text-slate-400'}`}>
+                <p className={`text-sm line-clamp-2 mb-3 leading-relaxed transition-all duration-200 ${
+                  isCompleted ? 'text-slate-500' : 'text-slate-400'
+                }`}>
                   {task.description}
                 </p>
               )}
@@ -179,7 +188,7 @@ const TaskCard: React.FC<TaskCardProps> = ({
           {totalSubtasks > 0 && (
             <div className="flex items-center gap-2 text-sm">
               <CheckSquare className="w-4 h-4 text-slate-500" />
-              <span className={task.completed ? 'text-slate-500' : 'text-slate-400'}>
+              <span className={isCompleted ? 'text-slate-500' : 'text-slate-400'}>
                 Subtasks: {completedSubtasks}/{totalSubtasks} completed
               </span>
               <div className="flex-1 bg-slate-700 rounded-full h-2 ml-2">
@@ -196,7 +205,7 @@ const TaskCard: React.FC<TaskCardProps> = ({
             {task.start_date && (
               <div className="flex items-center gap-2">
                 <Calendar className="w-4 h-4 text-slate-500" />
-                <span className={task.completed ? 'text-slate-500' : 'text-slate-400'}>
+                <span className={isCompleted ? 'text-slate-500' : 'text-slate-400'}>
                   Start: {format(new Date(task.start_date), 'MMM d')}
                 </span>
               </div>
@@ -204,7 +213,7 @@ const TaskCard: React.FC<TaskCardProps> = ({
             {task.due_date && (
               <div className="flex items-center gap-2">
                 <Calendar className="w-4 h-4 text-slate-500" />
-                <span className={task.completed ? 'text-slate-500' : 'text-slate-400'}>
+                <span className={isCompleted ? 'text-slate-500' : 'text-slate-400'}>
                   Due: {format(new Date(task.due_date), 'MMM d, yyyy')}
                 </span>
               </div>
@@ -220,7 +229,7 @@ const TaskCard: React.FC<TaskCardProps> = ({
                     className="w-3 h-3 rounded-full"
                     style={{ backgroundColor: project.color || '#6366f1' }}
                   />
-                  <span className={`text-sm ${task.completed ? 'text-slate-500' : 'text-slate-400'}`}>
+                  <span className={`text-sm ${isCompleted ? 'text-slate-500' : 'text-slate-400'}`}>
                     {project.name}
                   </span>
                 </div>

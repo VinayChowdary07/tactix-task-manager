@@ -7,13 +7,18 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Label } from '@/components/ui/label';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { toast } from 'sonner';
-import { Loader2, Zap, Shield } from 'lucide-react';
+import { Loader2, Zap, Shield, AlertCircle } from 'lucide-react';
+import EmailVerificationAlert from '@/components/EmailVerificationAlert';
 
 const Auth = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const [showVerificationAlert, setShowVerificationAlert] = useState(false);
+  const [signupEmail, setSignupEmail] = useState('');
+  const [verificationPending, setVerificationPending] = useState(false);
   const { signUp, signIn, user } = useAuth();
   const navigate = useNavigate();
 
@@ -31,10 +36,12 @@ const Auth = () => {
     
     if (error) {
       toast.error(error.message);
+      setLoading(false);
     } else {
-      toast.success('Check your email for the confirmation link!');
+      setSignupEmail(email);
+      setShowVerificationAlert(true);
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   const handleSignIn = async (e: React.FormEvent) => {
@@ -44,7 +51,13 @@ const Auth = () => {
     const { error } = await signIn(email, password);
     
     if (error) {
-      toast.error(error.message);
+      // Check if it's an email not confirmed error
+      if (error.message.includes('email not confirmed') || error.message.includes('Email not confirmed')) {
+        setVerificationPending(true);
+        toast.error('Please verify your email before signing in');
+      } else {
+        toast.error(error.message);
+      }
     } else {
       toast.success('Welcome back!');
       navigate('/');
@@ -72,6 +85,15 @@ const Auth = () => {
         </CardHeader>
         
         <CardContent>
+          {verificationPending && (
+            <Alert className="mb-4 bg-orange-500/10 border-orange-500/20">
+              <AlertCircle className="h-4 w-4 text-orange-400" />
+              <AlertDescription className="text-orange-300">
+                Verification pending. Please check your inbox or spam folder and verify your email before signing in.
+              </AlertDescription>
+            </Alert>
+          )}
+
           <Tabs defaultValue="signin" className="w-full">
             <TabsList className="grid w-full grid-cols-2 bg-slate-800/50 border-slate-700">
               <TabsTrigger value="signin" className="data-[state=active]:bg-primary data-[state=active]:text-white">
@@ -158,6 +180,12 @@ const Auth = () => {
           </Tabs>
         </CardContent>
       </Card>
+
+      <EmailVerificationAlert
+        isOpen={showVerificationAlert}
+        onClose={() => setShowVerificationAlert(false)}
+        email={signupEmail}
+      />
     </div>
   );
 };
