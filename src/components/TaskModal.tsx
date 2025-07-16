@@ -27,13 +27,13 @@ import { CheckSquare, Calendar, Flag, Plus, X, RotateCw, Palette } from 'lucide-
 interface TaskModalProps {
   isOpen: boolean;
   onClose: () => void;
+  onSave: (taskData: any) => Promise<void>;
   task?: Task | null;
+  projects: any[];
 }
 
-const TaskModal: React.FC<TaskModalProps> = ({ isOpen, onClose, task }) => {
+const TaskModal: React.FC<TaskModalProps> = ({ isOpen, onClose, onSave, task, projects }) => {
   const { user, loading: authLoading } = useAuth();
-  const { createTask, updateTask } = useTasks();
-  const { projects = [] } = useProjects();
   
   const [formData, setFormData] = useState({
     title: '',
@@ -170,11 +170,7 @@ const TaskModal: React.FC<TaskModalProps> = ({ isOpen, onClose, task }) => {
 
       console.log('Submitting task data:', taskData);
 
-      if (task) {
-        await updateTask.mutateAsync({ id: task.id, ...taskData });
-      } else {
-        await createTask.mutateAsync(taskData);
-      }
+      await onSave(taskData);
       
       onClose();
     } catch (error: any) {
