@@ -47,12 +47,16 @@ const TaskCard: React.FC<TaskCardProps> = ({
   const completedSubtasks = task.subtasks?.filter(st => st.completed).length || 0;
   const totalSubtasks = task.subtasks?.length || 0;
 
+  // Determine if task is completed - check both completed field and status
+  const isCompleted = task.completed === true || task.status === 'Done';
+
   const handleToggleComplete = (checked: boolean | string) => {
     if (onToggleComplete) {
+      const newCompleted = typeof checked === 'boolean' ? checked : !isCompleted;
       onToggleComplete({
         ...task,
-        completed: typeof checked === 'boolean' ? checked : !task.completed,
-        status: (typeof checked === 'boolean' ? checked : !task.completed) ? 'Done' : 'Todo'
+        completed: newCompleted,
+        status: newCompleted ? 'Done' : 'Todo'
       });
     }
   };
@@ -80,8 +84,6 @@ const TaskCard: React.FC<TaskCardProps> = ({
   const handleDropdownClick = (e: React.MouseEvent) => {
     e.stopPropagation();
   };
-
-  const isCompleted = task.completed || task.status === 'Done';
 
   return (
     <Card 
@@ -176,7 +178,7 @@ const TaskCard: React.FC<TaskCardProps> = ({
               
               {task.description && (
                 <p className={`text-sm line-clamp-2 mb-3 leading-relaxed transition-all duration-200 ${
-                  isCompleted ? 'text-slate-500' : 'text-slate-400'
+                  isCompleted ? 'text-slate-500 line-through' : 'text-slate-400'
                 }`}>
                   {task.description}
                 </p>
@@ -243,9 +245,11 @@ const TaskCard: React.FC<TaskCardProps> = ({
               )}
             </div>
             
-            <div className={`flex items-center gap-1 px-2 py-1 rounded-full ${priorityStyle.bg} ${priorityStyle.border} border`}>
-              <Flag className={`w-3 h-3 ${priorityStyle.color}`} />
-              <span className={`text-xs font-medium ${priorityStyle.color}`}>
+            <div className={`flex items-center gap-1 px-2 py-1 rounded-full ${priorityStyle.bg} ${priorityStyle.border} border ${
+              isCompleted ? 'opacity-50' : ''
+            }`}>
+              <Flag className={`w-3 h-3 ${priorityStyle.color} ${isCompleted ? 'opacity-50' : ''}`} />
+              <span className={`text-xs font-medium ${priorityStyle.color} ${isCompleted ? 'opacity-50' : ''}`}>
                 {task.priority}
               </span>
             </div>
@@ -253,9 +257,13 @@ const TaskCard: React.FC<TaskCardProps> = ({
 
           {/* Status Badge */}
           <div className="flex items-center justify-between">
-            <div className={`inline-flex items-center gap-1 px-3 py-1 rounded-full bg-slate-800/50 border ${statusStyle.border}`}>
-              <div className={`w-2 h-2 rounded-full ${statusStyle.color.replace('text-', 'bg-')}`} />
-              <span className={`text-sm font-medium ${statusStyle.color}`}>
+            <div className={`inline-flex items-center gap-1 px-3 py-1 rounded-full bg-slate-800/50 border ${statusStyle.border} ${
+              isCompleted ? 'opacity-50' : ''
+            }`}>
+              <div className={`w-2 h-2 rounded-full ${statusStyle.color.replace('text-', 'bg-')} ${
+                isCompleted ? 'opacity-50' : ''
+              }`} />
+              <span className={`text-sm font-medium ${statusStyle.color} ${isCompleted ? 'opacity-50' : ''}`}>
                 {task.status}
               </span>
             </div>
