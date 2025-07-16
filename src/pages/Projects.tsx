@@ -1,8 +1,7 @@
-
 import React, { useState, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Plus, FolderOpen, Search, Filter, Target, CheckCircle2, Clock, Users } from 'lucide-react';
+import { Plus, FolderOpen, Search, Filter, Target, CheckCircle2, Clock, Users, Edit, Trash2 } from 'lucide-react';
 import {
   Select,
   SelectContent,
@@ -10,16 +9,19 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { useProjects } from '@/hooks/useProjects';
+import { useProjects, Project } from '@/hooks/useProjects';
 import { useTasks } from '@/hooks/useTasks';
 import ProjectModal from '@/components/ProjectModal';
+import ConfirmationDialog from '@/components/ui/confirmation-dialog';
 import { Card, CardContent } from '@/components/ui/card';
+import { toast } from 'sonner';
 
 const Projects = () => {
-  const { projects, isLoading } = useProjects();
+  const { projects, isLoading, deleteProject } = useProjects();
   const { tasks } = useTasks();
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editingProject, setEditingProject] = useState<any>(null);
+  const [editingProject, setEditingProject] = useState<Project | null>(null);
+  const [deletingProject, setDeletingProject] = useState<Project | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
 
@@ -58,14 +60,36 @@ const Projects = () => {
     ];
   };
 
-  const handleEditProject = (project: any) => {
+  const handleEditProject = (project: Project, e: React.MouseEvent) => {
+    e.stopPropagation();
     setEditingProject(project);
     setIsModalOpen(true);
+  };
+
+  const handleDeleteProject = (project: Project, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setDeletingProject(project);
+  };
+
+  const confirmDeleteProject = async () => {
+    if (!deletingProject) return;
+    
+    try {
+      await deleteProject.mutateAsync(deletingProject.id);
+      setDeletingProject(null);
+    } catch (error) {
+      console.error('Error deleting project:', error);
+      toast.error('Failed to delete project. Please try again.');
+    }
   };
 
   const handleCloseModal = () => {
     setIsModalOpen(false);
     setEditingProject(null);
+  };
+
+  const handleCloseDeleteDialog = () => {
+    setDeletingProject(null);
   };
 
   if (isLoading) {
@@ -186,8 +210,7 @@ const Projects = () => {
               return (
                 <Card 
                   key={project.id}
-                  className="group relative bg-slate-900 border-slate-700 hover:border-slate-600 transition-all duration-300 hover:shadow-xl hover:shadow-black/20 hover:scale-[1.02] overflow-hidden cursor-pointer"
-                  onClick={() => handleEditProject(project)}
+                  className="group relative bg-slate-900 border-slate-700 hover:border-slate-600 transition-all duration-300 hover:shadow-xl hover:shadow-black/20 hover:scale-[1.02] overflow-hidden"
                 >
                   {/* Color accent bar */}
                   <div 
@@ -195,10 +218,28 @@ const Projects = () => {
                     style={{ backgroundColor: project.color || '#6366f1' }}
                   />
                   
+                  {/* Action Buttons */}
+                  <div className="absolute top-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity z-10">
+                    <button
+                      onClick={(e) => handleEditProject(project, e)}
+                      className="p-2 bg-slate-800/80 hover:bg-slate-700 rounded-lg transition-colors backdrop-blur-sm"
+                      title="Edit project"
+                    >
+                      <Edit className="w-4 h-4 text-slate-300 hover:text-white" />
+                    </button>
+                    <button
+                      onClick={(e) => handleDeleteProject(project, e)}
+                      className="p-2 bg-slate-800/80 hover:bg-red-600 rounded-lg transition-colors backdrop-blur-sm"
+                      title="Delete project"
+                    >
+                      <Trash2 className="w-4 h-4 text-slate-300 hover:text-white" />
+                    </button>
+                  </div>
+                  
                   <CardContent className="p-6">
                     <div className="space-y-4">
                       {/* Header */}
-                      <div className="flex items-start justify-between">
+                      <div className="flex items-start justify-between pr-16">
                         <div className="flex items-center gap-2 flex-1">
                           <div 
                             className="w-3 h-3 rounded-full flex-shrink-0 mt-1"
@@ -286,6 +327,18 @@ const Projects = () => {
           isOpen={isModalOpen}
           onClose={handleCloseModal}
           project={editingProject}
+        />
+
+        {/* Delete Confirmation Dialog */}
+        <ConfirmationDialog
+          isOpen={!!deletingProject}
+          onClose={handleCloseDeleteDialog}
+          onConfirm={confirmDeleteProject}
+          title="Delete Project"
+          description={`Are you sure you want to delete "${deletingProject?.name}"? This will remove all associated tasks and data. This action cannot be undone.`}
+          confirmText="Delete Project"
+          cancelText="Cancel"
+          isDestructive={true}
         />
       </div>
     </div>
