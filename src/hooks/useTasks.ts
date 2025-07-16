@@ -1,3 +1,4 @@
+
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/lib/auth';
@@ -29,7 +30,9 @@ export interface Task {
   repeat_until?: string;
   subtasks?: Subtask[];
   completed?: boolean;
-  color?: string; // Add color field
+  color?: string;
+  parent_recurring_task_id?: string;
+  is_recurring_parent?: boolean;
 }
 
 export interface TaskInput {
@@ -47,7 +50,7 @@ export interface TaskInput {
   repeat_until?: string;
   subtasks?: Subtask[];
   completed?: boolean;
-  color?: string; // Add color field
+  color?: string;
 }
 
 // Helper function to convert database task to our Task interface
@@ -122,7 +125,8 @@ export const useTasks = () => {
         subtasks: taskData.subtasks || [],
         completed: taskData.completed || false,
         color: taskData.color || null,
-        user_id: user.id
+        user_id: user.id,
+        is_recurring_parent: taskData.recurring || false
       };
 
       const { data: taskResult, error: taskError } = await supabase
@@ -239,6 +243,39 @@ export const useTasks = () => {
     },
   });
 
+  // Function to manually trigger recurring task processing (for testing)
+  const processRecurringTasks = useMutation({
+    mutationFn: async () => {
+      if (!user?.id) {
+        throw new Error('User not authenticated.');
+      }
+      
+      console.log('Manually processing recurring tasks...');
+      
+      const { data, error } = await supabase.rpc('process_recurring_tasks');
+      
+      if (error) {
+        console.error('Error processing recurring tasks:', error);
+        throw error;
+      }
+      
+      console.log('Recurring tasks processed:', data);
+      return data;
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['tasks'] });
+      if (data && data.length > 0 && data[0].processed_count > 0) {
+        toast.success(`Created ${data[0].processed_count} recurring task(s)!`);
+      } else {
+        toast.info('No recurring tasks needed to be created.');
+      }
+    },
+    onError: (error) => {
+      console.error('Manual recurring task processing failed:', error);
+      toast.error('Failed to process recurring tasks.');
+    },
+  });
+
   return {
     tasks,
     isLoading: isLoading || authLoading,
@@ -246,5 +283,6 @@ export const useTasks = () => {
     createTask,
     updateTask,
     deleteTask,
+    processRecurringTasks,
   };
 };

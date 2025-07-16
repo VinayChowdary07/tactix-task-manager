@@ -444,6 +444,13 @@ export type Database = {
         Args: { task_id: string }
         Returns: string
       }
+      process_recurring_tasks: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          processed_count: number
+          created_tasks: string[]
+        }[]
+      }
     }
     Enums: {
       [_ in never]: never

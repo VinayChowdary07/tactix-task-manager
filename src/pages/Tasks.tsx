@@ -1,375 +1,298 @@
-import React, { useState, useMemo } from 'react';
+
+import React, { useState } from 'react';
+import { Plus, Filter, Calendar, List, Layout, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Switch } from '@/components/ui/switch';
-import { 
-  Plus, 
-  CheckSquare, 
-  Search, 
-  Filter, 
-  SortAsc,
-  Target,
-  TrendingUp,
-  Calendar,
-  Clock,
-  Eye,
-  EyeOff
-} from 'lucide-react';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import { useTasks, Task } from '@/hooks/useTasks';
-import { useProjects } from '@/hooks/useProjects';
-import TaskModal from '@/components/TaskModal';
 import TaskCard from '@/components/TaskCard';
-import TaskViewToggle, { TaskView } from '@/components/tasks/TaskViewToggle';
-import TaskKanbanView from '@/components/tasks/TaskKanbanView';
-import TaskGroupedView from '@/components/tasks/TaskGroupedView';
-import TaskTimelineView from '@/components/tasks/TaskTimelineView';
+import TaskModal from '@/components/TaskModal';
 import TaskDetailsModal from '@/components/tasks/TaskDetailsModal';
+import TaskKanbanView from '@/components/tasks/TaskKanbanView';
+import TaskTimelineView from '@/components/tasks/TaskTimelineView';
+import TaskGroupedView from '@/components/tasks/TaskGroupedView';
+import TaskViewToggle from '@/components/tasks/TaskViewToggle';
+import RecurringTaskProcessor from '@/components/RecurringTaskProcessor';
+import { useTasks } from '@/hooks/useTasks';
+import { useProjects } from '@/hooks/useProjects';
+import { Task } from '@/hooks/useTasks';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+
+type ViewType = 'list' | 'kanban' | 'timeline' | 'grouped';
 
 const Tasks = () => {
-  const { tasks, isLoading, deleteTask, updateTask } = useTasks();
-  const { projects = [] } = useProjects();
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editingTask, setEditingTask] = useState<Task | null>(null);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [filterPriority, setFilterPriority] = useState<string>('all');
-  const [filterStatus, setFilterStatus] = useState<string>('all');
-  const [sortBy, setSortBy] = useState<'created_at' | 'due_date' | 'title' | 'priority'>('created_at');
-  const [currentView, setCurrentView] = useState<TaskView>('list');
-  const [groupBy, setGroupBy] = useState<'status' | 'project' | 'priority'>('status');
-  const [showCompleted, setShowCompleted] = useState(true);
-  const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
+  const [editingTask, setEditingTask] = useState<Task | null>(null);
+  const [selectedTask, setSelectedTask] = useState<Task | null>(null);
+  const [viewType, setViewType] = useState<ViewType>('list');
+  const [filterStatus, setFilterStatus] = useState<string>('all');
+  const [filterPriority, setFilterPriority] = useState<string>('all');
+  const [groupBy, setGroupBy] = useState<'status' | 'project' | 'priority'>('status');
 
-  const filteredAndSortedTasks = useMemo(() => {
-    let filtered = tasks.filter(task => {
-      const matchesSearch = task.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                           task.description?.toLowerCase().includes(searchTerm.toLowerCase());
-      
-      const matchesPriority = filterPriority === 'all' || task.priority === filterPriority;
-      const matchesStatus = filterStatus === 'all' || task.status === filterStatus;
-      const matchesCompleted = showCompleted || !task.completed;
-      
-      return matchesSearch && matchesPriority && matchesStatus && matchesCompleted;
-    });
+  const { tasks, isLoading, createTask, updateTask, deleteTask } = useTasks();
+  const { projects } = useProjects();
 
-    return filtered.sort((a, b) => {
-      switch (sortBy) {
-        case 'due_date':
-          if (!a.due_date && !b.due_date) return 0;
-          if (!a.due_date) return 1;
-          if (!b.due_date) return -1;
-          return new Date(a.due_date).getTime() - new Date(b.due_date).getTime();
-        case 'title':
-          return a.title.localeCompare(b.title);
-        case 'priority':
-          const priorityOrder = { 'Critical': 4, 'High': 3, 'Medium': 2, 'Low': 1 };
-          return priorityOrder[b.priority] - priorityOrder[a.priority];
-        case 'created_at':
-          return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
-        default:
-          return 0;
-      }
-    });
-  }, [tasks, searchTerm, filterPriority, filterStatus, sortBy, showCompleted]);
+  const handleCreateTask = async (taskData: any) => {
+    try {
+      await createTask.mutateAsync(taskData);
+      setIsModalOpen(false);
+    } catch (error) {
+      console.error('Failed to create task:', error);
+    }
+  };
 
   const handleEditTask = (task: Task) => {
     setEditingTask(task);
     setIsModalOpen(true);
   };
 
+  const handleUpdateTask = async (taskData: any) => {
+    if (!editingTask) return;
+    
+    try {
+      await updateTask.mutateAsync({ id: editingTask.id, ...taskData });
+      setIsModalOpen(false);
+      setEditingTask(null);
+    } catch (error) {
+      console.error('Failed to update task:', error);
+    }
+  };
+
   const handleDeleteTask = async (id: string) => {
-    if (window.confirm('Are you sure you want to delete this task?')) {
-      try {
-        await deleteTask.mutateAsync(id);
-      } catch (error) {
-        console.error('Error deleting task:', error);
-      }
+    try {
+      await deleteTask.mutateAsync(id);
+    } catch (error) {
+      console.error('Failed to delete task:', error);
     }
   };
 
   const handleToggleComplete = async (task: Task) => {
+    const newStatus = task.status === 'Done' ? 'Todo' : 'Done';
+    const newCompleted = newStatus === 'Done';
+    
     try {
-      await updateTask.mutateAsync({
-        id: task.id,
-        completed: task.completed,
-        status: task.status
+      await updateTask.mutateAsync({ 
+        id: task.id, 
+        status: newStatus,
+        completed: newCompleted 
       });
     } catch (error) {
-      console.error('Error updating task:', error);
+      console.error('Failed to toggle task completion:', error);
     }
   };
 
-  const handleCloseModal = () => {
-    setIsModalOpen(false);
-    setEditingTask(null);
-  };
-
-  const handleViewTaskDetails = (task: Task) => {
+  const handleViewTask = (task: Task) => {
     setSelectedTask(task);
     setIsDetailsModalOpen(true);
   };
 
-  const handleCloseDetailsModal = () => {
+  const closeModal = () => {
+    setIsModalOpen(false);
+    setEditingTask(null);
+  };
+
+  const closeDetailsModal = () => {
     setIsDetailsModalOpen(false);
     setSelectedTask(null);
   };
 
-  const getStatsCards = () => {
-    const totalTasks = tasks.length;
-    const completedTasks = tasks.filter(t => t.completed).length;
-    const inProgressTasks = tasks.filter(t => t.status === 'In Progress').length;
-    const overdueTasks = tasks.filter(t => t.due_date && new Date(t.due_date) < new Date() && !t.completed).length;
-
-    return [
-      { label: 'Total Tasks', value: totalTasks, icon: CheckSquare, color: 'text-cyan-400' },
-      { label: 'In Progress', value: inProgressTasks, icon: Clock, color: 'text-orange-400' },
-      { label: 'Completed', value: completedTasks, icon: Target, color: 'text-green-400' },
-      { label: 'Overdue', value: overdueTasks, icon: Calendar, color: 'text-red-400' },
-    ];
-  };
+  // Filter tasks based on status and priority
+  const filteredTasks = tasks.filter(task => {
+    const statusMatch = filterStatus === 'all' || task.status === filterStatus;
+    const priorityMatch = filterPriority === 'all' || task.priority === filterPriority;
+    return statusMatch && priorityMatch;
+  });
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <div className="text-center">
-          <div className="w-8 h-8 border-4 border-cyan-400 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-          <p className="text-slate-400">Loading your tasks...</p>
-        </div>
+      <div className="flex items-center justify-center h-64">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-cyan-500"></div>
       </div>
     );
   }
 
+  const renderTaskView = () => {
+    switch (viewType) {
+      case 'kanban':
+        return (
+          <TaskKanbanView
+            tasks={filteredTasks}
+            projects={projects}
+            onEdit={handleEditTask}
+            onDelete={handleDeleteTask}
+            onToggleComplete={handleToggleComplete}
+            onView={handleViewTask}
+          />
+        );
+      case 'timeline':
+        return (
+          <TaskTimelineView
+            tasks={filteredTasks}
+            projects={projects}
+            onEdit={handleEditTask}
+            onDelete={handleDeleteTask}
+            onToggleComplete={handleToggleComplete}
+          />
+        );
+      case 'grouped':
+        return (
+          <TaskGroupedView
+            tasks={filteredTasks}
+            projects={projects}
+            groupBy={groupBy}
+            onEdit={handleEditTask}
+            onDelete={handleDeleteTask}
+            onToggleComplete={handleToggleComplete}
+          />
+        );
+      default:
+        return (
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+            {filteredTasks.map((task) => (
+              <TaskCard
+                key={task.id}
+                task={task}
+                projects={projects}
+                onEdit={handleEditTask}
+                onDelete={handleDeleteTask}
+                onToggleComplete={handleToggleComplete}
+              />
+            ))}
+          </div>
+        );
+    }
+  };
+
   return (
-    <div className="min-h-screen bg-slate-950 text-white p-6">
-      <div className="max-w-7xl mx-auto space-y-8">
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-white mb-2">Tasks Dashboard</h1>
-            <p className="text-slate-400">Manage your tasks and track progress efficiently</p>
-          </div>
-          
-          <Button 
-            onClick={() => setIsModalOpen(true)}
-            className="bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 text-white shadow-lg hover:shadow-cyan-500/25 transition-all transform hover:scale-105"
-          >
-            <Plus className="w-4 h-4 mr-2" />
-            New Task
-          </Button>
+    <div className="container mx-auto px-6 py-8">
+      <div className="flex justify-between items-center mb-8">
+        <div>
+          <h1 className="text-3xl font-bold text-slate-100 mb-2">Tasks</h1>
+          <p className="text-slate-400">Manage and organize your tasks</p>
         </div>
+        <Button 
+          onClick={() => setIsModalOpen(true)}
+          className="bg-cyan-600 hover:bg-cyan-700 text-white shadow-lg shadow-cyan-500/25 hover:shadow-cyan-500/40 transition-all duration-300"
+        >
+          <Plus className="w-4 h-4 mr-2" />
+          Add Task
+        </Button>
+      </div>
 
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-          {getStatsCards().map((stat, index) => (
-            <div
-              key={index}
-              className="bg-slate-900 border border-slate-800 rounded-xl p-6 hover:border-slate-700 transition-colors"
-            >
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-slate-400 text-sm">{stat.label}</p>
-                  <p className={`text-2xl font-bold ${stat.color}`}>{stat.value}</p>
-                </div>
-                <stat.icon className={`w-8 h-8 ${stat.color}`} />
-              </div>
-            </div>
-          ))}
-        </div>
-
-        {/* Controls */}
-        <div className="bg-slate-900 border border-slate-800 rounded-xl p-6 space-y-4">
-          {/* View Toggle and Filters Row */}
-          <div className="flex flex-col lg:flex-row gap-4 items-start lg:items-center justify-between">
-            <TaskViewToggle currentView={currentView} onViewChange={setCurrentView} />
-            
-            {/* Show Completed Toggle */}
-            <div className="flex items-center gap-3">
-              <div className="flex items-center gap-2">
-                {showCompleted ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
-                <span className="text-sm text-slate-300">Show Completed</span>
-              </div>
-              <Switch
-                checked={showCompleted}
-                onCheckedChange={setShowCompleted}
-              />
-            </div>
-          </div>
-
-          {/* Search and Filters */}
-          <div className="grid grid-cols-1 md:grid-cols-6 gap-4">
-            <div className="relative md:col-span-2">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 w-4 h-4" />
-              <Input
-                placeholder="Search tasks..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10 bg-slate-800 border-slate-700 text-white placeholder-slate-400"
-              />
-            </div>
-            
-            <Select value={filterPriority} onValueChange={setFilterPriority}>
-              <SelectTrigger className="bg-slate-800 border-slate-700 text-white">
-                <div className="flex items-center gap-2">
-                  <Filter className="w-4 h-4" />
-                  <SelectValue placeholder="Priority" />
-                </div>
-              </SelectTrigger>
-              <SelectContent className="bg-slate-800 border-slate-700">
-                <SelectItem value="all">All Priorities</SelectItem>
-                <SelectItem value="Critical">Critical</SelectItem>
-                <SelectItem value="High">High</SelectItem>
-                <SelectItem value="Medium">Medium</SelectItem>
-                <SelectItem value="Low">Low</SelectItem>
-              </SelectContent>
-            </Select>
-
-            <Select value={filterStatus} onValueChange={setFilterStatus}>
-              <SelectTrigger className="bg-slate-800 border-slate-700 text-white">
-                <SelectValue placeholder="Status" />
-              </SelectTrigger>
-              <SelectContent className="bg-slate-800 border-slate-700">
-                <SelectItem value="all">All Status</SelectItem>
-                <SelectItem value="Todo">Todo</SelectItem>
-                <SelectItem value="In Progress">In Progress</SelectItem>
-                <SelectItem value="Done">Done</SelectItem>
-              </SelectContent>
-            </Select>
-
-            {currentView === 'grouped' && (
-              <Select value={groupBy} onValueChange={(value: any) => setGroupBy(value)}>
-                <SelectTrigger className="bg-slate-800 border-slate-700 text-white">
-                  <SelectValue placeholder="Group by" />
+      <Tabs defaultValue="tasks" className="w-full">
+        <TabsList className="grid w-full grid-cols-2">
+          <TabsTrigger value="tasks" className="flex items-center gap-2">
+            <List className="w-4 h-4" />
+            Tasks
+          </TabsTrigger>
+          <TabsTrigger value="recurring" className="flex items-center gap-2">
+            <Clock className="w-4 h-4" />
+            Recurring
+          </TabsTrigger>
+        </TabsList>
+        
+        <TabsContent value="tasks" className="space-y-6">
+          <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
+            <div className="flex flex-col sm:flex-row gap-4">
+              <Select value={filterStatus} onValueChange={setFilterStatus}>
+                <SelectTrigger className="w-[180px] bg-slate-800 border-slate-700">
+                  <SelectValue placeholder="Filter by status" />
                 </SelectTrigger>
-                <SelectContent className="bg-slate-800 border-slate-700">
-                  <SelectItem value="status">Status</SelectItem>
-                  <SelectItem value="project">Project</SelectItem>
-                  <SelectItem value="priority">Priority</SelectItem>
+                <SelectContent>
+                  <SelectItem value="all">All Status</SelectItem>
+                  <SelectItem value="Todo">Todo</SelectItem>
+                  <SelectItem value="In Progress">In Progress</SelectItem>
+                  <SelectItem value="Done">Done</SelectItem>
                 </SelectContent>
               </Select>
-            )}
 
-            {(currentView === 'list') && (
-              <Select value={sortBy} onValueChange={(value: any) => setSortBy(value)}>
-                <SelectTrigger className="bg-slate-800 border-slate-700 text-white">
-                  <div className="flex items-center gap-2">
-                    <SortAsc className="w-4 h-4" />
-                    <SelectValue placeholder="Sort by" />
-                  </div>
+              <Select value={filterPriority} onValueChange={setFilterPriority}>
+                <SelectTrigger className="w-[180px] bg-slate-800 border-slate-700">
+                  <SelectValue placeholder="Filter by priority" />
                 </SelectTrigger>
-                <SelectContent className="bg-slate-800 border-slate-700">
-                  <SelectItem value="created_at">Newest</SelectItem>
-                  <SelectItem value="due_date">Due Date</SelectItem>
-                  <SelectItem value="priority">Priority</SelectItem>
-                  <SelectItem value="title">Title</SelectItem>
+                <SelectContent>
+                  <SelectItem value="all">All Priorities</SelectItem>
+                  <SelectItem value="Low">Low</SelectItem>
+                  <SelectItem value="Medium">Medium</SelectItem>
+                  <SelectItem value="High">High</SelectItem>
+                  <SelectItem value="Critical">Critical</SelectItem>
                 </SelectContent>
               </Select>
-            )}
-          </div>
-        </div>
 
-        {/* Tasks Content */}
-        {filteredAndSortedTasks.length === 0 ? (
-          <div className="text-center py-20 bg-slate-900 border border-slate-800 rounded-xl">
-            <div className="w-20 h-20 bg-slate-800 rounded-full flex items-center justify-center mx-auto mb-6">
-              <CheckSquare className="w-10 h-10 text-slate-500" />
+              {viewType === 'grouped' && (
+                <Select value={groupBy} onValueChange={(value: 'status' | 'project' | 'priority') => setGroupBy(value)}>
+                  <SelectTrigger className="w-[180px] bg-slate-800 border-slate-700">
+                    <SelectValue placeholder="Group by" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="status">Group by Status</SelectItem>
+                    <SelectItem value="project">Group by Project</SelectItem>
+                    <SelectItem value="priority">Group by Priority</SelectItem>
+                  </SelectContent>
+                </Select>
+              )}
             </div>
-            <h3 className="text-xl font-semibold text-white mb-2">
-              {searchTerm || filterPriority !== 'all' || filterStatus !== 'all' ? 'No tasks found' : 'No tasks yet'}
-            </h3>
-            <p className="text-slate-400 mb-6 max-w-md mx-auto">
-              {searchTerm || filterPriority !== 'all' || filterStatus !== 'all'
-                ? 'Try adjusting your search or filters to find what you\'re looking for.'
-                : 'Create your first task to start organizing your work and tracking progress.'
-              }
-            </p>
-            {(!searchTerm && filterPriority === 'all' && filterStatus === 'all') && (
+
+            <TaskViewToggle viewType={viewType} onViewChange={setViewType} />
+          </div>
+
+          {filteredTasks.length === 0 ? (
+            <div className="text-center py-20 bg-slate-900 border border-slate-800 rounded-xl">
+              <List className="w-12 h-12 text-slate-600 mx-auto mb-4" />
+              <p className="text-slate-400 text-lg mb-2">No tasks found</p>
+              <p className="text-slate-500 text-sm mb-4">
+                {tasks.length === 0 ? "Create your first task to get started" : "Try adjusting your filters"}
+              </p>
               <Button 
                 onClick={() => setIsModalOpen(true)}
-                className="bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600"
+                variant="outline"
+                className="border-slate-600 text-slate-300 hover:bg-slate-800"
               >
                 <Plus className="w-4 h-4 mr-2" />
-                Create First Task
+                Add Task
               </Button>
-            )}
+            </div>
+          ) : (
+            renderTaskView()
+          )}
+        </TabsContent>
+        
+        <TabsContent value="recurring" className="space-y-6">
+          <RecurringTaskProcessor />
+          
+          <div className="bg-slate-900/50 backdrop-blur-xl rounded-xl border border-slate-800 p-6">
+            <h3 className="text-lg font-semibold text-slate-200 mb-4">How Recurring Tasks Work</h3>
+            <div className="space-y-3 text-slate-400 text-sm">
+              <p>• Recurring tasks are automatically processed every day at midnight (00:00 UTC)</p>
+              <p>• When you create a task with recurrence, new instances are generated based on the schedule</p>
+              <p>• Daily tasks: Create a new task every day at the specified interval</p>
+              <p>• Weekly tasks: Create a new task every week on the same day</p>
+              <p>• Monthly tasks: Create a new task every month on the same date</p>
+              <p>• Each recurring task instance is independent and can be edited or deleted separately</p>
+              <p>• The original recurring task remains intact and continues generating new instances</p>
+            </div>
           </div>
-        ) : (
-          <>
-            {/* Render different views */}
-            {currentView === 'list' && (
-              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-                {filteredAndSortedTasks.map((task) => (
-                  <TaskCard
-                    key={task.id}
-                    task={task}
-                    projects={projects}
-                    onEdit={handleEditTask}
-                    onDelete={handleDeleteTask}
-                    onToggleComplete={handleToggleComplete}
-                    onViewDetails={handleViewTaskDetails}
-                  />
-                ))}
-              </div>
-            )}
+        </TabsContent>
+      </Tabs>
 
-            {currentView === 'grouped' && (
-              <TaskGroupedView
-                tasks={filteredAndSortedTasks}
-                projects={projects}
-                groupBy={groupBy}
-                onEdit={handleEditTask}
-                onDelete={handleDeleteTask}
-                onToggleComplete={handleToggleComplete}
-              />
-            )}
+      <TaskModal
+        isOpen={isModalOpen}
+        onClose={closeModal}
+        onSubmit={editingTask ? handleUpdateTask : handleCreateTask}
+        task={editingTask}
+        projects={projects}
+      />
 
-            {currentView === 'kanban' && (
-              <TaskKanbanView
-                tasks={filteredAndSortedTasks}
-                projects={projects}
-                onEdit={handleEditTask}
-                onDelete={handleDeleteTask}
-                onToggleComplete={handleToggleComplete}
-              />
-            )}
-
-            {currentView === 'timeline' && (
-              <TaskTimelineView
-                tasks={filteredAndSortedTasks}
-                projects={projects}
-                onEdit={handleEditTask}
-              />
-            )}
-          </>
-        )}
-
-        {/* Task Modal */}
-        <TaskModal
-          isOpen={isModalOpen}
-          onClose={handleCloseModal}
-          task={editingTask}
+      {selectedTask && (
+        <TaskDetailsModal
+          isOpen={isDetailsModalOpen}
+          onClose={closeDetailsModal}
+          task={selectedTask}
+          projects={projects}
+          onEdit={handleEditTask}
+          onDelete={handleDeleteTask}
+          onToggleComplete={handleToggleComplete}
         />
-
-        {/* Task Details Modal */}
-        {selectedTask && (
-          <TaskDetailsModal
-            isOpen={isDetailsModalOpen}
-            onClose={handleCloseDetailsModal}
-            task={selectedTask}
-            projects={projects}
-            onEdit={(task) => {
-              handleCloseDetailsModal();
-              handleEditTask(task);
-            }}
-          />
-        )}
-      </div>
+      )}
     </div>
   );
 };
