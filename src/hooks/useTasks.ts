@@ -1,4 +1,3 @@
-
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/lib/auth';
@@ -161,30 +160,25 @@ export const useTasks = () => {
       
       console.log('Updating task:', id, 'with data:', taskData);
       
-      const updateData = {
-        title: taskData.title?.trim(),
-        description: taskData.description?.trim() || null,
-        due_date: taskData.due_date || null,
-        start_date: taskData.start_date || null,
-        priority: taskData.priority,
-        status: taskData.status,
-        project_id: taskData.project_id || null,
-        time_estimate: taskData.time_estimate || null,
-        recurring: taskData.recurring,
-        repeat_type: taskData.repeat_type,
-        repeat_interval: taskData.repeat_interval,
-        repeat_until: taskData.repeat_until || null,
-        subtasks: taskData.subtasks || [],
-        completed: taskData.completed,
-        color: taskData.color
-      };
-
-      // Remove undefined values
-      Object.keys(updateData).forEach(key => {
-        if (updateData[key] === undefined) {
-          delete updateData[key];
-        }
-      });
+      // Only include defined values in the update to preserve existing data
+      const updateData: Record<string, any> = {};
+      
+      // Only add fields that are explicitly being updated
+      if (taskData.title !== undefined) updateData.title = taskData.title?.trim();
+      if (taskData.description !== undefined) updateData.description = taskData.description?.trim() || null;
+      if (taskData.due_date !== undefined) updateData.due_date = taskData.due_date || null;
+      if (taskData.start_date !== undefined) updateData.start_date = taskData.start_date || null;
+      if (taskData.priority !== undefined) updateData.priority = taskData.priority;
+      if (taskData.status !== undefined) updateData.status = taskData.status;
+      if (taskData.project_id !== undefined) updateData.project_id = taskData.project_id || null;
+      if (taskData.time_estimate !== undefined) updateData.time_estimate = taskData.time_estimate || null;
+      if (taskData.recurring !== undefined) updateData.recurring = taskData.recurring;
+      if (taskData.repeat_type !== undefined) updateData.repeat_type = taskData.repeat_type;
+      if (taskData.repeat_interval !== undefined) updateData.repeat_interval = taskData.repeat_interval;
+      if (taskData.repeat_until !== undefined) updateData.repeat_until = taskData.repeat_until || null;
+      if (taskData.subtasks !== undefined) updateData.subtasks = taskData.subtasks || [];
+      if (taskData.completed !== undefined) updateData.completed = taskData.completed;
+      if (taskData.color !== undefined) updateData.color = taskData.color;
 
       const { data: taskResult, error } = await supabase
         .from('tasks')

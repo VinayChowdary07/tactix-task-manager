@@ -68,6 +68,7 @@ const Tasks = () => {
     const newCompleted = newStatus === 'Done';
     
     try {
+      // Only update the completion status and status field, preserve all other data
       await updateTask.mutateAsync({ 
         id: task.id, 
         status: newStatus,

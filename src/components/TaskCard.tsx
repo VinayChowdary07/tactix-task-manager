@@ -53,8 +53,9 @@ const TaskCard: React.FC<TaskCardProps> = ({
   const handleToggleComplete = (checked: boolean | string) => {
     if (onToggleComplete) {
       const newCompleted = typeof checked === 'boolean' ? checked : !isCompleted;
+      // Pass the complete task object with only the completion fields updated
       onToggleComplete({
-        ...task,
+        ...task, // Preserve ALL existing task data
         completed: newCompleted,
         status: newCompleted ? 'Done' : 'Todo'
       });
